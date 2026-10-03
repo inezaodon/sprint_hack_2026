@@ -46,12 +46,12 @@ SELECT 'goodwillfinds:' || marketplace_order_id || ':commission' AS fee_key, cha
        'commission' AS fee_type, marketplace_fees AS amount, paid_at_utc AS fee_at_utc
 FROM stg_goodwillfinds_orders WHERE marketplace_fees <> 0;
 
--- Weekly payouts carry only the pay date. Assumption: each payout covers the days since the previous payout
--- (previous date + 1 .. this date); the first one covers the 7 days ending on its date.
+-- Weekly payouts carry only the pay date. Each one settles a Mon-Sun week (Eastern) and is paid the Wednesday
+-- after it ends, so the period is the Mon-Sun week ending 3 days before the pay date.
 CREATE OR REPLACE TEMP TABLE stg_goodwillfinds_payouts AS
 SELECT 'goodwillfinds:' || id AS payout_key, 'goodwillfinds' AS channel, date AS paid_on,
-       coalesce(CAST(lag(date) OVER (ORDER BY date, id) + INTERVAL 1 DAY AS DATE), CAST(date - INTERVAL 6 DAY AS DATE)) AS period_start,
-       date AS period_end,
+       CAST(date_trunc('week', date - INTERVAL 3 DAY) AS DATE) AS period_start,
+       CAST(date - INTERVAL 3 DAY AS DATE) AS period_end,
        charges_gross AS gross, fees, refunds_gross AS refunds, amount AS net
 FROM goodwillfinds.payouts;
 
