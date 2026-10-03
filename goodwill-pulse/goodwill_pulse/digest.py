@@ -41,7 +41,7 @@ def _totals(con, start: date, end: date) -> dict[str, dict]:
         SELECT channel, count(*), sum(subtotal), sum(coalesce(shipping_charged, 0)), sum(coalesce(marketplace_fees, 0)),
                sum(coalesce(refund_amount, 0))
         FROM fct_orders WHERE business_date BETWEEN ? AND ? GROUP BY channel""", [start, end]).fetchall()
-    out = {c: dict.fromkeys(MEASURES, 0.0) for c in ORDER}
+    out = {c: {"orders": 0, **dict.fromkeys(MEASURES[1:], 0.0)} for c in ORDER}
     for ch, n, sub, ship, fees, ref in rows:
         out[ch] = {"orders": int(n), "item_sales": float(sub or 0), "shipping": float(ship or 0),
                    "fees": float(fees or 0), "refunds": float(ref or 0)}
