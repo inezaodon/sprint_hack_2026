@@ -18,10 +18,21 @@ from . import db
 from .config import INBOX_DIR, SAMPLES_DIR, WEB_DIR
 from .ingest.pipeline import FileResult, confirm_aliases, process_dir, process_file
 from .pulse import build_pulse, business_dates
+from .routes import ai as ai_routes, close as close_routes, dashboard as dashboard_routes
 
 app = FastAPI(title="Goodwill Pulse")
 _lock = threading.Lock()
-_con = db.connect()
+_con = None  # opened on first use, so importing the app (e.g. in tests) doesn't take the warehouse lock
+
+
+def _db():
+    global _con
+    if _con is None:
+        _con = db.connect()
+    return _con
+
+for _r in (dashboard_routes, close_routes, ai_routes):
+    app.include_router(_r.router)
 
 
 def _result(r: FileResult) -> dict:
@@ -31,7 +42,7 @@ def _result(r: FileResult) -> dict:
 
 def _rows(sql: str, params: list | None = None) -> list[dict]:
     with _lock:
-        cur = _con.execute(sql, params or [])
+        cur = _db().execute(sql, params or [])
         cols = [d[0] for d in cur.description]
         return [dict(zip(cols, row)) for row in cur.fetchall()]
 
@@ -44,18 +55,18 @@ def health() -> dict:
 @app.get("/api/pulse/dates")
 def pulse_dates() -> list[str]:
     with _lock:
-        return business_dates(_con)
+        return business_dates(_db())
 
 
 @app.get("/api/pulse")
 def pulse(d: date | None = None) -> dict:
     with _lock:
         if d is None:
-            dates = business_dates(_con)
+            dates = business_dates(_db())
             if not dates:
                 raise HTTPException(404, "No orders loaded yet.")
             d = date.fromisoformat(dates[0])
-        return build_pulse(_con, d)
+        return build_pulse(_db(), d)
 
 
 @app.post("/api/upload")
@@ -66,7 +77,7 @@ async def upload(files: list[UploadFile] = File(...)) -> list[dict]:
         dest = INBOX_DIR / Path(f.filename or "upload.csv").name
         dest.write_bytes(await f.read())
         with _lock:
-            out.append(_result(process_file(_con, dest)))
+            out.append(_result(process_file(_db(), dest)))
         dest.unlink(missing_ok=True)
     return out
 
@@ -94,7 +105,7 @@ class AliasBody(BaseModel):
 def confirm_mapping(file_id: str, body: AliasBody | None = None) -> dict:
     with _lock:
         try:
-            return _result(confirm_aliases(_con, file_id, body.aliases if body else None))
+            return _result(confirm_aliases(_db(), file_id, body.aliases if body else None))
         except KeyError:
             raise HTTPException(404, "Unknown file")
 
@@ -102,7 +113,7 @@ def confirm_mapping(file_id: str, body: AliasBody | None = None) -> dict:
 @app.post("/api/exceptions/{exception_id}/resolve")
 def resolve(exception_id: int) -> dict:
     with _lock:
-        _con.execute("UPDATE exceptions SET status = 'resolved' WHERE exception_id = ?", [exception_id])
+        _db().execute("UPDATE exceptions SET status = 'resolved' WHERE exception_id = ?", [exception_id])
     return {"ok": True}
 
 
@@ -112,10 +123,11 @@ def demo_reset() -> dict:
     """Wipe the warehouse and load the synthetic history (everything before the demo day)."""
     global _con
     with _lock:
-        _con.close()
+        if _con is not None:
+            _con.close()
         db.reset()
         _con = db.connect()
-        results = process_dir(_con, SAMPLES_DIR / "history")
+        results = process_dir(_db(), SAMPLES_DIR / "history")
     return {"files": len(results), "orders": _rows("SELECT count(*) AS n FROM orders")[0]["n"]}
 
 
@@ -129,7 +141,7 @@ def demo_drop(sample_set: str) -> list[dict]:
     for p in src.iterdir():
         shutil.copy2(p, INBOX_DIR / p.name)
     with _lock:
-        return [_result(r) for r in process_dir(_con, INBOX_DIR, move_done=True)]
+        return [_result(r) for r in process_dir(_db(), INBOX_DIR, move_done=True)]
 
 
 SHELL = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -140,6 +152,23 @@ SHELL = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
 def index() -> str:
     # web/index.html is written as an artifact page (no <html>/<head>); add the document shell here
     return SHELL.format((WEB_DIR / "index.html").read_text())
+
+
+def _page(name: str) -> HTMLResponse:
+    path = WEB_DIR / f"{name}.html"
+    if not path.exists():
+        raise HTTPException(404, f"{name} page not built yet")
+    return HTMLResponse(path.read_text())
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_page() -> HTMLResponse:
+    return _page("dashboard")
+
+
+@app.get("/close", response_class=HTMLResponse)
+def close_page() -> HTMLResponse:
+    return _page("close")
 
 
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")

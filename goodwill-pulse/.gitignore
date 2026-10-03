@@ -5,3 +5,7 @@ data/archive/
 data/inbox/
 data/out/
 .env
+data/sources/
+data/harmonized.duckdb*
+data/close_inputs/
+*.tmp

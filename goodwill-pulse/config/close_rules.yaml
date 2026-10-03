@@ -1,0 +1,127 @@
+# Month-end close rules for E-Commerce (Feature 3). Read by goodwill_pulse/close/rules.py.
+#
+# Every rule the manual allocation workbook applies is written here as DATA. The Python engine only knows a small
+# set of rule *kinds* (shipping_bank, fedex_net, channel_revenue, sgw_periods, gwb_statement, jewelry_reclass);
+# accounts, departments, vendors, matching patterns, periods and owners all come from this file.
+#
+# Sign convention (CONTRACT section 5): amount > 0 = debit, amount < 0 = credit; every document sums to 0.
+#
+# Account numbers marked `placeholder: true` are NOT from Goodwill. They are clearly-labelled stand-ins until
+# Goodwill shares the chart of accounts (question 6 for Amanda). Only these codes come from the deck (slide 38):
+#   GL 10009 (OSM / Pitney Bowes / EasyPost shipping, 1st Source acct 0101), GL 40356 + Dept 180 + Vendor V00122 (FedEx).
+
+version: "2026.10.03-1"
+timezone: America/New_York          # business_date for harmonized rows; bank / FedEx dates are already local dates
+posting_date: month_end             # every journal line is dated the last day of the close month
+doc_no_format: "ECOM-{yyyy}-{mm}-{suffix}"
+
+accounts:
+  # ---- from the deck (slide 38) -----------------------------------------------------------------------------------
+  shipping_gl:      {account_type: "G/L Account",  account_no: "10009",  placeholder: false, label: "Shipping postage (OSM / PB / EasyPost)"}
+  bank_0101:        {account_type: "Bank Account", account_no: "0101",   placeholder: false, label: "1st Source operating account 0101"}
+  fedex_gl:         {account_type: "G/L Account",  account_no: "40356",  placeholder: false, label: "FedEx shipping"}
+  fedex_vendor:     {account_type: "Vendor",       account_no: "V00122", placeholder: false, label: "FedEx"}
+  # ---- PLACEHOLDERS (confirm with Goodwill) -----------------------------------------------------------------------
+  shipping_income:  {account_type: "G/L Account",  account_no: "4xxxx-SHIPINC", placeholder: true, label: "PLACEHOLDER shipping & handling income"}
+  refunds:          {account_type: "G/L Account",  account_no: "4xxxx-REFUNDS", placeholder: true, label: "PLACEHOLDER sales returns & refunds (contra revenue)"}
+  marketplace_fees: {account_type: "G/L Account",  account_no: "6xxxx-FEES",    placeholder: true, label: "PLACEHOLDER marketplace & payment fees"}
+  jewelry_revenue:  {account_type: "G/L Account",  account_no: "4xxxx-JEWELRY", placeholder: true, label: "PLACEHOLDER jewelry program revenue"}
+
+# One entry per marketplace. revenue / customer accounts are PLACEHOLDERS. Revenue lines carry store_id (store credit:
+# the originating store gets the sale, Debie's rule). The Customer line is the marketplace receivable = AR invoice.
+channels:
+  shopgoodwill:  {label: ShopGoodwill,  doc_suffix: SGW,    revenue: "4xxxx-SGW",  customer: "CUST-SGW",  tool: upright}
+  ebay:          {label: eBay,          doc_suffix: EBAY,   revenue: "4xxxx-EBAY", customer: "CUST-EBAY", tool: both}
+  amazon:        {label: Amazon,        doc_suffix: AMAZON, revenue: "4xxxx-AMZ",  customer: "CUST-AMZ",  tool: cashmonkey}
+  goodwillfinds: {label: GoodwillFinds, doc_suffix: GWF,    revenue: "4xxxx-GWF",  customer: "CUST-GWF",  tool: upright}
+  goodwillbooks: {label: Goodwillbooks, doc_suffix: GWB,    revenue: "4xxxx-GWB",  customer: "CUST-GWB",  tool: cashmonkey}
+
+# Exception owners (slide 41 workstream 5: every exception has an owner).
+owners:
+  shipping: "Accounting - AP (shipping)"
+  fedex:    "Accounting - AP (FedEx)"
+  revenue:  "Accounting - E-Commerce revenue"
+  jewelry:  "E-Commerce Ops - Jewelry"
+  gwb:      "Accounting - Goodwill Books"
+  close:    "Controller (close owner)"
+
+rules:
+  # Slide 38 #4: "OSM / PB / EasyPost - Shipping amounts - 1st Source acct 0101 - GL 10009".
+  # Withdrawals from bank 0101 whose description matches a postage vendor, bank date inside the month.
+  # Dr GL 10009 per bank line / Cr Bank Account 0101 (one line per vendor).
+  - id: shipping_postage
+    kind: shipping_bank
+    doc_suffix: SHIPPING
+    source: bank_0101
+    owner: shipping
+    bank_account: "0101"
+    vendors:                                     # description prefix (case-insensitive) -> vendor label
+      "OSM WORLDWIDE": OSM Worldwide
+      "PITNEY BOWES": Pitney Bowes
+      "EASYPOST": EasyPost
+    debit: shipping_gl
+    credit: bank_0101
+    department: null                             # deck gives no department for postage: confirm
+
+  # Slide 38 #5: "FedEx - BC GL 40356 - Dept 180 - V00122 - net BNKDEPOSIT refunds".
+  # Dr GL 40356 Dept 180 per FedEx invoice dated in the month; Cr GL 40356 Dept 180 per bank-0101 BNKDEPOSIT whose
+  # description contains FEDEX (refund) dated in the month; Cr Vendor V00122 for the NET.
+  # Refund credits that belong to this month's invoices but land in the bank after month end -> exception.
+  - id: fedex_net_refunds
+    kind: fedex_net
+    doc_suffix: FEDEX
+    source: fedex_invoices
+    owner: fedex
+    expense: fedex_gl
+    vendor: fedex_vendor
+    department: "180"
+    refund_bank_type: BNKDEPOSIT
+    refund_match: FEDEX                          # substring of the bank description
+    cross_month_lookahead_days: 10               # how far past month end to look for late refunds
+
+  # Slide 38 #6: "ShopGoodwill - Filter year/month; Period 1 periodic only; Period 3 all reports".
+  # TEAM ASSUMPTION (confirm with Amanda, question 5): periods are 1 = days 1-10, 2 = 11-20, 3 = 21-month end
+  # (same as sql/sources/shopgoodwill.sql). periodic_only = post the periodic statement totals (fct_payouts);
+  # all_reports = post from the detailed sales / fee / refund reports (fct_orders, fct_refunds) because the period-3
+  # statement is only issued after month end. Period 2 is not on the slide; we treat it like period 1.
+  - id: shopgoodwill_periods
+    kind: sgw_periods
+    channel: shopgoodwill
+    doc_suffix: SGW
+    source: harmonized.fct_payouts+fct_orders
+    owner: revenue
+    periods:
+      1: {days: [1, 10],  mode: periodic_only}
+      2: {days: [11, 20], mode: periodic_only}   # ASSUMPTION (not on slide 38)
+      3: {days: [21, 31], mode: all_reports}
+    statement_tolerance: 1.00                    # $ difference statement vs detail before an exception
+
+  # Slide 38 #1, #2, #8, #9: Cash Monkey / Upright exports, eBay listing sales report, Amazon payments summary.
+  # Detail-based revenue journal for the month (business_date in America/New_York).
+  - {id: revenue_ebay,          kind: channel_revenue, channel: ebay,          doc_suffix: EBAY,   source: harmonized.fct_orders, owner: revenue}
+  - {id: revenue_amazon,        kind: channel_revenue, channel: amazon,        doc_suffix: AMAZON, source: harmonized.fct_orders, owner: revenue}
+  - {id: revenue_goodwillfinds, kind: channel_revenue, channel: goodwillfinds, doc_suffix: GWF,    source: harmonized.fct_orders, owner: revenue}
+
+  # Slide 38 #7: "Goodwill Books - Prior-month payment statement - Monthly email attachment (PDF)".
+  # ASSUMPTION: the September close uses the statement COVERING September, which arrives (by email) in October, i.e. it
+  # is the "prior-month" statement at the time the close is done. statement_month_offset: 0 = same month as the close.
+  # Statement lines must sum to the statement total. Store credit is filled from the SKU (enrich step).
+  # If the statement has not arrived, the doc is accrued from harmonized detail and a missing-source exception raised.
+  - id: goodwillbooks_statement
+    kind: gwb_statement
+    channel: goodwillbooks
+    doc_suffix: GWB
+    source: gwb_statement
+    owner: gwb
+    statement_month_offset: 0
+
+  # Slide 38 #3: "Jewelry - Jewelry Report - Request report; Co-Pivot populates Supplier".
+  # Enrich: blank Supplier is filled by SKU lookup against harmonized items / order lines (the Co-Pivot step).
+  # Rule: reclassify jewelry sales out of the channel revenue account into the jewelry revenue account, per store.
+  # Rows whose SKU cannot be matched are held out of the journal and raised as an exception (no store to credit).
+  - id: jewelry_reclass
+    kind: jewelry_reclass
+    doc_suffix: JEWELRY
+    source: jewelry_report
+    owner: jewelry
+    credit: jewelry_revenue

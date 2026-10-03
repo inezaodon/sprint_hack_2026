@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>E-Commerce Monthly Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: same operations console as the Daily Pulse. Sticky bar with the month/store/channel filters,
+   then summary before detail: 3 anchors → 15-KPI scorecard (slide 35 rows) → pillar tabs → stores → categories. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18221f; --muted:#5b6762; --line:#d8dedb; --soft:#eaefec;
+  --accent:#0f6b62; --accent-soft:#dcefeb;
+  --ok:#23784a; --ok-soft:#e1f2e7; --warn:#9a5b00; --warn-soft:#fcefd9; --bad:#b0362c; --bad-soft:#fae3e0;
+  --display:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --body:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  /* chart series (validated categorical order; one slot per marketplace, fixed by entity) */
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+@media (max-width:520px){.wrap,.bar-in,nav.tabs{padding-inline:16px}}
+button,select{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand b{font:800 17px var(--display);letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.filters button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;width:32px;height:32px}
+.filters button:disabled{opacity:.4;cursor:default}
+.filters select{font:500 14px var(--body);border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);max-width:180px}
+.links{display:flex;gap:4px;font-weight:600;font-size:14px}
+.links a{padding:6px 10px;border-radius:6px;text-decoration:none;color:var(--muted)}
+.links a:hover{background:var(--soft);color:var(--ink)}
+.links a[aria-current="page"]{color:var(--ink);background:var(--accent-soft)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--body);padding:5px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)} .p-info{background:var(--accent-soft);color:var(--accent)}
+.p-none{background:var(--soft);color:var(--muted)}
+.badge{display:inline-block;font:500 10.5px/1.3 var(--mono);letter-spacing:.03em;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.badge.b-input{border-color:var(--warn);color:var(--warn)}
+.badge.b-na{border-style:dashed}
+
+section.block{padding-top:28px}
+.headline{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px;margin-bottom:16px}
+h1{font:800 clamp(1.5rem,3vw,2rem)/1.15 var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+h2{font:700 1.05rem var(--display);margin:0;text-wrap:balance}
+h3{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.sub{color:var(--muted);font-size:14px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card-pad{padding:18px}
+.banner{margin-bottom:16px;padding:12px 16px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:14px}
+.banner.err{background:var(--bad-soft);color:var(--bad)}
+
+/* anchors */
+.anchors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.anchors{grid-template-columns:minmax(0,1fr)}}
+.anchor{padding:18px 18px 12px;display:grid;gap:6px}
+.anchor .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.anchor .lbl{font-weight:700;font-size:14px}
+.anchor .val{font:600 clamp(28px,4vw,34px)/1.1 var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.anchor .cmp{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.anchor .spark{position:relative;height:64px}
+.anchor .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.goal{font:600 12px var(--mono);color:var(--accent)}
+
+/* scorecard: slide 35 rows */
+.score{display:grid;gap:0}
+.srow{display:grid;grid-template-columns:150px minmax(0,1fr);border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow > h3{padding:16px;background:var(--soft);display:flex;align-items:flex-start}
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.cell{padding:14px 16px;display:grid;gap:4px;align-content:start;border-left:1px solid var(--line)}
+.cell .lbl{font-size:13.5px;font-weight:600;line-height:1.3}
+.cell .val{font:600 21px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.cell .val.na{color:var(--muted);font-size:15px;font-family:var(--body);font-weight:500}
+.cell .cmp{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--muted)}
+.cell .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+@media (max-width:640px){.srow{grid-template-columns:minmax(0,1fr)}.srow > h3{padding:10px 16px}.cell{border-left:0;border-top:1px solid var(--line)}}
+.delta{font:500 12px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.up{color:var(--ok)} .down{color:var(--bad)} .flat{color:var(--muted)}
+
+/* pillar tabs */
+nav.ptabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.ptabs button{border:0;background:none;color:var(--muted);padding:10px 12px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+nav.ptabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+.chart-card{padding:16px;display:grid;gap:10px;align-content:start}
+.chart-box{position:relative;height:260px}
+.chart-note{font-size:12.5px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+table{border-collapse:collapse;width:100%}
+.tscroll{overflow-x:auto}
+.list th,.list td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
+.list th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);white-space:nowrap}
+.list td.r,.list th.r{text-align:right}
+.list td.r{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list tr:last-child td{border-bottom:0}
+.list .sel td{background:var(--accent-soft)}
+.list.kpi{min-width:560px}
+.list.stores{min-width:820px}
+.list.cats{min-width:620px}
+.barcell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.bar{height:8px;border-radius:0 4px 4px 0;background:var(--accent);min-width:1px}
+.bartrack{width:90px;display:flex}
+.tag{font:600 10.5px var(--mono);color:var(--accent);margin-left:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--muted);padding:5px 10px;font-weight:600;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.legendrow{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);margin-top:24px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>E-Commerce Monthly Dashboard</b><span>Goodwill Michiana · SprintHack prototype · synthetic data</span></div>
+    <div class="filters" aria-label="Filters">
+      <button id="prev" aria-label="Previous month">‹</button>
+      <select id="f-month" aria-label="Month"></select>
+      <button id="next" aria-label="Next month">›</button>
+      <select id="f-store" aria-label="Store"><option value="">All stores</option></select>
+      <select id="f-channel" aria-label="Marketplace"><option value="">All marketplaces</option></select>
+    </div>
+    <nav class="links" aria-label="Pages">
+      <a href="/">Daily Pulse</a>
+      <a href="/dashboard" aria-current="page">Monthly</a>
+      <a href="/close">Month-end close</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="block" aria-labelledby="title">
+    <div class="headline">
+      <h1 id="title">Monthly dashboard</h1>
+      <span class="sub" id="subtitle">Loading…</span>
+    </div>
+    <div id="banner" class="banner" hidden></div>
+
+    <div class="sec-head"><h2>2027 plan anchors</h2><span class="sub">Each should rise year over year (slide 36). Line = last 13 months.</span></div>
+    <div class="anchors" id="anchors"></div>
+  </section>
+
+  <section class="block" aria-labelledby="sc-title">
+    <div class="sec-head"><h2 id="sc-title">COO scorecard</h2><span class="sub">15 KPIs, one page, monthly (slide 35). Arrows are colored by whether the move is good.</span></div>
+    <div class="card score" id="scorecard"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section class="block" aria-labelledby="p-title">
+    <div class="sec-head"><h2 id="p-title">Five pillars</h2><span class="sub">Growth, profitability, productivity, inventory and engagement (slide 32).</span></div>
+    <nav class="ptabs" role="tablist" id="ptabs"></nav>
+    <div id="pillar"></div>
+  </section>
+
+  <section class="block" aria-labelledby="st-title">
+    <div class="sec-head"><h2 id="st-title">Stores</h2><span class="sub" id="st-sub">Revenue is credited to the store that sent the item online.</span></div>
+    <div class="card tscroll"><table class="list stores" aria-label="Revenue and items by originating store">
+      <thead><tr><th>Store</th><th class="r">Revenue credited</th><th class="r">Share</th><th class="r">Units sold</th><th class="r">Avg price</th>
+        <th class="r">Identified</th><th class="r">Sent online</th><th class="r">Listed</th><th class="r">Backlog at month end</th></tr></thead>
+      <tbody id="stores"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody></table></div>
+  </section>
+
+  <section class="block" aria-labelledby="cat-title">
+    <div class="sec-head"><h2 id="cat-title">Top 10 categories</h2>
+      <div class="seg" role="group" aria-label="Rank categories by">
+        <button id="by-revenue" aria-pressed="true">By revenue</button><button id="by-margin" aria-pressed="false">By margin</button>
+      </div></div>
+    <div class="card tscroll"><table class="list cats" aria-label="Top categories">
+      <thead><tr><th>#</th><th>Category</th><th class="r">Revenue</th><th class="r">Units</th><th class="r">Avg price</th><th class="r">Gross profit</th><th class="r">Margin</th></tr></thead>
+      <tbody id="cats"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody></table></div>
+    <p class="chart-note" id="cat-basis"></p>
+  </section>
+
+  <div class="legendrow" aria-label="Data badges">
+    <b>Data badges:</b>
+    <span><span class="badge">source report</span> computed from marketplace and operations data</span>
+    <span><span class="badge b-input">manual input</span> uses a monthly figure from Finance</span>
+    <span><span class="badge b-na">not yet available</span> no data source yet</span>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const PILLARS = [["growth","Growth"],["profitability","Profitability"],["productivity","Productivity"],["inventory","Inventory"],["engagement","Engagement"]];
+const CHANNEL_SLOT = {shopgoodwill:1, ebay:2, amazon:3, goodwillfinds:4, goodwillbooks:5};
+const state = {month: null, store: "", channel: "", pillar: "growth", catBy: "revenue", opts: null, kpis: null, defs: {}};
+const charts = {};
+
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r.json();
+}
+const qs = o => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== "")).toString();
+
+/* ---------- formatting ---------- */
+// pct values are fractions (0.52 = 52%). If a KPI ever sends 52, |v| > 1.5 is treated as already in percent.
+const pctNum = v => Math.abs(v) > 1.5 ? v : v * 100;
+function money(v, compact) {
+  const a = Math.abs(v), s = v < 0 ? "−" : "";
+  if (compact !== false && a >= 1e6) return `${s}$${(a / 1e6).toFixed(2)}M`;
+  if (compact !== false && a >= 1e4) return `${s}$${(a / 1e3).toFixed(1)}K`;
+  if (a >= 100) return `${s}$${Math.round(a).toLocaleString("en-US")}`;
+  return `${s}$${a.toFixed(2)}`;
+}
+function count(v) {
+  const a = Math.abs(v);
+  if (a >= 1e6) return (v / 1e6).toFixed(2) + "M";
+  if (a >= 1e4) return (v / 1e3).toFixed(1) + "K";
+  return Number.isInteger(v) ? v.toLocaleString("en-US") : v.toLocaleString("en-US", {maximumFractionDigits: 1});
+}
+function fmt(v, unit, compact) {
+  if (v === null || v === undefined || Number.isNaN(v)) return null;
+  switch (unit) {
+    case "usd": return money(v, compact);
+    case "usd_per_hour": return money(v, false) + "/hr";
+    case "pct": return pctNum(v).toFixed(1) + "%";
+    case "days": return v.toFixed(1) + (Math.abs(v) === 1 ? " day" : " days");
+    default: return count(v);
+  }
+}
+function axisFmt(unit) {
+  return v => unit === "pct" ? pctNum(v).toFixed(0) + "%" : unit === "usd" || unit === "usd_per_hour" ? money(v) : count(v);
+}
+// change vs a prior value; pct KPIs move in percentage points, everything else in relative %
+function delta(card, prior, label) {
+  const v = card.value;
+  if (v === null || v === undefined || prior === null || prior === undefined) return `<span>${label} <span class="delta flat">—</span></span>`;
+  let d, txt;
+  if (card.unit === "pct") { d = pctNum(v) - pctNum(prior); txt = `${Math.abs(d).toFixed(1)} pts`; }
+  else { if (!prior) return `<span>${label} <span class="delta flat">—</span></span>`; d = (v - prior) / Math.abs(prior) * 100; txt = `${Math.abs(d).toFixed(1)}%`; }
+  const better = (state.defs[card.id] || {}).better || card.better || "up";
+  const good = better === "down" ? d < 0 : d > 0;
+  const cls = Math.abs(d) < 0.05 ? "flat" : good ? "up" : "down";
+  const arrow = Math.abs(d) < 0.05 ? "" : d > 0 ? "▲ " : "▼ ";
+  return `<span>${label} <span class="delta ${cls}" title="prior ${esc(fmt(prior, card.unit))}">${arrow}${txt}</span></span>`;
+}
+function statusChip(s) {
+  const m = {good: ["p-ok", "On track"], watch: ["p-warn", "Watch"], bad: ["p-bad", "Off track"]}[s];
+  return m ? `<span class="pill ${m[0]}">${m[1]}</span>` : "";
+}
+const provChip = c => c.provisional ? `<span class="pill p-none" title="${esc((c.notes || []).join(" "))}">Provisional</span>` : "";
+const noteTitle = c => esc((c.notes || []).join(" "));
+function badge(card) {
+  if (card.availability === "n/a") return `<span class="badge b-na">not yet available</span>`;
+  if (card.availability === "input") return `<span class="badge b-input" title="${esc(card.source)}">manual input</span>`;
+  return `<span class="badge" title="${esc(card.formula)}">${esc(card.source || "source report")}</span>`;
+}
+const monthLabel = (m, short) => new Date(m + "-15T12:00:00").toLocaleDateString("en-US", short ? {month: "short", year: "2-digit"} : {month: "long", year: "numeric"});
+const valueHtml = c => { const t = fmt(c.value, c.unit); return t === null ? `<div class="val na">${c.availability === "n/a" ? "Not yet available" : "No data"}</div>` : `<div class="val">${esc(t)}</div>`; };
+
+/* ---------- theme-aware chart colors ---------- */
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function chartBase(unit, opts = {}) {
+  const ink = css("--muted"), grid = css("--line");
+  return {
+    responsive: true, maintainAspectRatio: false, animation: matchMedia("(prefers-reduced-motion: reduce)").matches ? false : {duration: 300},
+    interaction: {mode: opts.stacked ? "index" : "nearest", intersect: false, axis: opts.horizontal ? "y" : "x"},
+    indexAxis: opts.horizontal ? "y" : "x",
+    plugins: {legend: {display: false},
+      tooltip: {backgroundColor: css("--ink"), titleColor: css("--surface"), bodyColor: css("--surface"), padding: 10, cornerRadius: 6,
+        titleFont: {family: css("--body").split(",")[0].replace(/"/g, "")}, bodyFont: {family: "IBM Plex Mono"},
+        callbacks: {label: c => ` ${c.dataset.label}: ${fmt(opts.horizontal ? c.parsed.x : c.parsed.y, unit) ?? "no data"}`,
+                    footer: opts.stacked ? items => "Total: " + fmt(items.reduce((a, i) => a + (i.parsed.y || 0), 0), unit) : undefined}}},
+    scales: {
+      x: {stacked: !!opts.stacked, grid: {display: !!opts.horizontal, color: grid}, border: {color: grid},
+          ticks: {color: ink, font: {size: 11}, maxRotation: 0, autoSkip: true, callback: opts.horizontal ? axisFmt(unit) : undefined}},
+      y: {stacked: !!opts.stacked, beginAtZero: opts.beginAtZero !== false, grid: {display: !opts.horizontal, color: grid}, border: {display: false},
+          ticks: {color: ink, font: {size: 11}, maxTicksLimit: 5, callback: opts.horizontal ? undefined : axisFmt(unit)}}},
+  };
+}
+function draw(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const el = document.getElementById(id);
+  if (!el || !window.Chart) return;
+  charts[id] = new Chart(el, config);
+}
+
+/* ---------- anchors ---------- */
+function renderAnchors(list) {
+  $("#anchors").innerHTML = list.length ? list.map((c, i) => {
+    const up = c.value != null && c.prior_year != null ? c.value > c.prior_year : null;
+    const goal = up === null ? `<span class="pill p-none">No prior year</span>` : up ? `<span class="pill p-ok">Up vs last year</span>` : `<span class="pill p-bad">Below last year</span>`;
+    return `<div class="card anchor" title="${noteTitle(c)}">
+      <div class="top"><span class="lbl">${esc(c.label)}</span>${goal}</div>
+      ${valueHtml(c)}
+      <div class="cmp">${delta(c, c.prior_year, "vs last year")}${delta(c, c.prior_month, "vs last month")}</div>
+      <div class="spark"><canvas id="spark-${i}" aria-label="${esc(c.label)}, 13-month trend" role="img"></canvas></div>
+      <div class="foot"><span class="goal">Goal: ↑ annually</span>${badge(c)}</div></div>`;
+  }).join("") : `<div class="card empty">No anchor KPIs returned.</div>`;
+  list.forEach((c, i) => {
+    const pts = c.trend || [], acc = css("--accent");
+    const n = pts.length;
+    draw(`spark-${i}`, {type: "line",
+      data: {labels: pts.map(p => monthLabel(String(p.month).slice(0, 7), true)),
+        datasets: [{label: c.label, data: pts.map(p => p.value), borderColor: acc, borderWidth: 2, tension: .3, spanGaps: true, fill: true,
+          backgroundColor: ctx => { const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, acc + "40"); g.addColorStop(1, acc + "00"); return g; },
+          pointRadius: pts.map((_, j) => j === n - 1 || j === 0 ? 3.5 : 0), pointHoverRadius: 5,
+          pointBackgroundColor: pts.map((_, j) => j === 0 ? css("--surface") : acc), pointBorderColor: acc, pointBorderWidth: 2}]},
+      options: Object.assign(chartBase(c.unit, {beginAtZero: false}), {scales: {x: {display: false}, y: {display: false, grace: "10%"}}, layout: {padding: 4}})});
+  });
+}
+
+/* ---------- scorecard ---------- */
+function cellHtml(c) {
+  return `<div class="cell" title="${noteTitle(c)}">
+    <div class="lbl">${esc(c.label)}</div>${valueHtml(c)}
+    <div class="cmp">${delta(c, c.prior_month, "vs LM")}${delta(c, c.prior_year, "vs LY")}</div>
+    <div class="meta">${statusChip(c.status)}${provChip(c)}${badge(c)}</div></div>`;
+}
+function renderScorecard(k) {
+  const byId = Object.fromEntries(k.scorecard.map(c => [c.id, c]));
+  const rows = (k.scorecard_rows || []).filter(r => r.ids.length);
+  $("#scorecard").innerHTML = rows.length ? rows.map(r => `<div class="srow"><h3>${esc(r.label)}</h3>
+      <div class="cells">${r.ids.map(id => cellHtml(byId[id])).join("")}</div></div>`).join("")
+    : `<div class="empty">No scorecard KPIs returned.</div>`;
+}
+
+/* ---------- pillars ---------- */
+function kpiTable(cards) {
+  return `<div class="card tscroll"><table class="list kpi"><thead><tr><th>KPI</th><th class="r">This month</th><th class="r">vs last month</th><th class="r">vs last year</th><th>Data</th></tr></thead><tbody>
+    ${cards.map(c => `<tr><td>${esc(c.label)}${c.status ? " " + statusChip(c.status) : ""}</td>
+      <td class="r">${esc(fmt(c.value, c.unit) ?? (c.availability === "n/a" ? "not yet available" : "no data"))}</td>
+      <td class="r">${delta(c, c.prior_month, "")}</td><td class="r">${delta(c, c.prior_year, "")}</td><td>${badge(c)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+// group pillar cards that have a trend by unit, so one chart never mixes scales
+function trendGroups(cards) {
+  const g = {};
+  cards.filter(c => c.availability !== "n/a" && (c.trend || []).some(p => p.value != null)).forEach(c => (g[c.unit] ||= []).push(c));
+  return Object.values(g).map(cs => cs.slice(0, 3));
+}
+function chartCard(id, title, note, legend) {
+  return `<div class="card chart-card"><h3>${esc(title)}</h3>${legend || ""}<div class="chart-box"><canvas id="${id}" role="img" aria-label="${esc(title)}"></canvas></div>${note ? `<div class="chart-note">${note}</div>` : ""}</div>`;
+}
+const legendHtml = items => items.length > 1 ? `<div class="legend">${items.map(([l, col]) => `<span><i style="background:${col}"></i>${esc(l)}</span>`).join("")}</div>` : "";
+function drawTrend(id, cards) {
+  const unit = cards[0].unit;
+  const months = cards[0].trend.map(p => String(p.month).slice(0, 7));
+  const cols = cards.length === 1 ? [css("--accent")] : cards.map((_, i) => css(`--s${i + 1}`));
+  draw(id, {type: "line", data: {labels: months.map(m => monthLabel(m, true)),
+    datasets: cards.map((c, i) => ({label: c.label, data: c.trend.map(p => p.value), borderColor: cols[i], backgroundColor: cols[i],
+      borderWidth: 2, tension: .25, spanGaps: true, pointRadius: c.trend.map((_, j) => j === c.trend.length - 1 ? 4 : 0), pointHoverRadius: 5,
+      pointBorderColor: css("--surface"), pointBorderWidth: 2}))},
+    options: chartBase(unit, {beginAtZero: unit !== "pct" ? true : false})});
+  return cols;
+}
+
+async function renderPillar() {
+  const k = state.kpis; if (!k) return;
+  document.querySelectorAll("#ptabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.p === state.pillar));
+  const cards = k.pillars[state.pillar] || [];
+  const groups = trendGroups(cards);
+  const specs = [];   // [id, title, note, legendItems, drawFn]
+  const f = {month: state.month, store: state.store, channel: state.channel};
+
+  if (state.pillar === "growth") specs.push(["c-mkt", "Revenue by marketplace, 13 months", "Stacked monthly revenue. Hover for each marketplace and the total.", "mkt"]);
+  if (state.pillar === "profitability") specs.push(["c-catm", "Gross margin by category (top 10 by profit)", "Gross profit ÷ revenue, after fees and refunds.", "catm"]);
+  if (state.pillar === "productivity") specs.push(["c-pipe", "Items identified → sent → listed, by store (top 10)", "Month counts by store, ET dates.", "pipe"]);
+  groups.slice(0, specs.length ? 1 : 2).forEach((g, i) => specs.push([`c-tr${i}`, g.map(c => c.label).join(" · ") + ", 13 months", "", "trend", g]));
+
+  const na = cards.filter(c => c.availability === "n/a");
+  $("#pillar").innerHTML = `<div class="pgrid">${specs.map(s => chartCard(s[0], s[1], s[2], s[3] === "trend" ? legendHtml(s[4].map((c, i) => [c.label, s[4].length === 1 ? css("--accent") : css(`--s${i + 1}`)])) : `<div id="${s[0]}-lg"></div>`)).join("")
+      || `<div class="card empty">No trend data for this pillar yet.</div>`}</div>
+    <div style="margin-top:16px">${cards.length ? kpiTable(cards) : `<div class="card empty">No KPIs in this pillar.</div>`}</div>
+    ${na.length ? `<p class="chart-note">${na.map(c => esc(c.label)).join(", ")}: not yet available. No source feeds this today; shown so the gap stays visible.</p>` : ""}`;
+
+  for (const s of specs) {
+    try {
+      if (s[3] === "trend") drawTrend(s[0], s[4]);
+      else if (s[3] === "mkt") await drawMarketplace(s[0], f);
+      else if (s[3] === "catm") await drawCatMargin(s[0], f);
+      else if (s[3] === "pipe") await drawPipeline(s[0], f);
+    } catch (e) { const el = document.getElementById(s[0]); if (el) el.parentElement.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+}
+function revenueKpiId() {
+  const ids = Object.keys(state.defs);
+  return ids.find(i => /^(total_)?(ecom_)?revenue$/.test(i)) || ids.find(i => /revenue/.test(i) && state.defs[i].unit === "usd" && !/per|growth|top|budget|share/.test(i));
+}
+async function drawMarketplace(id, f) {
+  const kid = revenueKpiId(); if (!kid) throw new Error("No revenue KPI in the registry.");
+  const r = await api(`/api/dashboard/series?${qs({kpi: kid, months: 13, month: f.month, store: f.store, by: "channel"})}`);
+  const series = r.series.filter(s => !f.channel || s.key === f.channel);
+  const labels = series[0]?.points.map(p => monthLabel(p.month, true)) || [];
+  const col = s => css(`--s${CHANNEL_SLOT[s.key] || 1}`);
+  document.getElementById(id + "-lg").innerHTML = legendHtml(series.map(s => [s.label, col(s)])) || "";
+  draw(id, {type: "bar", data: {labels, datasets: series.map(s => ({label: s.label, data: s.points.map(p => p.value), backgroundColor: col(s),
+      borderColor: css("--surface"), borderWidth: {top: 2}, borderSkipped: "bottom", borderRadius: 2, maxBarThickness: 34}))},
+    options: chartBase("usd", {stacked: true})});
+}
+async function drawCatMargin(id, f) {
+  const r = await api(`/api/dashboard/categories?${qs({month: f.month, store: f.store, channel: f.channel, by: "margin"})}`);
+  const cs = r.categories.filter(c => c.margin_pct != null);
+  if (!cs.length) throw new Error("No category sales this month.");
+  draw(id, {type: "bar", data: {labels: cs.map(c => c.category), datasets: [{label: "Gross margin", data: cs.map(c => c.margin_pct),
+      backgroundColor: css("--accent"), borderRadius: {topRight: 4, bottomRight: 4}, borderSkipped: "start", maxBarThickness: 18}]},
+    options: chartBase("pct", {horizontal: true})});
+}
+async function drawPipeline(id, f) {
+  const r = await api(`/api/dashboard/stores?${qs({month: f.month, channel: f.channel})}`);
+  const st = r.stores.filter(s => s.store_id).sort((a, b) => b.items_sent - a.items_sent).slice(0, 10);
+  if (!st.length) throw new Error("No store data this month.");
+  const ds = [["Identified", "items_identified", "--s1"], ["Sent online", "items_sent", "--s2"], ["Listed", "items_listed", "--s3"]];
+  document.getElementById(id + "-lg").innerHTML = legendHtml(ds.map(d => [d[0], css(d[2])]));
+  draw(id, {type: "bar", data: {labels: st.map(s => s.store_name || s.store_id), datasets: ds.map(d => ({label: d[0], data: st.map(s => s[d[1]]),
+      backgroundColor: css(d[2]), borderColor: css("--surface"), borderWidth: 1, borderRadius: {topRight: 3, bottomRight: 3}, borderSkipped: "start", maxBarThickness: 8}))},
+    options: Object.assign(chartBase("count", {horizontal: true}), {interaction: {mode: "index", intersect: false, axis: "y"}})});
+}
+
+/* ---------- stores & categories ---------- */
+async function loadStores() {
+  const r = await api(`/api/dashboard/stores?${qs({month: state.month, channel: state.channel})}`);
+  const max = Math.max(...r.stores.map(s => s.revenue), 1);
+  $("#st-sub").textContent = `Revenue is credited to the store that sent the item online. ${money(r.total_revenue)} total${state.channel ? " on " + chLabel(state.channel) : ""}.`;
+  $("#stores").innerHTML = r.stores.length ? r.stores.map(s => `<tr class="${s.store_id && s.store_id === state.store ? "sel" : ""}">
+      <td>${esc(s.store_name)}${s.store_id ? ` <span class="sub">${esc(s.store_id)}</span>` : ` <span class="pill p-warn">no store code</span>`}${s.ai_flagging ? `<span class="tag" title="Store uses AI flagging">AI</span>` : ""}</td>
+      <td class="r"><div class="barcell">${money(s.revenue, false)}<span class="bartrack"><span class="bar" style="width:${(s.revenue / max * 100).toFixed(1)}%"></span></span></div></td>
+      <td class="r">${s.share == null ? "—" : (s.share * 100).toFixed(1) + "%"}</td><td class="r">${count(s.units)}</td><td class="r">${s.asp == null ? "—" : money(s.asp)}</td>
+      <td class="r">${count(s.items_identified)}</td><td class="r">${count(s.items_sent)}</td><td class="r">${count(s.items_listed)}</td><td class="r">${count(s.backlog_end)}</td></tr>`).join("")
+    : `<tr><td colspan="9" class="empty">No store data for this month.</td></tr>`;
+}
+async function loadCats() {
+  const r = await api(`/api/dashboard/categories?${qs({month: state.month, store: state.store, channel: state.channel, by: state.catBy})}`);
+  $("#by-revenue").setAttribute("aria-pressed", state.catBy === "revenue"); $("#by-margin").setAttribute("aria-pressed", state.catBy === "margin");
+  const key = state.catBy === "revenue" ? "revenue" : "gross_profit";
+  const max = Math.max(...r.categories.map(c => c[key]), 1);
+  $("#cats").innerHTML = r.categories.length ? r.categories.map(c => `<tr><td class="num">${c.rank}</td><td>${esc(c.category)}</td>
+      <td class="r">${state.catBy === "revenue" ? `<div class="barcell">${money(c.revenue, false)}<span class="bartrack"><span class="bar" style="width:${(c.revenue / max * 100).toFixed(1)}%"></span></span></div>` : money(c.revenue, false)}</td>
+      <td class="r">${count(c.units)}</td><td class="r">${c.asp == null ? "—" : money(c.asp)}</td>
+      <td class="r">${state.catBy === "margin" ? `<div class="barcell">${money(c.gross_profit, false)}<span class="bartrack"><span class="bar" style="width:${Math.max(0, c.gross_profit / max * 100).toFixed(1)}%"></span></span></div>` : money(c.gross_profit, false)}</td>
+      <td class="r">${c.margin_pct == null ? "—" : (c.margin_pct * 100).toFixed(1) + "%"}</td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">No category sales for this month.</td></tr>`;
+  $("#cat-basis").textContent = r.basis;
+}
+const chLabel = ch => (state.opts.channels.find(c => c.channel === ch) || {}).label || ch;
+
+/* ---------- orchestration ---------- */
+function setBanner(msg, err) { const b = $("#banner"); b.hidden = !msg; b.textContent = msg || ""; b.className = "banner" + (err ? " err" : ""); }
+function syncNav() {
+  const ms = state.opts.months, i = ms.indexOf(state.month);
+  $("#prev").disabled = i < 0 || i >= ms.length - 1; $("#next").disabled = i <= 0;
+}
+async function loadAll() {
+  syncNav();
+  const scope = [state.store ? (state.opts.stores.find(s => s.store_id === state.store) || {}).store_name || state.store : "All stores",
+                 state.channel ? chLabel(state.channel) : "all marketplaces"].join(" · ");
+  $("#title").textContent = monthLabel(state.month);
+  const thru = state.opts.data_through ? new Date(state.opts.data_through + "T12:00:00").toLocaleDateString("en-US", {month: "short", day: "numeric", year: "numeric"}) : "";
+  const partial = state.month === state.opts.months[0] && state.month !== state.opts.default_month;
+  $("#subtitle").textContent = `${scope}${thru ? ` · data through ${thru}` : ""}${partial ? " · month in progress" : ""}`;
+  setBanner("");
+  const side = Promise.allSettled([loadStores(), loadCats()]);
+  try {
+    const k = await api(`/api/dashboard/kpis?${qs({month: state.month, store: state.store, channel: state.channel})}`);
+    state.kpis = k;
+    renderAnchors(k.anchors); renderScorecard(k); renderPillar();
+    if (k.missing_values && k.missing_values.length) {
+      const names = k.missing_values.map(id => (state.defs[id] || {}).label || id);
+      setBanner(`No data for ${names.join(", ")} with these filters. Shown as "No data", not zero.`);
+    } else if (partial) setBanner(`${monthLabel(state.month)} is still in progress; compare against a full month with care.`);
+  } catch (e) {
+    state.kpis = null;
+    setBanner(`KPIs unavailable: ${e.message}`, true);
+    $("#anchors").innerHTML = ""; $("#scorecard").innerHTML = `<div class="empty">${esc(e.message)}</div>`; $("#pillar").innerHTML = "";
+  }
+  const side_r = await side;
+  side_r.forEach((r, i) => { if (r.status === "rejected") (i ? $("#cats") : $("#stores")).innerHTML = `<tr><td colspan="9" class="empty">${esc(r.reason.message)}</td></tr>`; });
+}
+
+async function init() {
+  $("#ptabs").innerHTML = PILLARS.map(([p, l]) => `<button role="tab" data-p="${p}" aria-selected="${p === state.pillar}">${l}</button>`).join("");
+  try {
+    const o = await api("/api/dashboard/options");
+    state.opts = o;
+    state.defs = Object.fromEntries((o.kpis || []).map(k => [k.id, k]));
+    $("#f-month").innerHTML = o.months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join("");
+    $("#f-store").innerHTML += o.stores.map(s => `<option value="${esc(s.store_id)}">${esc(s.store_name)} (${esc(s.store_id)})</option>`).join("");
+    $("#f-channel").innerHTML += o.channels.map(c => `<option value="${esc(c.channel)}">${esc(c.label)}</option>`).join("");
+    state.month = o.default_month || o.months[0];
+    $("#f-month").value = state.month;
+    if (!state.month) { setBanner("No orders in the harmonized data yet.", true); return; }
+    await loadAll();
+  } catch (e) {
+    $("#subtitle").textContent = "";
+    setBanner(e.message, true);
+    $("#scorecard").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    $("#stores").innerHTML = `<tr><td colspan="9" class="empty">—</td></tr>`; $("#cats").innerHTML = `<tr><td colspan="7" class="empty">—</td></tr>`;
+  }
+}
+
+$("#f-month").addEventListener("change", e => { state.month = e.target.value; loadAll(); });
+$("#f-store").addEventListener("change", e => { state.store = e.target.value; loadAll(); });
+$("#f-channel").addEventListener("change", e => { state.channel = e.target.value; loadAll(); });
+$("#prev").addEventListener("click", () => { const ms = state.opts.months, i = ms.indexOf(state.month); if (i < ms.length - 1) { state.month = ms[i + 1]; $("#f-month").value = state.month; loadAll(); } });
+$("#next").addEventListener("click", () => { const ms = state.opts.months, i = ms.indexOf(state.month); if (i > 0) { state.month = ms[i - 1]; $("#f-month").value = state.month; loadAll(); } });
+$("#ptabs").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (b) { state.pillar = b.dataset.p; renderPillar(); } });
+$("#by-revenue").addEventListener("click", () => { state.catBy = "revenue"; loadCats(); });
+$("#by-margin").addEventListener("click", () => { state.catBy = "margin"; loadCats(); });
+// redraw charts with the other theme's tokens when the theme flips
+const rerender = () => { if (state.kpis) { renderAnchors(state.kpis.anchors); renderPillar(); } };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+new MutationObserver(rerender).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+
+init();
+</script>
+</body>
+</html>
