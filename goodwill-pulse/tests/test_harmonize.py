@@ -237,6 +237,8 @@ def test_listings_payouts_and_ops(built):
     assert q(con, "SELECT count(*) FROM fct_payouts")[0][0] == 9    # amazon 3, ebay 2, sgw 1, gf 2, gwb 1
     assert q(con, "SELECT paid_on, period_start, period_end, net FROM fct_payouts WHERE payout_key='goodwillbooks:2026-09'") == [
         (date(2026, 10, 15), date(2026, 9, 1), date(2026, 9, 30), D("12.75"))]
+    assert q(con, "SELECT period_start, period_end FROM fct_payouts WHERE payout_key='goodwillfinds:7002'") == [
+        (date(2026, 10, 5), date(2026, 10, 11))]   # paid Wed 10/14 for the Mon-Sun week ending 3 days earlier
     assert q(con, "SELECT gross, fees, refunds, net FROM fct_payouts WHERE payout_key='ebay:PAY1'") == [
         (D("81.60"), D("18.68"), D("0.00"), D("57.47"))]   # incl. TEST order's sale + label; net is the bank amount
     assert q(con, "SELECT first_sold_at_utc FROM fct_items WHERE item_id='UP-03-000001'") == [(utc(2026, 10, 1, 3, 30),)]

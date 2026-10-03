@@ -13,6 +13,6 @@ INSERT INTO line_items VALUES
  (4009, 3009, 'UP-13-000020', 'Vase',  'Goodwil Michiana #13',  'home decor', 25.00, 1);
 INSERT INTO refunds VALUES (6001, 3001, '2026-10-01T00:30:00-04:00', 25.00, 'damaged in transit');
 INSERT INTO payouts VALUES (7001, '2026-10-02', 66.20, 'paid', 80.00, 9.00, 4.80),
-                           (7002, '2026-10-09', 10.00, 'paid', 10.00, 0.00, 0.00);
+                           (7002, '2026-10-14', 10.00, 'paid', 10.00, 0.00, 0.00);
 INSERT INTO products VALUES
  (8001, 'UP-13-000020', 'Vase', 'Goodwil Michiana #13', 'home decor', '2026-09-20T10:00:00-04:00', '2026-09-30T19:41:07-04:00', 'sold', 25.00);

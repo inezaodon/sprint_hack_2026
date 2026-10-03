@@ -7,6 +7,7 @@
                                                  unless override=true with a note
     GET  /api/close/export?month=&kind=journal|invoice|invoice_json|reconciliation   the file (journal/invoice only
                                                  after approval)
+    GET  /api/close/quality                      data-quality check results (dq_results); ?refresh=1 re-runs the checks
 
 The CloseRun from `close.rules.run_close` is cached per month in memory; `?refresh=1` rebuilds it.
 Outputs are written to data/out/close/<yyyy-mm>/.
@@ -23,6 +24,7 @@ import duckdb
 from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import FileResponse
 
+from .. import quality as quality_mod
 from ..close import bc_excel, invoice as inv_mod, reconcile as rec_mod, workbook_compare as wc_mod
 from ..close.journal import Journal, build_journal
 from ..config import CONFIG_DIR, DATA_DIR, OUT_DIR
@@ -33,6 +35,7 @@ router = APIRouter(prefix="/api/close", tags=["close"])
 HARMONIZED_PATH = DATA_DIR / "harmonized.duckdb"
 FINANCE_PATH = DATA_DIR / "sources" / "finance.duckdb"
 RULES_PATH = CONFIG_DIR / "close_rules.yaml"
+SOURCES_DIR = DATA_DIR / "sources"
 CLOSE_INPUTS_DIR = DATA_DIR / "close_inputs"
 OUT_ROOT = OUT_DIR / "close"
 
@@ -375,6 +378,34 @@ def approve(month: str = Query(..., description="yyyy-mm"), body: dict | None = 
         v.approval = a
         _write_outputs(v)
     return {"approval": a.to_dict(), "outputs": {k: p.name for k, p in v.files.items()}}
+
+
+@router.get("/quality")
+def quality(refresh: bool = False) -> dict:
+    """The data-quality checks from goodwill_pulse.quality, as last written to dq_results by the build."""
+    if not HARMONIZED_PATH.exists():
+        raise HTTPException(503, "data/harmonized.duckdb is missing. Run .venv/bin/python -m goodwill_pulse.build.")
+    if refresh:
+        with _lock:
+            quality_mod.run_checks(HARMONIZED_PATH, SOURCES_DIR)
+    con = duckdb.connect(str(HARMONIZED_PATH), read_only=True)
+    try:
+        rows = con.execute("SELECT check_id, run_at, severity, status, failing_rows, detail, description "
+                           "FROM dq_results").fetchall()
+    except duckdb.Error:
+        rows = []
+    finally:
+        con.close()
+    if not rows:
+        raise HTTPException(503, "No data-quality results yet. Run .venv/bin/python -m goodwill_pulse.quality.")
+    order = {"error": 0, "warning": 1, "info": 2}
+    checks = sorted(({"check_id": c, "severity": sev, "status": st, "failing_rows": n,
+                      "examples": json.loads(d) if d else [], "description": desc}
+                     for c, _, sev, st, n, d, desc in rows),
+                    key=lambda r: (r["status"] == "pass", order.get(r["severity"], 3), r["check_id"]))
+    failed = [r for r in checks if r["status"] != "pass"]
+    return {"run_at": max(r[1] for r in rows).isoformat(), "total": len(checks), "passed": len(checks) - len(failed),
+            "blocking": sum(r["severity"] == "error" for r in failed), "checks": checks}
 
 
 KINDS = {"journal": ("journal", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),

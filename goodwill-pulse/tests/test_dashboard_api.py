@@ -300,3 +300,14 @@ def test_page_has_ask_the_data_hooks():
                    "Which stores sent the most items to e-commerce last month?", "tool: ", "filters: "):
         assert needle in html, needle
     assert html.count('class="chip"') == 3
+
+
+def test_close_quality_route():
+    from fastapi.testclient import TestClient
+    from goodwill_pulse.api import app
+    r = TestClient(app).get("/api/close/quality")
+    assert r.status_code in (200, 503)
+    if r.status_code == 200:
+        j = r.json()
+        assert j["total"] == len(j["checks"]) and j["passed"] <= j["total"]
+        assert all({"check_id", "severity", "status", "failing_rows"} <= set(c) for c in j["checks"])

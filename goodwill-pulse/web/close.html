@@ -206,6 +206,14 @@ details.doc .tscroll{border-top:1px solid var(--line)}
   </section>
 
   <section>
+    <div class="sec-head"><h2>Data quality</h2><span class="sub" id="dq-sub">Automated checks on the harmonized numbers behind this close.</span></div>
+    <div class="card tscroll">
+      <table class="list"><thead><tr><th>Status</th><th>Check</th><th class="r">Failing rows</th><th>What it checks</th></tr></thead>
+      <tbody id="dq-body"></tbody></table>
+    </div>
+  </section>
+
+  <section>
     <div class="sec-head"><h2>Exceptions</h2><span class="sub">Every exception has an owner. Errors block approval.</span></div>
     <div class="card tscroll">
       <table class="list w-exc"><thead><tr><th>Severity</th><th>Source</th><th>What happened</th><th class="r">Amount</th><th>Owner</th></tr></thead>
@@ -378,6 +386,17 @@ function showError(msg) {
   $("#recon-body").innerHTML = `<tr><td colspan="9" class="empty">${esc(msg)}</td></tr>`;
 }
 
+async function loadQuality() {
+  try {
+    const q = await api("/api/close/quality");
+    $("#dq-sub").textContent = `${q.passed} of ${q.total} checks pass${q.blocking ? ` · ${q.blocking} blocking` : ""} · last run ${new Date(q.run_at).toLocaleString("en-US", {dateStyle: "medium", timeStyle: "short"})}`;
+    const P = {error: ["p-bad", "Error"], warning: ["p-warn", "Warning"], info: ["p-info", "Info"]};
+    $("#dq-body").innerHTML = q.checks.map(c => { const [cl, l] = c.status === "pass" ? ["p-ok", "Pass"] : (P[c.severity] || ["p-info", c.severity]);
+      return `<tr><td><span class="pill ${cl}">${l}</span></td><td class="mono">${esc(c.check_id)}</td>
+        <td class="r">${c.failing_rows == null ? "—" : int(c.failing_rows)}</td><td class="muted">${esc(c.description)}</td></tr>`; }).join("");
+  } catch (e) { $("#dq-body").innerHTML = `<tr><td colspan="4" class="empty">${esc(e.message)}</td></tr>`; }
+}
+
 async function load(refresh) {
   try { render(await api(`/api/close/run?month=${month}${refresh ? "&refresh=true" : ""}`)); }
   catch (e) { showError(e.message); }
@@ -388,7 +407,7 @@ async function init() {
     const m = await api("/api/close/months");
     $("#month").innerHTML = m.months.map(x => `<option value="${x.month}">${esc(x.label)}${x.complete ? "" : " (in progress)"}</option>`).join("");
     month = m.default; $("#month").value = month;
-    await load();
+    await load(); loadQuality();
   } catch (e) { showError(e.message); }
 }
 
