@@ -17,7 +17,7 @@ const exFmt = (unit, v) => v == null ? "n/a" : unit === "usd" ? usd(v, 2) : fmt(
 const exTable = (heads, rows, rightFrom = 1) => `<div class="scroll ex-tbl"><table><thead><tr>${heads.map((h, i) => `<th class="${i >= rightFrom ? "r" : ""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr class="${r.cls || ""}">${r.cells.map((c, i) => `<td class="${i >= rightFrom ? "r num" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const exStatusPill = (s, text) => pill(s === "match" ? "p-ok" : s === "diff" ? "p-warn" : "p-info", text || (s === "match" ? "Match" : s === "diff" ? "Differs" : "Not checked"));
 const exPeriod = (a, b) => a === b ? longDay(a) : `${shortDay(a)}${a.slice(0, 4) !== b.slice(0, 4) ? ", " + a.slice(0, 4) : ""} to ${shortDay(b)}, ${b.slice(0, 4)}`;
-const exMonthEnd = m => addDays(addDays(m + "-01", 31).slice(0, 8) + "01", -1).slice(0, 10) >= m + "-28" ? iso(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0)) : m + "-28";
+const exMonthEnd = m => iso(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0));
 
 /* Bind dates and filters into the stored SQL text, so the reader sees the exact query for THIS number. */
 function exBind(sql, b) {
@@ -59,7 +59,7 @@ function exOverall(lin, pred) {
   const hits = lin.ledger ? (lin.ledger.checks || []).filter(pred) : [];
   if (!hits.length) return {s: "none", html: pill("p-info", "Not independently recomputed yet")};
   const bad = hits.filter(c => c.status !== "match").length;
-  return {s: bad ? "diff" : "match", html: bad ? pill("p-warn", `${bad} of ${hits.length} independent check${hits.length > 1 ? "s" : ""} differ`) : pill("p-ok", `${hits.length} independent check${hits.length > 1 ? "s" : ""} match`)};
+  return {s: bad ? "diff" : "match", html: bad ? pill("p-warn", `${bad} of ${hits.length} independent check${hits.length > 1 ? "s differ" : " differs"}`) : pill("p-ok", `${hits.length} independent check${hits.length > 1 ? "s" : ""} match`)};
 }
 
 /* Daily rows: per-marketplace derivation, plus order rows from lineage/drill where covered. */

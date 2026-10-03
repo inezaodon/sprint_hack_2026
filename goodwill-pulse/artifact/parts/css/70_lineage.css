@@ -1,0 +1,58 @@
+/* Explain card + Data & Lineage tab. Tokens only. */
+.ex-host{margin:8px 0 0}
+.ex-btn{font:600 12.5px var(--body);background:var(--surface);color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+.ex-btn:hover,.ex-btn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.ex-slot:not(:empty){margin-top:10px}
+.ex-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;min-width:0;max-width:100%}
+.ex-head{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:10px}
+.ex-head b{font:700 15px var(--display)}
+.ex-title{color:var(--muted);font-size:13px;flex:1 1 200px;min-width:0;overflow-wrap:anywhere}
+.ex-card[data-mode="quick"] .ex-full{display:none}
+.ex-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ex-step h4{font:600 14px var(--body);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.ex-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 12px var(--mono);flex:none}
+.ex-sb{padding-left:30px;min-width:0}
+.ex-sb p{margin:0 0 8px}
+.ex-q{font:600 15px/1.35 var(--display)}
+.ex-spec{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.ex-note{font-size:12.5px}
+.ex-chip{display:inline-block;font:500 12px var(--body);background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 9px;margin:0 2px 2px 0}
+.ex-def b{font:600 14px var(--body);margin-right:6px}
+.ex-sql{border:1px solid var(--line);border-radius:6px;background:var(--bg);margin:0 0 8px;min-width:0}
+.ex-sqlh{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--line)}
+.ex-copy{font:600 12px var(--body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:5px;padding:4px 10px;cursor:pointer}
+.ex-sql pre{margin:0;padding:10px;overflow-x:auto;white-space:pre;color:var(--ink)}
+.ex-sqld{border:1px solid var(--line);border-radius:6px;margin-bottom:8px}
+.ex-sqld>.ex-sql{margin:0 8px 8px}
+.ex-tbl{border:1px solid var(--line);border-radius:6px;margin:6px 0}
+.ex-tbl th,.ex-tbl td{padding:6px 10px}
+.ex-cmp{font-weight:500}
+.ex-h5{font:600 13px var(--body);margin:12px 0 4px}
+.ex-cell{border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--bg)}
+.ex-cell>summary{gap:6px 14px;font-size:13px}
+.ex-cellb{padding:0 10px 10px}
+.ex-check{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:8px}
+.ex-check.ex-hit{border-color:var(--accent)}
+.ex-checkh{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.ex-foot{margin:12px 0 0;font-size:12.5px}
+.ln-pipe{list-style:none;margin:0 0 10px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:22px}
+.ln-box{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ln-box:not(:last-child)::after{content:"▸";position:absolute;right:-17px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:16px}
+.ln-box.ln-end{border-color:var(--accent);background:var(--accent-soft)}
+.ln-n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 12px var(--mono);display:inline-flex;align-items:center;justify-content:center}
+.ln-d{color:var(--muted);font-size:12.5px}
+.ln-c{font-size:12.5px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ln-ex{margin:0;color:var(--muted);max-width:80ch}
+.ln-tbl>summary{gap:6px 14px;font-size:13px}
+.ln-tb{padding:0 12px 12px}
+.ln-cols{line-height:1.8;margin:0;overflow-wrap:anywhere}
+.ln-head{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:15px}
+.ln-sm{font-size:12px}
+.ln-ledger td{vertical-align:top}
+.ln-cardslot{margin-top:12px}
+.ln-defs{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.ln-def>summary{gap:6px 12px}
+.ln-db{padding:0 12px 12px}
+.ln-how{max-width:80ch}
+.ln-how p{margin:0 0 8px}
+@media (max-width:520px){.ln-pipe{grid-template-columns:1fr;gap:20px}.ln-box:not(:last-child)::after{content:"▾";right:50%;top:auto;bottom:-19px;transform:translateX(50%)}.ex-sb{padding-left:0}.ex-card{padding:12px}}

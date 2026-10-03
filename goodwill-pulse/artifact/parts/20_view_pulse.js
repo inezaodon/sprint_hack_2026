@@ -22,7 +22,7 @@ async function viewPulse(root) {
     <div class="bar"><div class="seg" role="group" aria-label="Report period">${Object.entries(PR).map(([k, v]) => `<button data-preset="${k}" aria-pressed="${state.rng.preset === k}">${esc(v.label)}</button>`).join("")}</div>
       <label class="f">From<input type="date" id="rfrom" value="${from}" min="${rows[0].date}" max="${last}"></label>
       <label class="f">To<input type="date" id="rto" value="${to}" min="${rows[0].date}" max="${last}"></label></div>
-    <div class="card pad" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline"><span class="kpi"><span class="l">Item sales</span><span class="v">${usd(T.item_sales)}</span></span>
+    <div class="card pad" data-explain="report:${from}:${to}" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline"><span class="kpi"><span class="l">Item sales</span><span class="v">${usd(T.item_sales)}</span></span>
       <span class="kpi"><span class="l">Orders</span><span class="v">${nf(T.orders)}</span></span><span class="kpi"><span class="l">Shipping charged</span><span class="v">${usd(T.shipping)}</span></span>
       <span class="muted" style="font-size:13px">${from === to ? longDay(from) : `${longDay(from)} to ${longDay(to)} (${span} days)`} · ${dcell(T.item_sales, TP.item_sales)} vs ${from === to ? "same weekday last week" : "a week earlier"}</span></div>
     <div class="card scroll" style="margin-top:12px"><table><thead><tr><th>Marketplace</th><th class="r">Orders</th><th class="r">Item sales</th><th class="r">Shipping</th><th class="r">Fees</th><th class="r">Refunds</th><th class="r">vs a week earlier</th></tr></thead><tbody>
