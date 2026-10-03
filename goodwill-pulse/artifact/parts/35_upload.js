@@ -13,7 +13,7 @@ const UPL_FIELDS = [
   {id: "channel", label: "Marketplace", hint: "Or choose one marketplace for the whole file."},
   {id: "item_sales", label: "Item sales (subtotal)", req: true, hint: "Item subtotal. Not the order total, which includes shipping and tax."},
   {id: "shipping", label: "Shipping charged", hint: "What the buyer paid for shipping. Not your shipping cost."},
-  {id: "shipping_2", label: "Plus handling (optional)", hint: "Added to shipping charged."},
+  {id: "shipping_2", label: "Plus handling (optional)", hint: "Added to shipping charged. For Upright files it is not added for ShopGoodwill, matching the warehouse build."},
   {id: "fees", label: "Marketplace fees", hint: "Final value fee or market fees."},
   {id: "fees_2", label: "Plus payment fee (optional)", hint: "Added to fees."},
   {id: "refund", label: "Refunds", hint: "Leave empty if the file has no refunds. The warehouse refunds are then kept."},
@@ -195,7 +195,7 @@ function uplBuild(U) {
         (!has("channel") || get("channel") == null) && r.some(v => typeof v === "number" || (typeof v === "string" && uplMoney(v).val != null)));
     if (isTot) { excl(line, "Totals row (not an order)", "totals"); continue; }
     const oid = uplId(get("order_id")), buyer = buyerCol >= 0 ? String(r[buyerCol] ?? "").trim() : "";
-    if (/^test$/i.test(buyer) || /^test@/i.test(buyer) || /\btest\b/i.test(oid)) { excl(line, "Test order (buyer TEST), not revenue", "test"); continue; }
+    if (/^test$/i.test(buyer) || /^test@/i.test(buyer) || /\btest\b/i.test(oid)) { excl(line, "Test order, not revenue", "test"); continue; }
     const dv = get("paid_date");
     if (dv == null || String(dv).trim() === "") { prob(line, "Blank paid date. Row excluded."); excl(line, "Blank paid date", "date"); continue; }
     const dp = uplDateParts(dv, dmy);
@@ -209,6 +209,7 @@ function uplBuild(U) {
     const amt = {}; let bad = null;
     for (const id of ["item_sales", "shipping", "shipping_2", "fees", "fees_2", "refund"]) {
       if (!has(id)) continue;
+      if (id === "shipping_2" && U.kind === "upright" && ch === "shopgoodwill") continue;   // warehouse keeps ShopGoodwill handling out of shipping
       const a = uplMoney(r[map[id]]);
       if (a.bad) { bad = `${U.headers[map[id]] || id}: "${uplCell(r[map[id]]).slice(0, 24)}"`; break; }
       amt[id] = a.blank ? 0 : a.val;
@@ -422,7 +423,7 @@ function uplPreviewHTML(f) {
   const tile = (l, v, sub) => `<div class="card kpi"><span class="l">${esc(l)}</span><span class="v">${esc(v)}</span>${sub ? `<span class="muted">${esc(sub)}</span>` : ""}</div>`;
   const chBox = [...new Set([...chans, ...f.aside])].filter(c => UPL_CHANNELS.includes(c)).map(c => `<label class="upl-chk"><input type="checkbox" data-aside="${c}" ${f.aside.has(c) ? "" : "checked"}> ${esc(CHN[c])}</label>`).join("");
   const wide = f.map.paid_date >= 0 && f.map.item_sales >= 0;
-  let html = `<div class="grid g3 upl-tiles">${tile("Rows kept", nf(kept.length), `of ${nf(res.read)} data rows read`)}${tile("Rows excluded", nf(ex.length), blanks ? `plus ${blanks} blank` : "")}${tile("Orders", nf(orders), "distinct order ids")}${tile("Business days", kept.length ? `${shortDay(dates[0])} to ${shortDay(dates[dates.length - 1])}` : "none", `Dates read as ${res.dmy ? "day/month" : "month/day"}, ${UPL_TZ[f.tz].split(" (")[0]} time converted to Eastern business dates`)}${tile("Item sales", usd(tot("item_sales"), 2), res.supplies.shipping ? `Shipping ${usd(tot("shipping"), 2)}` : "")}${tile("Marketplaces", chans.map(c => CHN[c]).join(", ") || "none")}</div>`;
+  let html = `<div class="grid g3 upl-tiles">${tile("Rows kept", nf(kept.length), `of ${nf(res.read)} data rows read`)}${tile("Rows excluded", nf(ex.length), blanks ? `plus ${blanks} blank` : "")}${tile("Orders", nf(orders), "distinct order ids")}${tile("Business days", kept.length ? `${shortDay(dates[0])} to ${shortDay(dates[dates.length - 1])}` : "none", `Dates read as ${res.dmy ? "day/month" : "month/day"}${f.tz === "America/New_York" ? ", taken as Eastern business dates" : `, ${UPL_TZ[f.tz].split(" (")[0]} time converted to Eastern`}`)}${tile("Item sales", usd(tot("item_sales"), 2), res.supplies.shipping ? `Shipping ${usd(tot("shipping"), 2)}` : "")}${tile("Marketplaces", chans.map(c => CHN[c]).join(", ") || "none")}</div>`;
   if (chBox) html += `<div class="card pad"><div class="rowlab">Marketplaces to add</div><div class="upl-chks">${chBox}</div>${f.aside.has("ebay") ? `<p class="muted upl-note">${esc(UPL_SETASIDE_WHY)}</p>` : ""}</div>`;
   html += `<div class="grid g2"><div class="card pad"><div class="rowlab">Problems found (${res.problems.length})</div>${res.problems.length ? `<ul class="upl-list">${res.problems.slice(0, 40).map(p => `<li>${p.line ? `<span class="mono">Line ${p.line}</span> ` : ""}${esc(p.text)}</li>`).join("")}${res.problems.length > 40 ? `<li class="muted">and ${res.problems.length - 40} more</li>` : ""}</ul>` : `<p class="muted">None. Every kept row has a date, a marketplace and numeric amounts.</p>`}</div>
     <div class="card pad"><div class="rowlab">Excluded rows (${ex.length + blanks}). Nothing is dropped without being listed here.</div>${ex.length + blanks ? `<table><thead><tr><th>Why</th><th class="r">Rows</th><th>Lines</th></tr></thead><tbody>${Object.entries(reasons).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r num">${v.n}</td><td class="mono">${esc(v.lines.join(", "))}${v.n > v.lines.length ? ", ..." : ""}</td></tr>`).join("")}${blanks ? `<tr><td>Blank rows</td><td class="r num">${blanks}</td><td class="mono">${esc(res.excluded.filter(x => x.kind === "blank").slice(0, 8).map(x => x.line).join(", "))}</td></tr>` : ""}</tbody></table>` : `<p class="muted">No rows were excluded.</p>`}</div></div>`;

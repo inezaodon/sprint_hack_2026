@@ -231,7 +231,7 @@ async function askDashboard(sp, res, rel, ctx, opt) {
   const F = {store_revenue: ["revenue", "Revenue", "usd"], item_sales: ["revenue", "Revenue", "usd"], units_sold: ["units", "Units", "count"], items_sent: ["items_sent", "Sent", "count"], items_listed: ["items_listed", "Listed", "count"]}[res.metric] || ["revenue", "Revenue", "usd"];
   if (rel.stores && m.stores?.stores) {
     const rows = [...m.stores.stores].sort((a, b) => sp.order === "asc" ? (a[F[0]] ?? 0) - (b[F[0]] ?? 0) : (b[F[0]] ?? 0) - (a[F[0]] ?? 0)).slice(0, 5);
-    extra += `<h3 class="ask-h3">Stores, ${sp.order === "asc" ? "lowest" : "highest"} five by ${esc(F[1].toLowerCase())}</h3><div class="card scroll"><table><thead><tr><th>Store</th><th class="r">${esc(F[1])}</th><th class="r">Revenue</th><th class="r">Listed</th></tr></thead><tbody>${rows.map(s => `<tr><td>${esc(s.store_name)}</td><td class="r num">${fmt(F[2], s[F[0]])}</td><td class="r num">${usd(s.revenue)}</td><td class="r num">${nf(s.items_listed)}</td></tr>`).join("")}</tbody></table></div>`;
+    extra += `<h3 class="ask-h3">Stores, ${sp.order === "asc" ? "lowest" : "highest"} five by ${esc(F[1].toLowerCase())}${sp.filters.category ? ", all categories" : ""}</h3><div class="card scroll"><table><thead><tr><th>Store</th><th class="r">${esc(F[1])}</th><th class="r">Revenue</th><th class="r">Sent</th></tr></thead><tbody>${rows.map(s => `<tr><td>${esc(s.store_name)}</td><td class="r num">${fmt(F[2], s[F[0]])}</td><td class="r num">${usd(s.revenue)}</td><td class="r num">${nf(s.items_sent)}</td></tr>`).join("")}</tbody></table></div>`;
   }
   if (rel.categories && m.categories) {
     const by = state.catBy === "margin" ? "margin" : "revenue", cs = (m.categories[by] || m.categories.revenue).categories.slice(0, 5);

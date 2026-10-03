@@ -2,8 +2,8 @@
 /* Shared KPI tile (also used by the Ask tab). card = a month doc card; month = "YYYY-MM" for the explain hook. */
 function dashKpiTile(c, anchor, month) {
   if (!c) return "";
-  return `<div class="card kpi ${anchor ? "anchor" : ""}" data-kpi="${esc(c.id)}" data-explain="kpi:${esc(c.id)}:${esc(month || state.month)}"><span class="l">${esc(c.label)}</span><span class="v">${fmt(c.unit, c.value)}</span>
-    <span class="d"><span class="muted">vs last month</span> ${delta(c, "prior_month")}<span class="muted">vs last year</span> ${delta(c, "prior_year")}</span>${spark(c.trend || [])}</div>`;
+  return `<div class="card kpi ${anchor ? "anchor" : ""}" data-kpi="${esc(c.id)}"><span class="l">${esc(c.label)}</span><span class="v">${fmt(c.unit, c.value)}</span>
+    <span class="d" data-explain="kpi:${esc(c.id)}:${esc(month || state.month)}"><span class="muted">vs last month</span> ${delta(c, "prior_month")}<span class="muted">vs last year</span> ${delta(c, "prior_year")}</span>${spark(c.trend || [])}</div>`;
 }
 async function viewDashboard(root) {
   const fc = state.focus; state.focus = null;

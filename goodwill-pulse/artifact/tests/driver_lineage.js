@@ -22,8 +22,9 @@ hold(out.full.steps > out.quick.steps && out.full.len > out.quick.len && out.ful
 out.persisted = (() => { try { return localStorage.getItem('gp_explain_mode'); } catch (e) { return 'n/a'; } })(); hold(out.persisted === 'full', 'mode remembered');
 // drill total equals displayed
 const cell = card.querySelector('.ex-cell');
-if (cell) { const sp = [...cell.querySelectorAll('summary span')].map(s => s.innerText); out.cellSummary = sp; const page = num(sp.find(s => /^Page/.test(s))), rec = num(sp.find(s => /add to/.test(s))); hold(Math.abs(page - rec) < 0.005, 'drill total equals displayed (' + page + ' vs ' + rec + ')'); }
+if (cell) { const sp = [...cell.querySelectorAll('summary span')].map(s => s.innerText); out.cellSummary = sp; const page = num(sp.find(s => /^Page/.test(s))), rec = num(sp.find(s => /add to/.test(s))); hold(Math.abs(page - rec) <= 0.01, 'full-day sum equals displayed (' + page + ' vs ' + rec + ')'); }
 else hold(false, 'drill cell present');
+// every drill cell on the report card: full-day sum equals page figure; truncated cells carry the label
 // search
 setVal('#ln-q', 'top line', 'input'); await sleep(200);
 out.searchTop = [...M().querySelectorAll('.ln-def summary b')].map(b => b.innerText); hold(out.searchTop.some(t => /item sales/i.test(t)), 'top line finds item sales');
@@ -42,7 +43,10 @@ click('[data-exmode=full]'); await sleep(200);
 out.reportFullSteps = [...rc.querySelectorAll('.ex-step')].filter(vis).length; hold(out.reportFullSteps > out.reportQuickSteps, 'report quick<full');
 const recomp = num(rc.querySelector('[data-ex-recomputed="item_sales"]').innerText), shown = num(M().querySelector('.kpi .v').innerText);
 out.reportTotals = {recomp, shown}; hold(Math.abs(recomp - shown) <= 0.5, 'recomputed total ~ displayed (displayed is rounded to dollars)');
-const cs = [...rc.querySelectorAll('.ex-cell')].length; out.reportCells = cs; hold(cs > 0, 'drill cells under report');
+const cl = [...rc.querySelectorAll('.ex-cell')]; out.cellChecks = cl.map(c => { const sp = [...c.querySelectorAll('summary span')].map(s => s.innerText); const tr = /^(\d+) orders/.exec(sp[0]); return {page: num(sp.find(s => /^Page/.test(s))), all: num(sp.find(s => /add to/.test(s))), rows: c.querySelectorAll('tbody tr').length, trunc: !!c.querySelector('[data-ex-trunc]'), n: tr && +tr[1]}; });
+hold(out.cellChecks.every(c => Math.abs(c.page - c.all) <= 0.01), 'all report cells: full-day sum equals page');
+hold(out.cellChecks.every(c => (c.n > c.rows) === c.trunc), 'truncated label present exactly when truncated');
+const cs = cl.length; out.reportCells = cs; hold(cs > 0, 'drill cells under report');
 // no duplicate buttons after re-render
 render(); await sleep(900); hold(M().querySelectorAll('.ex-btn').length === 1, 'no duplicate buttons after re-render');
 decorateExplain(M()); hold(M().querySelectorAll('.ex-btn').length === 1, 'decorate twice stays at one');

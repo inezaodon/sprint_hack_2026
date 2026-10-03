@@ -485,10 +485,11 @@ def build_metrics(latest_complete: date) -> dict:
         notes = [f"Code definition (goodwill_pulse/kpi.py): {kd.formula}"]
         notes.append(f"Pillar {kd.pillar}; better when {kd.better}; availability {kd.availability}; star={kd.anchor}; scorecard={kd.scorecard}.")
         notes.append(f"SQL recorded by running compute() for {latest_complete:%Y-%m} against harmonized.duckdb; "
-                     f"the value for month m is computed from a {13}-month window so statements span prior months too.")
+                     f"month cards also run the same statements for the prior month, prior year and a 13-month trend with other date parameters.")
         if not stmts:
             notes.append("No SQL: no source data yet, value is always None.")
         else:
+            notes.append("Statements that only select distinct months decide whether a month is covered by a table (a covered month with no rows is a real 0, an uncovered month is None).")
             reps = [n for n in seen.values() if n > 1]
             if reps:
                 notes.append("Some statements ran several times with different parameters (for example once per category); shown once.")
@@ -654,9 +655,9 @@ def channel_checks(con, daily_doc, scopes) -> list[dict]:
                     if m == "shipping" and handling:
                         tv = next((p["value"] for p in paths if p["label"].startswith("truth")), None)
                         if tv is not None and abs((pv - tv) - handling) <= MONEY_TOL:
-                            return (f"Cause found: the truth world keeps shipping ({tv}) and handling ({handling}) apart, but the {ch} "
+                            return (f"Cause found: the truth world keeps shipping ({tv:.2f}) and handling ({handling:.2f}) apart, but the {ch} "
                                     f"export has one delivery field that already includes handling, so the harmonized shipping_charged "
-                                    f"({pv}) equals shipping + handling. The two sources agree after adding handling; the definitions "
+                                    f"({pv:.2f}) equals shipping + handling. The two sources agree after adding handling; the definitions "
                                     f"differ by channel (ShopGoodwill keeps Handling in its own column, which fct_orders.handling holds "
                                     f"and the page's shipping excludes).")
                     if any("truth" in b for b in bad):
@@ -725,6 +726,7 @@ def build_ledger(con, latest_complete: date, as_of: date) -> dict:
                    lambda bad: "Revenue on lines with no resolvable store is not credited to any store, so the Stores view can sum to less "
                                "than the headline by exactly that amount; see the unassigned path.")
     c["components"] = {"unassigned_store_revenue": unassigned}
+    pc[3]["component"] = True   # informational: not compared against the page value
     c["paths"].append(pc[3])
     checks.append(c)
 

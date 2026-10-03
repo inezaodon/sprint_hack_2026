@@ -30,7 +30,7 @@ def upright_book(df, path, sheet="Paid orders"):
         row = [clean(r[c]) for c in UCOLS]; row[UCOLS.index("Paid At")] = r["_t"].to_pydatetime()
         ws.append(row)
     n = ws.max_row
-    ws.append([None] * 9 + [f"=SUM(J2:J{n})", f"=SUM(K2:K{n})"] + [None] * 8)      # the SUM row Upright adds at the bottom
+    ws.append([None] * 9 + [round(float(df.Subtotal.sum()), 2), round(float(df["Shipping Total"].sum()), 2)] + [None] * 8)      # the SUM row Upright adds at the bottom (values, as in the export)
     for r in ws.iter_rows(min_row=2, max_row=n, min_col=19, max_col=19):
         for c in r: c.number_format = "mm/dd/yyyy hh:mm:ss"
     wb.save(path)
