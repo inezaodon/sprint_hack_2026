@@ -1,0 +1,572 @@
+<title>Goodwill Track Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a ledger-style reading column with a sticky section index on wide screens; tables and pipeline diagram scroll inside their own boxes. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#152238; --muted:#566377; --line:#d9dee6;
+  --accent:#b7791f; --accent-soft:#fbf1df; --navy:#1d3a63; --navy-soft:#e7edf6;
+  --ok:#2f7d4f; --ok-soft:#e3f2e8; --warn:#a15c07; --warn-soft:#fdf0dc; --bad:#a93b32; --bad-soft:#f9e4e1;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1622; --surface:#16202f; --ink:#e6ebf2; --muted:#9aa7ba; --line:#2a3647;
+  --accent:#e0a54a; --accent-soft:#2e2414; --navy:#8fb3e6; --navy-soft:#1b2a41;
+  --ok:#6cc58f; --ok-soft:#16301f; --warn:#e9a64c; --warn-soft:#33240f; --bad:#ec8a80; --bad-soft:#3a1c1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1622; --surface:#16202f; --ink:#e6ebf2; --muted:#9aa7ba; --line:#2a3647;
+  --accent:#e0a54a; --accent-soft:#2e2414; --navy:#8fb3e6; --navy-soft:#1b2a41;
+  --ok:#6cc58f; --ok-soft:#16301f; --warn:#e9a64c; --warn-soft:#33240f; --bad:#ec8a80; --bad-soft:#3a1c1a; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-inline:20px;padding-block:0 80px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:t}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink)}
+main{min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.65rem;font-weight:800;margin-bottom:12px}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0 0 12px;max-width:68ch}
+a{color:var(--navy)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font:500 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+section{padding-block:44px 8px;border-top:1px solid var(--line)}
+section:first-of-type{border-top:0}
+.lede{font-size:1.1rem;color:var(--muted);max-width:64ch}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.gl{font-family:var(--mono);font-size:.85em;background:var(--navy-soft);color:var(--navy);padding:1px 6px;border-radius:4px;white-space:nowrap}
+
+header.hero{padding-block:40px 28px;display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font:13px/1.4 var(--mono);color:var(--muted)}
+blockquote{margin:8px 0 0;padding:18px 22px;background:var(--surface);border:1px solid var(--line);border-radius:6px;display:grid;gap:10px;max-width:72ch}
+blockquote p{margin:0;font-style:italic}
+blockquote cite{font:12px var(--mono);color:var(--muted);font-style:normal}
+
+.tldr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+@media (max-width:760px){.tldr{grid-template-columns:minmax(0,1fr)}}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:8px;align-content:start}
+.ask .tag{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ask p{margin:0;font-size:.95rem}
+.foundation{margin-top:14px;background:var(--navy-soft);border-radius:6px;padding:16px 18px;font-size:.95rem}
+.foundation strong{color:var(--navy)}
+
+/* manual flow */
+.flows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:8px}
+@media (max-width:760px){.flows{grid-template-columns:minmax(0,1fr)}}
+.flow{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+.flow ol{margin:10px 0 0;padding-left:22px;display:grid;gap:4px;font-size:.94rem}
+.flow .pain{margin-top:12px;font-size:.88rem;color:var(--bad);background:var(--bad-soft);padding:8px 10px;border-radius:4px}
+
+/* pipeline diagram */
+.pipe-scroll{overflow-x:auto;margin-top:12px;padding-bottom:6px}
+.pipe{display:grid;grid-template-columns:1.1fr 24px 1fr 24px 1fr 24px 1.2fr;align-items:stretch;min-width:820px;gap:0}
+.col{display:grid;gap:8px;align-content:start}
+.col h4{margin:0 0 2px;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-size:.85rem;line-height:1.35}
+.node small{display:block;color:var(--muted);font-size:.78rem}
+.node.core{border-color:var(--navy);background:var(--navy-soft)}
+.node.out{border-color:var(--accent);background:var(--accent-soft)}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px}
+
+/* feature cards */
+.features{display:grid;gap:18px;margin-top:10px}
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:22px;display:grid;gap:14px}
+.feat-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px}
+.fid{font:600 13px var(--mono);color:var(--accent)}
+.pill{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.p-must{background:var(--ok-soft);color:var(--ok)}
+.p-should{background:var(--warn-soft);color:var(--warn)}
+.p-stretch{background:var(--navy-soft);color:var(--navy)}
+.feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px}
+@media (max-width:760px){.feat-grid{grid-template-columns:minmax(0,1fr)}}
+.feat-grid > div{min-width:0}
+.lbl{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.feat ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:.93rem}
+.feat p{font-size:.95rem}
+.done{border-top:1px dashed var(--line);padding-top:12px;font-size:.92rem}
+.done b{color:var(--ok)}
+
+/* tables */
+.tbl{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:680px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono)}
+.av{font:500 11px var(--mono);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.av-y{background:var(--ok-soft);color:var(--ok)}
+.av-p{background:var(--warn-soft);color:var(--warn)}
+.av-n{background:var(--bad-soft);color:var(--bad)}
+.anchor{color:var(--accent);font-weight:600}
+
+/* pulse mock */
+.pulse{max-width:520px;margin-top:12px}
+.pulse table{min-width:0}
+.pulse tfoot td{font-weight:600;border-top:2px solid var(--ink)}
+.note{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+/* scope tiers */
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:10px}
+@media (max-width:860px){.tiers{grid-template-columns:minmax(0,1fr)}}
+.tier{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+.tier ul{margin:10px 0 0;padding-left:18px;display:grid;gap:5px;font-size:.92rem}
+
+/* rubric bars */
+.rub{display:grid;gap:10px;margin-top:12px}
+.rrow{display:grid;grid-template-columns:200px 46px minmax(0,1fr);gap:14px;align-items:start;font-size:.93rem}
+@media (max-width:640px){.rrow{grid-template-columns:minmax(0,1fr) 46px}.rrow .rwhat{grid-column:1/-1}}
+.rname{font-weight:600}
+.rbar{height:8px;background:var(--line);border-radius:4px;margin-top:6px;overflow:hidden}
+.rbar i{display:block;height:100%;background:var(--accent)}
+.rpts{font:600 14px var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}
+@media (max-width:760px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;font-size:.93rem;min-width:0}
+.role h3{margin-bottom:6px}
+.timeline{display:grid;gap:0;margin-top:12px;border-left:2px solid var(--line);padding-left:18px}
+.tl{position:relative;padding-block:6px 10px;font-size:.93rem}
+.tl::before{content:"";position:absolute;left:-24px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.tl b{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-right:8px}
+
+.qs{columns:2;column-gap:32px;font-size:.93rem;margin-top:8px;padding-left:20px}
+.qs li{break-inside:avoid;margin-bottom:8px}
+@media (max-width:760px){.qs{columns:1}}
+dl.gloss{display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 20px;font-size:.93rem;margin-top:10px}
+dl.gloss dt{font-weight:600}
+dl.gloss dd{margin:0;color:var(--muted)}
+@media (max-width:640px){dl.gloss{grid-template-columns:minmax(0,1fr)} dl.gloss dd{margin-bottom:8px}}
+.callout{background:var(--accent-soft);border-radius:6px;padding:14px 18px;font-size:.95rem;margin-top:14px;max-width:76ch}
+footer{margin-top:40px;font-size:.82rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#problem">The problem</a></li>
+    <li><a href="#today">How it's done today</a></li>
+    <li><a href="#system">The system, end to end</a></li>
+    <li><a href="#features">Features F1–F8</a></li>
+    <li><a href="#kpis">KPI reference</a></li>
+    <li><a href="#sources">Month-end sources</a></li>
+    <li><a href="#scope">Weekend scope</a></li>
+    <li><a href="#rubric">How we're scored</a></li>
+    <li><a href="#plan">Team plan</a></li>
+    <li><a href="#questions">Ask Goodwill</a></li>
+    <li><a href="#glossary">Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="problem">
+  <div class="eyebrow">SprintHack@ND · Goodwill Michiana track</div>
+  <h1>From manual reporting to management visibility</h1>
+  <div class="meta">
+    <span>Presented by Debie Coble, President &amp; CEO</span>
+    <span>Partner judge: Amanda Baumer</span>
+    <span>Demo: Sun 4:30 PM · Pod B · Room 154</span>
+    <span>Code freeze: Sun 4:00 PM</span>
+  </div>
+  <blockquote>
+    <p>“A monthly E-Commerce dashboard should balance growth, profitability, productivity, inventory management and customer engagement.”</p>
+    <p>“A nightly report creates a daily pulse. Each nightly report should show both revenue and customer count by marketplace, followed by enterprise totals.”</p>
+    <p>“From manual month-end close to Business Central integration. The current close combines portal downloads, emailed reports, bank activity, spreadsheet rules and manual Business Central entries.”</p>
+    <cite>Goodwill Michiana, slides 19–42 of the kickoff deck. Open the demo with these words.</cite>
+  </blockquote>
+
+  <p class="lede">Goodwill Michiana sells donated goods online through several marketplaces. Every number leadership sees today is assembled by a person: logging into portals, downloading reports, counting spreadsheet rows, and copying totals into a workbook that is then pasted into their accounting system, Microsoft Dynamics 365 Business Central. They are asking for three things, at three different speeds.</p>
+
+  <div class="tldr">
+    <div class="ask">
+      <span class="tag">Daily</span>
+      <h3>Nightly pulse report</h3>
+      <p>Revenue and customer count for each marketplace (ShopGoodwill, Amazon, eBay, other), then enterprise totals. Delivered every night with nobody touching it.</p>
+    </div>
+    <div class="ask">
+      <span class="tag">Monthly</span>
+      <h3>E-commerce dashboard and COO scorecard</h3>
+      <p>15 KPIs on one page across growth, profitability, productivity, inventory and engagement, tracking the three 2027 plan anchors.</p>
+    </div>
+    <div class="ask">
+      <span class="tag">Month-end</span>
+      <h3>Close automation into Business Central</h3>
+      <p>Nine source reports go through allocation rules and become balanced General Journal lines and an AR invoice in Business Central, with reconciliation evidence.</p>
+    </div>
+  </div>
+  <div class="foundation"><strong>The key insight for our team:</strong> all three asks sit on one shared foundation. Pull every source into one place, clean it into one common order format, and keep the raw files. The nightly report, the dashboard and the month-end close are then three different views of the same data. Build the foundation once and every demo gets stronger.</div>
+</header>
+
+<section id="today">
+  <div class="eyebrow">Current state</div>
+  <h2>How it's done today</h2>
+  <p>The slides walk through the manual steps with screenshots. Knowing these exactly is what earns points for “Fits Their Constraints”: it shows we understood the job below the surface.</p>
+  <div class="flows">
+    <div class="flow">
+      <h3>Every day: the Daily Summary Spreadsheet</h3>
+      <div class="lbl" style="margin-top:10px">Upright portal (6 steps)</div>
+      <ol>
+        <li>Open Reports from the Upright home dashboard</li>
+        <li>Under Downloads, click <b>Paid orders</b></li>
+        <li>Set the date range</li>
+        <li>Generate the report</li>
+        <li>Download it (Excel)</li>
+        <li><b>Customer count = rows minus the title row</b>, then type the numbers into the Daily Summary Spreadsheet</li>
+      </ol>
+      <div class="lbl" style="margin-top:12px">Cash Monkey, for Goodwill Books (4 steps)</div>
+      <ol>
+        <li>Open Cash Monkey reports</li>
+        <li>Orders Report</li>
+        <li>Pick dates from the drop-down</li>
+        <li>Click the link and the report downloads</li>
+      </ol>
+      <div class="pain">The step-6 screenshot shows a <code>=SUM()</code> totals row at the bottom of the export. If our parser counts rows naively, it overcounts customers by one. Handling this is a good “messy input” to show in the demo.</div>
+    </div>
+    <div class="flow">
+      <h3>Every month: the close</h3>
+      <div class="lbl" style="margin-top:10px">Gather 9 sources, then run the allocation workbook (6 steps)</div>
+      <ol>
+        <li><b>Archive inputs</b> under <code>Accounting / Month End / year / month / Journal Entries / E-Commerce JEs</code></li>
+        <li><b>Roll the workbook</b>: open last month's E-Commerce Allocation file and save a copy for this month</li>
+        <li><b>Populate tabs</b>: type report data into the <b>orange-highlighted fields</b> on each source tab</li>
+        <li><b>Generate entries</b>: workbook formulas flow the data into Journal Entry tabs</li>
+        <li><b>Post General Journal</b>: copy and paste the journal output into a Business Central General Journal</li>
+        <li><b>Create AR invoice</b> in Business Central from the Invoices tab</li>
+      </ol>
+      <div class="pain">The workbook is the real “control layer”. The business rules live in its formulas and in people's heads. Goodwill says the target is to automate the <b>rules</b>, not only the downloads.</div>
+    </div>
+  </div>
+</section>
+
+<section id="system">
+  <div class="eyebrow">Target state</div>
+  <h2>The system, end to end</h2>
+  <p>This is how the eight features fit together. Sources on the left, the shared foundation in the middle, the three things Goodwill asked for on the right.</p>
+  <div class="pipe-scroll" role="img" aria-label="Pipeline: nine sources flow into intake and archive, then normalize and enrich, then rules, producing a nightly pulse, monthly scorecard, and Business Central journal and invoice with reconciliation.">
+    <div class="pipe">
+      <div class="col">
+        <h4>Sources</h4>
+        <div class="node">Upright <small>paid orders / order items</small></div>
+        <div class="node">Cash Monkey <small>Books orders</small></div>
+        <div class="node">ShopGoodwill <small>periodic reports</small></div>
+        <div class="node">eBay <small>listing sales report</small></div>
+        <div class="node">Amazon <small>payments summary</small></div>
+        <div class="node">Goodwill Books <small>emailed statement</small></div>
+        <div class="node">Jewelry report</div>
+        <div class="node">Bank: OSM / PB / EasyPost <small>shipping</small></div>
+        <div class="node">FedEx <small>charges + refunds</small></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col">
+        <h4>Foundation</h4>
+        <div class="node core"><b>F1 Intake</b><small>download, email pickup, or file drop</small></div>
+        <div class="node core"><b>F2 Archive + run log</b><small>raw files, never edited</small></div>
+        <div class="node core"><b>F3 Normalize + enrich</b><small>one order schema, supplier, period</small></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col">
+        <h4>Logic</h4>
+        <div class="node core"><b>F6 Rules + mapping</b><small>workbook logic as config: periods, shipping, refunds, GL / dept mapping</small></div>
+        <div class="node core"><b>F8 Controls</b><small>missing reports, totals checks, exceptions, approvals</small></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col">
+        <h4>Outputs</h4>
+        <div class="node out"><b>F4 Nightly pulse</b><small>revenue + customers by marketplace</small></div>
+        <div class="node out"><b>F5 Monthly dashboard</b><small>15-KPI COO scorecard, 2027 anchors</small></div>
+        <div class="node out"><b>F7 Business Central</b><small>General Journal lines + AR invoice, posting status</small></div>
+        <div class="node out"><b>F8 Reconciliation report</b><small>source = workbook = posted</small></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Goodwill's own six-stage target close maps directly onto this: Acquire (F1) → Archive (F2) → Enrich (F3) → Apply rules (F6) → Create BC output (F7) → Post + reconcile (F8).</p>
+</section>
+
+<section id="features">
+  <div class="eyebrow">Breakdown</div>
+  <h2>Features F1–F8</h2>
+  <p>Each card covers what the feature is, why Goodwill needs it, what goes in and comes out, where it gets hard, and what “done” looks like for this weekend. The tag shows how important it is for our demo.</p>
+
+  <div class="features">
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F1</span><h3>Source intake</h3><span class="pill p-must">Must</span></div>
+    <p>Get each report into the system without a person clicking through a portal. This is Goodwill's Workstream 1, “Reliable monthly source package”, and it also feeds the nightly report.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Inputs</div><ul><li>Portal exports (CSV / Excel) from Upright, Cash Monkey, ShopGoodwill, eBay, Amazon</li><li>Email attachments (Goodwill Books statement, Upright's emailed report)</li><li>Bank activity (shipping) and FedEx</li></ul></div>
+      <div><div class="lbl">Outputs</div><ul><li>Raw files, one per source per date range, handed to F2</li><li>A status per source: received, missing, or failed</li></ul></div>
+      <div><div class="lbl">Three ways to acquire, easiest first</div><ul><li><b>Watched folder</b> (OneDrive or SharePoint): staff drop the export and the pipeline does the rest. Works this weekend.</li><li><b>Email pickup</b>: read attachments from a shared mailbox, for example with Power Automate (Microsoft 365).</li><li><b>Direct API</b>: eBay and Amazon have seller APIs. For Upright, ShopGoodwill and Cash Monkey we need to confirm what access exists.</li></ul></div>
+      <div><div class="lbl">Hard parts</div><ul><li>Credentials: we don't have Goodwill's logins, and we must not ask for real ones. Use sample files in the real format.</li><li>Each portal has different timing (Amazon reports must be requested and refreshed first).</li><li>Detecting that a report <i>should</i> have arrived and didn't.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> dropping the sample exports into a folder triggers ingestion for at least 3 sources, and a missing source is reported as missing, not silently zero.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F2</span><h3>Archive and run history</h3><span class="pill p-must">Must (small)</span></div>
+    <p>Save every raw input exactly as received, under the folder convention Goodwill already uses, and log every run. Accountants and auditors need to trace any posted number back to the file it came from.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Behavior</div><ul><li>Path: <code>Month End/2026/09/Journal Entries/E-Commerce JEs/&lt;source&gt;_&lt;period&gt;.xlsx</code></li><li>Raw files are never edited; transformations write new files.</li><li>Run log: when, which files, row counts, totals, who approved.</li></ul></div>
+      <div><div class="lbl">Why it matters</div><ul><li>It's step 01 of their manual process and stage 02 of their target close.</li><li>It's cheap to build and makes the reconciliation story (F8) credible.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> after a run, the archive folder and a run-log row exist, and the demo can click from a total to its source file.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F3</span><h3>Normalize and enrich</h3><span class="pill p-must">Must</span></div>
+    <p>Every marketplace exports different columns. Convert them all into one common order table so the downstream features never care where an order came from. Goodwill's “Enrich” stage also adds supplier, source label and period.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Suggested common schema</div><ul><li><code>channel, order_id, order_date, buyer_id</code></li><li><code>item_count, subtotal, shipping, tax, fees, refund, total</code></li><li><code>category, supplier / store, payment_type</code></li><li><code>source_file, source_row, period</code> (for traceability)</li></ul></div>
+      <div><div class="lbl">Cleaning rules we already know</div><ul><li>Drop the title row <b>and</b> the totals row before counting.</li><li>Upright exports carry Upright order ID, channel, channel order ID, buyer, item count, payment type, total, subtotal, shipping.</li><li>Jewelry: fill in Supplier (done today with a pivot step the slides call “Co-Pivot”).</li><li>Normalize dates and time zones so “the day” means the same thing in every source.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> 3+ differently shaped sample files land in one table with identical columns, with a test that proves the totals row is excluded.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F4</span><h3>Nightly pulse report</h3><span class="pill p-must">Must</span></div>
+    <p>The simplest of the three asks and the fastest way to show a full workflow running. One small table each night replaces the Daily Summary Spreadsheet.</p>
+    <div class="feat-grid">
+      <div>
+        <div class="lbl">Exact layout from the slide</div>
+        <div class="tbl pulse">
+          <table>
+            <thead><tr><th>Revenue source</th><th style="text-align:right">Daily revenue</th><th style="text-align:right">Daily customers</th></tr></thead>
+            <tbody>
+              <tr><td>ShopGoodwill</td><td class="num">$—</td><td class="num">—</td></tr>
+              <tr><td>Amazon</td><td class="num">$—</td><td class="num">—</td></tr>
+              <tr><td>eBay</td><td class="num">$—</td><td class="num">—</td></tr>
+              <tr><td>Other e-commerce channels</td><td class="num">$—</td><td class="num">—</td></tr>
+            </tbody>
+            <tfoot><tr><td>Total e-commerce</td><td class="num">$—</td><td class="num">—</td></tr></tfoot>
+          </table>
+        </div>
+        <p class="note">“Other marketplaces can be added as separate rows as the channel mix evolves.” So channels should come from config, not hard-coded rows.</p>
+      </div>
+      <div><div class="lbl">Design decisions to make</div><ul><li><b>Customer count:</b> today it's “rows minus title row”, so effectively orders. Ask Amanda whether she wants orders or unique buyers. Show both if unsure.</li><li><b>Delivery:</b> email or a Teams message is likely better than a new website, since they already use Microsoft tools.</li><li><b>Missing data:</b> if eBay didn't arrive, show “not received”, never $0.</li><li><b>Nice extra:</b> compare with the same day last week.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> a scheduled run (or one click) produces this table from sample exports and sends it, end to end, in one take.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F5</span><h3>Monthly dashboard and COO scorecard</h3><span class="pill p-should">Should</span></div>
+    <p>One page, monthly, with 15 KPIs grouped into Financial, Productivity, Inventory, Sales, and Category + Customer, with “trend and target context … as data becomes available”. The 2027 plan anchors are <b>net margin</b>, <b>revenue per labor hour</b> and <b>sell-through rate</b>, all going up every year. Those three should be the most prominent things on the page.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">What makes it hard</div><ul><li>Sales data alone covers only some KPIs. Margin needs costs, revenue per labor hour needs labor hours, and days-to-list needs donation and listing dates. See the <a href="#kpis">KPI table</a>.</li><li>Year-over-year needs last year's data.</li></ul></div>
+      <div><div class="lbl">How to handle it honestly</div><ul><li>Compute what sales data supports. For labor hours and costs, add a small monthly input sheet (it's how they'd start in real life too).</li><li>Mark each KPI as live, manual input, or not yet available. Judges reward saying what's simulated.</li><li>If they already pay for Power BI, a Power BI-ready dataset is a strong fit.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> the three 2027 anchors plus 5–8 more KPIs render from the same normalized data used by F4.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F6</span><h3>Rules and mapping (the workbook, as code)</h3><span class="pill p-must">Must for the close</span></div>
+    <p>This is the hard core of the month-end ask and Goodwill's Workstream 3. The allocation workbook's formulas decide which amounts go to which GL account and department. We rebuild that logic as readable, versioned rules that finance staff can review.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Known rules from the slides</div><ul><li>Monthly date range per source; Cash Monkey and Upright pull the <b>full month</b>.</li><li>ShopGoodwill: <b>Period 1 = periodic reports only; Period 3 = all reports</b>.</li><li>Shipping (OSM / PB / EasyPost): from 1st Source account <span class="gl">0101</span> → GL <span class="gl">10009</span>.</li><li>FedEx: GL <span class="gl">40356</span>, Dept <span class="gl">180</span>, vendor <span class="gl">V00122</span>, <b>net out BNKDEPOSIT refunds</b>.</li><li>Jewelry: Supplier assignment.</li></ul></div>
+      <div><div class="lbl">Build approach</div><ul><li>Rules as a config file (YAML / JSON / a sheet): source → account, department, debit or credit, filter.</li><li>Each rule has a test with a known input and expected journal lines.</li><li>Unknown rules: we don't have their workbook, so we implement the documented ones and design the format so the rest slot in. Say this in the demo.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> the FedEx and shipping rules run against sample data and produce correct, balanced lines, with a test suite proving it.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F7</span><h3>Business Central output</h3><span class="pill p-should">Should</span></div>
+    <p>Replace copy-paste into Business Central with ready-to-import entries: <b>General Journal lines</b> (step 05 today) and an <b>AR (accounts receivable) sales invoice</b> (step 06). Workstream 4 asks to “capture import/API validation and posting response”.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Two levels</div><ul><li><b>Level 1, file:</b> generate an Excel or CSV in the column layout BC's General Journal import accepts (posting date, document no., account type, account no., description, amount, department dimension). Low risk, works this weekend.</li><li><b>Level 2, API:</b> Business Central has a REST API with endpoints for journals, journal lines and sales invoices. A free BC sandbox trial could show a real post. Stretch goal.</li></ul></div>
+      <div><div class="lbl">Must be true of every output</div><ul><li><b>Balanced:</b> debits = credits per document.</li><li><b>Traceable:</b> each line links back to its source file and row (F2).</li><li><b>Never auto-posted without approval</b> until proven against the workbook. That is Goodwill's own rollout plan.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> a balanced General Journal import file and an AR invoice payload are generated from the sample month, and you can show the file opening in the expected format.</div>
+  </article>
+
+  <article class="feat">
+    <div class="feat-head"><span class="fid">F8</span><h3>Close controls and reconciliation</h3><span class="pill p-must">Must (it's the differentiator)</span></div>
+    <p>Goodwill's control principle: “Business Central receives balanced, traceable journal and invoice payloads; missing reports, failed rules and posting errors remain visible for review.” Most teams will skip this. Building it shows we understood that finance teams care more about trust than speed.</p>
+    <div class="feat-grid">
+      <div><div class="lbl">Checks</div><ul><li>Every required source for the month is present (9 of 9).</li><li>Source total = normalized total = journal total = posted total.</li><li>Each journal document balances.</li><li>Row counts match (no dropped rows, totals row excluded exactly once).</li></ul></div>
+      <div><div class="lbl">Exception handling</div><ul><li>An exception list: what failed, which source, who owns it.</li><li>Approval step before posting.</li><li>A one-page close report stored with the archive.</li></ul></div>
+    </div>
+    <div class="done"><b>Done this weekend:</b> feed it a broken month (one source missing, one refund) and the demo shows the exceptions caught and explained.</div>
+  </article>
+  </div>
+</section>
+
+<section id="kpis">
+  <div class="eyebrow">Reference</div>
+  <h2>KPI reference: the 15-KPI COO scorecard</h2>
+  <p>Formulas are our proposed definitions; confirm them with Goodwill. The availability column is our honest guess of what we can compute from marketplace sales exports alone. <span class="anchor">Gold</span> marks the three 2027 plan anchors.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Group</th><th>KPI</th><th>Proposed formula</th><th>Data needed</th><th>From sales exports?</th></tr></thead>
+    <tbody>
+      <tr><td>Financial</td><td>Total e-commerce revenue</td><td>Σ order totals, all channels</td><td>Normalized orders</td><td><span class="av av-y">Yes</span></td></tr>
+      <tr><td>Financial</td><td>Revenue growth % (YoY)</td><td>(this month − same month last year) ÷ same month last year</td><td>12+ months of history</td><td><span class="av av-p">Needs history</span></td></tr>
+      <tr><td>Financial</td><td class="anchor">Net margin %</td><td>(revenue − all costs) ÷ revenue</td><td>Fees, shipping, labor, overhead</td><td><span class="av av-p">Partial: fees and shipping only</span></td></tr>
+      <tr><td>Productivity</td><td>Listings created</td><td>Count of listings created in the month</td><td>Upright listing data</td><td><span class="av av-p">Upright, not orders</span></td></tr>
+      <tr><td>Productivity</td><td class="anchor">Revenue per labor hour</td><td>revenue ÷ e-commerce labor hours</td><td>Timekeeping or payroll hours</td><td><span class="av av-n">Manual input</span></td></tr>
+      <tr><td>Productivity</td><td>Listings per employee</td><td>listings ÷ e-commerce headcount (or FTE)</td><td>Upright per-user stats (seen on slide 22)</td><td><span class="av av-p">Upright</span></td></tr>
+      <tr><td>Inventory</td><td>Days from donation to listing</td><td>avg(listing date − received date)</td><td>Item-level dates</td><td><span class="av av-n">Ask what's tracked</span></td></tr>
+      <tr><td>Inventory</td><td>Unlisted inventory backlog</td><td>items sent to e-commerce, not yet listed</td><td>Upright manifests (dashboard shows “unprocessed manifest items”)</td><td><span class="av av-p">Upright</span></td></tr>
+      <tr><td>Inventory</td><td>Unsold inventory %</td><td>listed items unsold after N days ÷ listed items</td><td>Listing + sale status</td><td><span class="av av-p">Upright</span></td></tr>
+      <tr><td>Sales</td><td>Average selling price</td><td>revenue ÷ units sold</td><td>Normalized orders (item count)</td><td><span class="av av-y">Yes</span></td></tr>
+      <tr><td>Sales</td><td class="anchor">Sell-through rate</td><td>units sold ÷ units listed in the period</td><td>Listings + orders</td><td><span class="av av-p">Needs listings</span></td></tr>
+      <tr><td>Sales</td><td>Sales per employee</td><td>revenue ÷ e-commerce headcount</td><td>Headcount</td><td><span class="av av-p">Manual input</span></td></tr>
+      <tr><td>Category + customer</td><td>Top 10 categories by revenue</td><td>rank Σ revenue by category</td><td>Category on orders (Upright has “Sales by category”)</td><td><span class="av av-y">Likely</span></td></tr>
+      <tr><td>Category + customer</td><td>Top 10 categories by margin</td><td>rank (revenue − cost) by category</td><td>Category costs</td><td><span class="av av-n">Needs cost model</span></td></tr>
+      <tr><td>Category + customer</td><td>Repeat buyer rate</td><td>buyers with 2+ orders ÷ all buyers</td><td>Stable buyer ID per channel</td><td><span class="av av-y">Yes, per channel</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">The full framework (slides 33–34) lists about 30 more metrics, such as median sale price, days to sell, relisted inventory %, new buyers, NPS and marketplace conversion. The scorecard is the 15 that matter for the COO; ignore the rest this weekend.</p>
+</section>
+
+<section id="sources">
+  <div class="eyebrow">Reference</div>
+  <h2>The nine month-end sources</h2>
+  <p>“Each source has its own access path, timing and business rule.” This table is slide 38, with the job each source becomes in our system.</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Source</th><th>Month-end input</th><th>How it's acquired / the rule</th><th>Feature</th></tr></thead>
+    <tbody>
+      <tr><td>Cash Monkey</td><td>Orders, full month</td><td>Submit and download CSV; save as Excel</td><td>F1 · F3</td></tr>
+      <tr><td>Upright</td><td>Paid order items, full month</td><td>Generate; delivered by email; save as Excel</td><td>F1 (email) · F3</td></tr>
+      <tr><td>Jewelry</td><td>Jewelry report</td><td>Request report; “Co-Pivot” populates Supplier</td><td>F3 enrichment</td></tr>
+      <tr><td>OSM / PB / EasyPost</td><td>Shipping amounts</td><td>1st Source acct <span class="gl">0101</span> · GL <span class="gl">10009</span></td><td>F1 (bank) · F6</td></tr>
+      <tr><td>FedEx</td><td>Shipping charges + refunds</td><td>BC GL <span class="gl">40356</span> · Dept <span class="gl">180</span> · <span class="gl">V00122</span> · net BNKDEPOSIT refunds</td><td>F6</td></tr>
+      <tr><td>ShopGoodwill</td><td>Periodic marketplace reports</td><td>Filter year/month; Period 1 periodic only; Period 3 all reports</td><td>F6 period rule</td></tr>
+      <tr><td>Goodwill Books</td><td>Prior-month payment statement</td><td>Monthly email attachment</td><td>F1 (email)</td></tr>
+      <tr><td>eBay</td><td>Listing sales report</td><td>Seller Center: change date, generate, download</td><td>F1 · F3</td></tr>
+      <tr><td>Amazon</td><td>Payments summary</td><td>Seller Central: request, refresh, download</td><td>F1 · F3</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="scope">
+  <div class="eyebrow">Recommendation</div>
+  <h2>What we build this weekend</h2>
+  <p>Ground rule 06: <i>a small thing that works beats a big thing that does not.</i> Goodwill's own rollout plan says to automate source by source and prove each one against the workbook. Our demo should do the same thing in miniature: one thin, real slice through the whole system rather than eight half-features.</p>
+  <div class="tiers">
+    <div class="tier">
+      <span class="pill p-must">Core demo</span>
+      <h3 style="margin-top:10px">One pipeline, two outputs</h3>
+      <ul>
+        <li>Realistic sample exports for Upright, eBay, Amazon, ShopGoodwill (including the totals row and a refund)</li>
+        <li>F1 folder drop → F2 archive → F3 normalized table</li>
+        <li><b>F4 nightly pulse</b>, generated and sent</li>
+        <li><b>F6 + F7</b> for 2–3 sources (FedEx, shipping, one marketplace) → balanced General Journal import file</li>
+        <li><b>F8</b> reconciliation page that catches a missing source</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <span class="pill p-should">If time allows</span>
+      <h3 style="margin-top:10px">Visibility layer</h3>
+      <ul>
+        <li>F5 scorecard: the 3 anchors plus ASP, revenue, repeat buyers, top categories</li>
+        <li>Monthly input sheet for labor hours and costs</li>
+        <li>AR invoice payload</li>
+        <li>Email-attachment pickup for Goodwill Books</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <span class="pill p-stretch">Stretch</span>
+      <h3 style="margin-top:10px">Real integrations</h3>
+      <ul>
+        <li>Post to a Business Central sandbox through its API and show the posting response</li>
+        <li>Pull from the eBay or Amazon seller APIs (sandbox)</li>
+        <li>Power Automate or Power BI version, if Goodwill confirms they license it</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><b>The constraint judges will check:</b> the rubric's example for Goodwill is “tools they already pay for”. They run Business Central, so they are almost certainly on Microsoft 365 (Excel, Outlook, SharePoint/OneDrive, maybe Power Automate and Power BI). Outputs should arrive as Excel files, emails or Teams messages, and imports into Business Central. Avoid asking them to adopt a new paid SaaS. A Python script or small app is fine as the engine, but its inputs and outputs should live in tools they already own.</div>
+</section>
+
+<section id="rubric">
+  <div class="eyebrow">Judging</div>
+  <h2>How we're scored</h2>
+  <p>Six criteria, each scored 0–4 and weighted to 100. Level 2 is “a solid team”. Market size, pricing and polish score zero. Here is what level 4 looks like for our project.</p>
+  <div class="rub">
+    <div class="rrow"><div><div class="rname">Working evidence</div><div class="rbar"><i style="width:100%"></i></div></div><div class="rpts">26</div><div class="rwhat">Full workflow in one take on <b>more than one example, including a messy one</b>. Run a clean month, then a month with a missing file, a totals row and a FedEx refund.</div></div>
+    <div class="rrow"><div><div class="rname">Partner problem fit</div><div class="rbar"><i style="width:84.6%"></i></div></div><div class="rpts">22</div><div class="rwhat">Fully solves it with the fewest steps for the user. “Drop files, get the pulse and the journal” beats a tool with ten screens.</div></div>
+    <div class="rrow"><div><div class="rname">Fits their constraints</div><div class="rbar"><i style="width:73%"></i></div></div><div class="rpts">19</div><div class="rwhat">Works within all their limits so they could start using it tomorrow: Microsoft tools, Business Central import format, their folder convention, their GL codes, approval before posting.</div></div>
+    <div class="rrow"><div><div class="rname">Technical substance</div><div class="rbar"><i style="width:57.7%"></i></div></div><div class="rpts">15</div><div class="rwhat">The hard part (rules engine + reconciliation) is ours, and everyone can explain its limits and what we'd build next. AI coding tools are fine; not being able to explain our own system is not.</div></div>
+    <div class="rrow"><div><div class="rname">Demo clarity</div><div class="rbar"><i style="width:42.3%"></i></div></div><div class="rpts">11</div><div class="rwhat">Clear in the first 30 seconds. Open with Goodwill's words, show the manual steps for 10 seconds, then the button.</div></div>
+    <div class="rrow"><div><div class="rname">X-factor</div><div class="rbar"><i style="width:26.9%"></i></div></div><div class="rpts">7</div><div class="rwhat">Amanda would want to pilot it. The reconciliation report is the thing a finance team would want.</div></div>
+  </div>
+  <div class="callout"><b>Submission (by Sun 4:00 PM, innovationsprintlab.com/go/submit):</b> Google Slides link with the <b>recorded demo video embedded</b>, shared “anyone with the link” · GitHub repo · sources cited (open-source projects, models, APIs, templates) · what we built versus what we used. Resubmitting is allowed; the last submission counts.</div>
+</section>
+
+<section id="plan">
+  <div class="eyebrow">Execution</div>
+  <h2>Team plan</h2>
+  <p>Agree on the common order schema (F3) in the first 30 minutes. It's the contract that lets everyone work in parallel.</p>
+  <div class="roles">
+    <div class="role"><h3>Data and intake</h3>Builds realistic sample exports for each source (including messy cases), the parsers, normalization and archive. Owns F1, F2, F3.</div>
+    <div class="role"><h3>Finance rules</h3>Turns the slide rules into config and tests, generates journal lines and the BC import file, and checks balancing. Owns F6, F7. Best person to talk with Goodwill about accounting.</div>
+    <div class="role"><h3>Reporting</h3>Builds the nightly pulse and its delivery, then the scorecard with the three anchors. Owns F4, F5.</div>
+    <div class="role"><h3>Controls and demo</h3>Builds reconciliation and exceptions, writes the demo script, records the video, and builds the slides. Owns F8 and submission. Also the person who goes to office hours.</div>
+  </div>
+  <div class="timeline">
+    <div class="tl"><b>Sat 1:00</b>Agree on schema, sample-file formats and repo layout. Assign F-numbers.</div>
+    <div class="tl"><b>Sat 3:00</b>Office hours open (rooms 109A–D). Take the questions below to Goodwill and the mentors.</div>
+    <div class="tl"><b>Sat 6:30</b>Checkpoint: files → normalized table → pulse runs end to end, even if ugly.</div>
+    <div class="tl"><b>Sat 9:00</b>Building closes. Target: first journal lines generated for one source.</div>
+    <div class="tl"><b>Sun 11:00</b>Rules for 2–3 sources, reconciliation, messy-month test case.</div>
+    <div class="tl"><b>Sun 1:00</b>Feature freeze. Office hours (109A/B). Record the demo by 2:30 and leave time for a second take.</div>
+    <div class="tl"><b>Sun 4:00</b>Code freeze and submission. Demos 4:30–6:00 in Pod B, Room 154.</div>
+  </div>
+</section>
+
+<section id="questions">
+  <div class="eyebrow">Discovery</div>
+  <h2>Questions to ask Goodwill</h2>
+  <p>Goodwill itself says discovery must confirm credentials, report availability, Business Central destinations and existing workbook formulas. Asking these also scores on “did they engage the partner”.</p>
+  <ol class="qs">
+    <li>For the nightly report, is a “customer” an order or a unique buyer? Same question per channel.</li>
+    <li>Which Microsoft 365 tools do you already license: Power Automate, Power BI, SharePoint, Teams?</li>
+    <li>Where should the nightly report land: email, Teams, a shared Excel file?</li>
+    <li>Can you share a redacted export from Upright and from one marketplace so our parsers match the real columns?</li>
+    <li>Can you share a redacted copy (or just the tab list and formulas) of the E-Commerce Allocation workbook?</li>
+    <li>Which Business Central import do you use today for the General Journal: a journal template, a configuration package, or manual entry?</li>
+    <li>What is “Co-Pivot” in the Jewelry step, and how is Supplier decided?</li>
+    <li>ShopGoodwill Period 1 vs Period 3: what are the periods, and why do they take different reports?</li>
+    <li>Which marketplaces count as “other e-commerce channels” today?</li>
+    <li>Where would labor hours and costs come from for revenue per labor hour and net margin?</li>
+    <li>Does Upright record when an item was received or donated, for days from donation to listing?</li>
+    <li>Who approves journal entries before posting, and what would make you trust an automated one?</li>
+    <li>Which source is most painful or most error-prone today? We'll prioritize it.</li>
+  </ol>
+</section>
+
+<section id="glossary">
+  <div class="eyebrow">Vocabulary</div>
+  <h2>Glossary</h2>
+  <dl class="gloss">
+    <dt>Business Central (BC)</dt><dd>Microsoft Dynamics 365 Business Central, Goodwill's accounting / ERP system. Everything in the close ends up here.</dd>
+    <dt>Month-end close</dt><dd>The process of recording all of a month's activity in the books so the month's financial statements are final.</dd>
+    <dt>General Journal (GJ)</dt><dd>The BC screen where accountants enter journal lines: account, amount, debit or credit, date, dimensions. Today the workbook output is pasted here.</dd>
+    <dt>Journal entry (JE)</dt><dd>A set of lines whose debits equal credits. “E-Commerce JEs” is the folder for these.</dd>
+    <dt>AR invoice</dt><dd>Accounts receivable invoice: a record that money is owed to Goodwill (for example by a marketplace that pays out later).</dd>
+    <dt>GL account</dt><dd>General ledger account number, such as <span class="gl">10009</span> or <span class="gl">40356</span>. It decides where an amount lands in the books.</dd>
+    <dt>Dimension / Dept</dt><dd>An extra tag on a BC line for reporting, such as Department <span class="gl">180</span>.</dd>
+    <dt>Vendor <span class="gl">V00122</span></dt><dd>The BC vendor record used for FedEx charges.</dd>
+    <dt>BNKDEPOSIT</dt><dd>Bank deposit lines; FedEx refunds arrive this way and must be netted against charges.</dd>
+    <dt>Allocation workbook</dt><dd>The Excel file, copied forward each month, whose formulas turn source totals into journal and invoice entries. Orange cells are manual inputs.</dd>
+    <dt>Upright</dt><dd>The operations / listing portal shown in the slides (manifests, listings, paid orders, per-user production stats).</dd>
+    <dt>Cash Monkey</dt><dd>The platform behind the Goodwill Books channel; its Orders Report is pulled daily and monthly.</dd>
+    <dt>ShopGoodwill</dt><dd>Goodwill's own online auction marketplace.</dd>
+    <dt>Sell-through rate</dt><dd>Share of listed items that actually sold in a period. A 2027 anchor KPI.</dd>
+    <dt>ASP</dt><dd>Average selling price: revenue ÷ units sold.</dd>
+    <dt>Reconciliation</dt><dd>Proving two sets of numbers agree, for example that source reports total the same as what was posted.</dd>
+  </dl>
+</section>
+
+<footer>Compiled from the SprintHack@ND kickoff deck (Goodwill Michiana slides 18–42, judging appendix slides 89–95). Proposed formulas, feature names and the recommended scope are our team's interpretation, not Goodwill's requirements. Confirm them with Amanda Baumer.</footer>
+</main>
+</div>
