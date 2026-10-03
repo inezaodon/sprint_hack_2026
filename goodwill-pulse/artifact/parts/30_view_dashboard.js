@@ -1,5 +1,13 @@
 /* ---------------- Monthly Dashboard ---------------- */
+/* Shared KPI tile (also used by the Ask tab). card = a month doc card; month = "YYYY-MM" for the explain hook. */
+function dashKpiTile(c, anchor, month) {
+  if (!c) return "";
+  return `<div class="card kpi ${anchor ? "anchor" : ""}" data-kpi="${esc(c.id)}" data-explain="kpi:${esc(c.id)}:${esc(month || state.month)}"><span class="l">${esc(c.label)}</span><span class="v">${fmt(c.unit, c.value)}</span>
+    <span class="d"><span class="muted">vs last month</span> ${delta(c, "prior_month")}<span class="muted">vs last year</span> ${delta(c, "prior_year")}</span>${spark(c.trend || [])}</div>`;
+}
 async function viewDashboard(root) {
+  const fc = state.focus; state.focus = null;
+  if (fc && fc.month) state.month = fc.month;
   const opt = await read("site/options");
   if (!state.month) state.month = opt.default_month;
   const [m, ser, drows] = await Promise.all([read("month/" + state.month), read("series/all"), dailyRows()]);
@@ -10,15 +18,14 @@ async function viewDashboard(root) {
   const tval = rs => state.tm === "avg_order" ? (rs.reduce((a, r) => a + r.orders, 0) ? rs.reduce((a, r) => a + r.item_sales, 0) / rs.reduce((a, r) => a + r.orders, 0) : 0) : rs.reduce((a, r) => a + r[state.tm], 0);
   const tseries = CHORDER.map(c => { const rs = drows.filter(r => r.channel === c); return {label: CHN[c], color: CH[c], points: tkeys.map(k => ({label: GRAINS[state.tg].label(k), value: tval(rs.filter(r => GRAINS[state.tg].key(r.date) === k))}))}; });
   const C = m.cards;
-  const kpi = (id, anchor) => { const c = C[id]; if (!c) return ""; return `<div class="card kpi ${anchor ? "anchor" : ""}"><span class="l">${esc(c.label)}</span><span class="v">${fmt(c.unit, c.value)}</span>
-    <span class="d"><span class="muted">vs last month</span> ${delta(c, "prior_month")}<span class="muted">vs last year</span> ${delta(c, "prior_year")}</span>${spark(c.trend || [])}</div>`; };
+  const kpi = (id, anchor) => dashKpiTile(C[id], anchor, state.month);
   const sk = ser[state.kpi] || ser.total_revenue;
   const kpiOpts = Object.keys(ser).filter(k => ser[k]).map(k => `<option value="${k}">${esc(ser[k].label)}</option>`).join("");
   const PN = {growth: "Growth", profitability: "Profitability", productivity: "Productivity", inventory: "Inventory", engagement: "Engagement"};
   const avail = c => c.availability && c.availability !== "built" ? pill(c.availability === "input" ? "p-info" : "p-warn", c.availability === "input" ? "Manual input" : "Not yet available") : "";
   const optKpi = Object.fromEntries(opt.kpis.map(k => [k.id, k]));
-  const pillars = Object.entries(m.pillars).map(([p, ids]) => `<details><summary><b>${PN[p] || esc(p)}</b><span class="muted">${ids.length} measures</span></summary>
-    <div class="scroll"><table><thead><tr><th>Measure</th><th class="r">${monthShort(state.month)}</th><th class="r">vs last month</th><th class="r">vs last year</th><th></th></tr></thead><tbody>${ids.map(id => { const c = C[id]; return `<tr><td>${esc(c.label)}</td><td class="r num">${fmt(c.unit, c.value)}</td><td class="r num">${delta(c, "prior_month")}</td><td class="r num">${delta(c, "prior_year")}</td><td>${avail({availability: optKpi[id]?.availability})}</td></tr>`; }).join("")}</tbody></table></div></details>`).join("");
+  const pillars = Object.entries(m.pillars).map(([p, ids]) => `<details data-pillar="${esc(p)}"><summary><b>${PN[p] || esc(p)}</b><span class="muted">${ids.length} measures</span></summary>
+    <div class="scroll"><table><thead><tr><th>Measure</th><th class="r">${monthShort(state.month)}</th><th class="r">vs last month</th><th class="r">vs last year</th><th></th></tr></thead><tbody>${ids.map(id => { const c = C[id]; return `<tr data-kpi="${esc(id)}"><td>${esc(c.label)}</td><td class="r num">${fmt(c.unit, c.value)}</td><td class="r num">${delta(c, "prior_month")}</td><td class="r num">${delta(c, "prior_year")}</td><td>${avail({availability: optKpi[id]?.availability})}</td></tr>`; }).join("")}</tbody></table></div></details>`).join("");
   const stores = m.stores.stores, maxRev = Math.max(...stores.map(s => s.revenue), 1);
   const cats = m.categories[state.catBy].categories;
   root.innerHTML = `
@@ -43,6 +50,12 @@ async function viewDashboard(root) {
     <div class="card scroll" style="margin-top:12px"><table><thead><tr><th>Category</th><th class="r">Revenue</th><th class="r">Units</th><th class="r">Avg price</th><th class="r">Fees</th><th class="r">Gross profit</th><th class="r">Margin</th></tr></thead><tbody>
     ${cats.map(c => `<tr><td>${esc(c.category)}</td><td class="r num">${usd(c.revenue)}</td><td class="r num">${nf(c.units)}</td><td class="r num">${usd(c.asp, 2)}</td><td class="r num">${usd(c.fees)}</td><td class="r num">${usd(c.gross_profit)}</td><td class="r num">${pct(c.margin_pct)}</td></tr>`).join("")}</tbody></table></div></section>
   <section><h2>All measures by pillar</h2><div class="card">${pillars}</div></section>`;
+  if (fc && Array.isArray(fc.ids)) {
+    const want = new Set(fc.ids);
+    root.querySelectorAll("[data-kpi]").forEach(e => { if (want.has(e.dataset.kpi)) e.classList.add("focus"); });
+    const det = [...root.querySelectorAll("details[data-pillar]")].find(d => d.dataset.pillar === fc.pillar);
+    if (det) { det.open = true; requestAnimationFrame(() => { try { det.scrollIntoView({block: "start", behavior: "smooth"}); } catch (e) {} }); }
+  }
   $("#month", root).value = state.month; $("#kpi", root).value = state.kpi in ser ? state.kpi : "total_revenue";
   $("#month", root).onchange = e => { state.month = e.target.value; render(); };
   $("#kpi", root).onchange = e => { state.kpi = e.target.value; render(); };

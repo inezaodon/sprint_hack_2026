@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "goodwill-pulse",
-      "runtimeExecutable": "/Users/odon/Desktop/Hackathon/goodwill-pulse/.venv/bin/uvicorn",
-      "runtimeArgs": ["goodwill_pulse.api:app", "--app-dir", "/Users/odon/Desktop/Hackathon/goodwill-pulse", "--port", "8000", "--reload", "--reload-dir", "/Users/odon/Desktop/Hackathon/goodwill-pulse"],
-      "port": 8000
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "cd /Users/odon/Desktop/Hackathon/goodwill-pulse && exec .venv/bin/uvicorn goodwill_pulse.api:app --app-dir . --port \"${PORT:-8001}\" --reload --reload-dir goodwill_pulse --reload-dir web --reload-dir config"],
+      "port": 8001,
+      "autoPort": true
     }
   ]
 }

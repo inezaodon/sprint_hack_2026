@@ -1,0 +1,11 @@
+.ask-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;font-size:13px}
+.ask-interp{margin:0 0 12px;font:500 15px/1.4 var(--body);max-width:75ch}
+.ask-note{margin:-6px 0 10px;font-size:12.5px}
+.ask-h3{font:700 14px var(--display);margin:16px 0 8px}
+.ask-dash{margin-top:20px}
+.ask-alts{display:flex;flex-wrap:wrap;gap:8px}
+.ask-clarify .chip{text-align:left}
+.kpi.focus,tr.focus td{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft);animation:askpulse 1.6s ease-out 1}
+tr.focus td{outline:0;box-shadow:inset 0 2px 0 var(--accent),inset 0 -2px 0 var(--accent)}
+@keyframes askpulse{from{box-shadow:0 0 0 6px var(--accent-soft)}to{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.kpi.focus{animation:none}}
