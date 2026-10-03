@@ -1,0 +1,41 @@
+# Upright Labs "Lister" > Reports > Downloads > Paid orders.
+# Columns A–R are copied from the export shown in Goodwill's deck (slide 26).
+# Columns after R are cut off in that screenshot; the ones marked `assumed` are our guess. Confirm with Goodwill.
+report_type: upright_paid_orders
+label: Upright paid orders
+source_system: upright
+grain: order                      # one row per paid order
+filename_pattern: '^paid_orders_(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})'
+filename_date_format: '%m-%d-%Y'
+source_timezone: America/Los_Angeles   # Upright UI: "Use America/Los_Angeles for SGW"
+has_totals_row: true              # the export ends with a SUM row (slide 26, row 130)
+
+columns:
+  'Upright Order ID': {field: source_order_id, required: true}
+  'Channel': {field: channel_raw, required: true}
+  'Channel Order ID': {field: channel_order_id, required: true}
+  'Secondary Channel': {field: ignore}
+  'Channel Buyer': {field: buyer, required: true}
+  'Order Item Count': {field: item_count, type: int, required: true}
+  'Payment Method': {field: ignore}
+  'Payment Type': {field: payment_type}
+  'Total': {field: total, type: money, required: true}
+  'Subtotal': {field: subtotal, type: money, required: true}
+  'Shipping Total': {field: shipping_charged, type: money}
+  'Shipping Discount': {field: ignore}
+  'Handling': {field: handling, type: money}
+  'Tax Total': {field: tax, type: money}
+  'Donation': {field: ignore}
+  'Currency': {field: currency}
+  'Final Value Fee': {field: fee_final_value, type: money}
+  'Payment Fee': {field: fee_payment, type: money}
+  'Paid At': {field: paid_at_local, type: datetime, required: true, assumed: true}
+
+channel_values:            # Upright channel text -> canonical channel
+  Shopgoodwill: shopgoodwill
+  ShopGoodwill: shopgoodwill
+  eBay: ebay
+  Ebay: ebay
+  GoodwillFinds: goodwillfinds
+  Goodwillfinds: goodwillfinds
+line_of_business: general_merch
