@@ -46,10 +46,17 @@ CREATE OR REPLACE TEMP MACRO store_from_vendor(v) AS
 CREATE OR REPLACE TEMP MACRO et_date(ts) AS CAST(timezone('America/New_York', ts) AS DATE);
 
 -- Naive local wall-clock time -> UTC instant. ShopGoodwill runs on America/Los_Angeles; Goodwillbooks on Eastern.
--- ICU resolves DST: a spring-forward gap time is shifted forward, a fall-back repeated hour takes one offset
--- (the source gives us no way to tell which of the two it was).
-CREATE OR REPLACE TEMP MACRO pacific_naive(ts) AS timezone('America/Los_Angeles', ts);
-CREATE OR REPLACE TEMP MACRO eastern_naive(ts) AS timezone('America/New_York', ts);
+-- DST rules (team rule = Python zoneinfo fold=0):
+--   * spring-forward gap (02:30 does not exist) -> shifted forward (03:30 DST); ICU already does this.
+--   * fall-back repeated hour (01:07 happens twice) -> the FIRST occurrence (still DST). ICU picks the SECOND
+--     (standard time), so: if the instant one hour earlier shows the same wall-clock time, that earlier instant
+--     is the first occurrence and we take it.
+CREATE OR REPLACE TEMP MACRO local_to_utc(tz, ts) AS
+    CASE WHEN timezone(tz, timezone(tz, ts) - INTERVAL 1 HOUR) = ts
+         THEN timezone(tz, ts) - INTERVAL 1 HOUR
+         ELSE timezone(tz, ts) END;
+CREATE OR REPLACE TEMP MACRO pacific_naive(ts) AS local_to_utc('America/Los_Angeles', ts);
+CREATE OR REPLACE TEMP MACRO eastern_naive(ts) AS local_to_utc('America/New_York', ts);
 
 -- Amazon reports print Pacific time with a zone abbreviation ('Sep 30, 2026 4:41:07 PM PDT').
 -- Use the abbreviation's fixed offset when present: it is exact even in the repeated fall-back hour.

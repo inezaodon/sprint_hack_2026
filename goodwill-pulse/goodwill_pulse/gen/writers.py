@@ -31,11 +31,14 @@ def _money(x: float) -> str:
 def upright_rows(orders: list[Order]) -> list[list[str]]:
     rows = []
     for o in sorted(orders, key=lambda o: o.paid_at):
-        handling = 3.0 * o.item_count
-        tax = round(o.subtotal * o.tax_rate, 2)
+        handling = 3.0 * o.item_count if o.handling is None else o.handling
+        tax = round(o.subtotal * o.tax_rate, 2) if o.tax_amount is None else o.tax_amount
         total = round(o.subtotal + o.shipping + handling + tax, 2)
-        fvf = round(o.subtotal * 0.1325, 2) if o.channel_raw == "eBay" else 0.0
-        pay_fee = round(total * 0.029 + 0.30, 2) if o.payment_type == "PayPal" else 0.0
+        if o.final_value_fee is not None:
+            fvf, pay_fee = o.final_value_fee, o.payment_fee or 0.0
+        else:
+            fvf = round(o.subtotal * 0.1325, 2) if o.channel_raw == "eBay" else 0.0
+            pay_fee = round(total * 0.029 + 0.30, 2) if o.payment_type == "PayPal" else 0.0
         rows.append([
             o.source_order_id, o.channel_raw, o.order_id, "", o.buyer, str(o.item_count), "", o.payment_type,
             _money(total), _money(o.subtotal), _money(o.shipping), "", _money(handling), _money(tax), "0", "USD",
@@ -78,8 +81,12 @@ def write_cashmonkey_orders(path_dir: Path, orders: list[Order], generated_at: d
         fee_rate = {"Amazon-MF": 0.15, "eBay": 0.1325, "Goodwillbooks": 0.05}[o.channel_raw]
         per_unit_ship_credit = round(o.shipping / o.item_count, 2)
         for line in o.lines:
-            fees = round(line["price"] * fee_rate + (1.80 if o.channel_raw == "Amazon-MF" else 0.30), 2)
-            ship_cost = round(rng.uniform(3.2, 4.4), 2)
+            fees = line.get("fees")
+            if fees is None:
+                fees = round(line["price"] * fee_rate + (1.80 if o.channel_raw == "Amazon-MF" else 0.30), 2)
+            ship_cost = line.get("ship_cost")
+            if ship_cost is None:
+                ship_cost = round(rng.uniform(3.2, 4.4), 2)
             net = round(line["price"] + per_unit_ship_credit - fees - ship_cost, 2)
             rows.append([
                 o.paid_at.strftime("%Y-%m-%d %H:%M:%S"), o.order_id,

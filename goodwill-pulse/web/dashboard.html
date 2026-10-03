@@ -136,6 +136,23 @@ table{border-collapse:collapse;width:100%}
 .seg button{border:0;background:var(--surface);color:var(--muted);padding:5px 10px;font-weight:600;font-size:13px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+/* AI: grounded brief + ask the data */
+.ai-brief{padding:16px 18px;margin-bottom:20px;display:grid;gap:8px;border-color:var(--accent);background:var(--accent-soft)}
+.ai-brief p{margin:0;max-width:75ch;line-height:1.55}
+.ai-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ai-meta .badge{background:var(--surface)}
+.ask{padding:18px;display:grid;gap:12px}
+.ask form{display:flex;flex-wrap:wrap;gap:8px}
+.ask input{flex:1 1 260px;min-width:0;font:inherit;font-size:15px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;border-radius:6px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:13px}
+.chip:hover{border-color:var(--accent)}
+.answer{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.answer p{margin:0;max-width:75ch}
+.cite{font:500 12px var(--mono);color:var(--muted);word-break:break-word}
 .legendrow{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);margin-top:24px;align-items:center}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
 </style>
@@ -167,6 +184,11 @@ table{border-collapse:collapse;width:100%}
       <span class="sub" id="subtitle">Loading…</span>
     </div>
     <div id="banner" class="banner" hidden></div>
+    <div id="ai-brief" class="card ai-brief" hidden aria-live="polite">
+      <h3>What changed this month</h3>
+      <p id="ai-text"></p>
+      <div class="ai-meta" id="ai-meta"></div>
+    </div>
 
     <div class="sec-head"><h2>2027 plan anchors</h2><span class="sub">Each should rise year over year (slide 36). Line = last 13 months.</span></div>
     <div class="anchors" id="anchors"></div>
@@ -181,6 +203,22 @@ table{border-collapse:collapse;width:100%}
     <div class="sec-head"><h2 id="p-title">Five pillars</h2><span class="sub">Growth, profitability, productivity, inventory and engagement (slide 32).</span></div>
     <nav class="ptabs" role="tablist" id="ptabs"></nav>
     <div id="pillar"></div>
+  </section>
+
+  <section class="block" aria-labelledby="ask-title">
+    <div class="sec-head"><h2 id="ask-title">Ask the data</h2><span class="sub">Answers come from the KPI tools, never free-form SQL. Each answer names the tool and filters it used.</span></div>
+    <div class="card ask">
+      <form id="ask-form" autocomplete="off">
+        <input id="ask-q" type="text" placeholder="e.g. What was revenue on eBay last month?" aria-label="Question about the data">
+        <button class="btn primary" id="ask-go" type="submit">Ask</button>
+      </form>
+      <div class="chips" aria-label="Example questions">
+        <button class="chip" type="button" data-q="What was revenue on eBay last month?">What was revenue on eBay last month?</button>
+        <button class="chip" type="button" data-q="Top categories by revenue last month">Top categories by revenue last month</button>
+        <button class="chip" type="button" data-q="Which stores sent the most items to e-commerce last month?">Which stores sent the most items to e-commerce last month?</button>
+      </div>
+      <div class="answer" id="ask-answer" hidden aria-live="polite"></div>
+    </div>
   </section>
 
   <section class="block" aria-labelledby="st-title">
@@ -467,6 +505,44 @@ async function loadCats() {
 }
 const chLabel = ch => (state.opts.channels.find(c => c.channel === ch) || {}).label || ch;
 
+/* ---------- AI: narrative + ask ---------- */
+async function post(path, body) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+  if (!r.ok) throw Object.assign(new Error((await r.json().catch(() => ({}))).detail || r.statusText), {status: r.status});
+  return r.json();
+}
+function aiBadges(r) {
+  const n = (r.checked_numbers || []).length, bad = (r.unmatched_numbers || []).length;
+  return `<span class="badge" title="${esc(r.fallback_reason || "")}">engine: ${esc(r.engine || "fallback")}</span>` +
+    (bad ? `<span class="pill p-warn">${bad} number${bad > 1 ? "s" : ""} not matched</span>`
+         : `<span class="badge" title="Every number in the text matched a computed value">numbers checked ✓ (${n})</span>`);
+}
+let briefSeq = 0;
+async function loadBrief() {
+  const seq = ++briefSeq, box = $("#ai-brief");
+  try {
+    const r = await post(`/api/ai/narrative/month?${qs({month: state.month, store: state.store, channel: state.channel})}`);
+    if (seq !== briefSeq) return;
+    if (!r.text) { box.hidden = true; return; }
+    $("#ai-text").textContent = r.text;
+    $("#ai-meta").innerHTML = aiBadges(r);
+    box.hidden = false;
+  } catch (e) { if (seq === briefSeq) box.hidden = true; }   // 503 / not built yet: no brief, no noise
+}
+async function ask(q) {
+  q = (q || "").trim(); if (!q) return;
+  const out = $("#ask-answer"), go = $("#ask-go");
+  $("#ask-q").value = q; go.disabled = true;
+  out.hidden = false; out.innerHTML = `<p class="sub">Working on it…</p>`;
+  try {
+    const r = await post("/api/ai/ask", {question: q, month: state.month});
+    const cites = (r.citations || []).map(c => `<div class="cite">tool: ${esc(c.tool)} · filters: ${esc(Object.entries(c.filters || {}).map(([k, v]) => `${k}=${v}`).join(", ") || "none")}</div>`).join("");
+    out.innerHTML = `<p>${esc(r.answer)}</p>${cites || `<div class="cite">No tool was called.</div>`}<div class="ai-meta">${aiBadges(r)}</div>`;
+  } catch (e) {
+    out.innerHTML = `<p class="sub">${e.status === 503 ? "Ask the data is not available until the harmonized data is built." : esc(e.message)}</p>`;
+  } finally { go.disabled = false; }
+}
+
 /* ---------- orchestration ---------- */
 function setBanner(msg, err) { const b = $("#banner"); b.hidden = !msg; b.textContent = msg || ""; b.className = "banner" + (err ? " err" : ""); }
 function syncNav() {
@@ -482,6 +558,7 @@ async function loadAll() {
   const partial = state.month === state.opts.months[0] && state.month !== state.opts.default_month;
   $("#subtitle").textContent = `${scope}${thru ? ` · data through ${thru}` : ""}${partial ? " · month in progress" : ""}`;
   setBanner("");
+  loadBrief();
   const side = Promise.allSettled([loadStores(), loadCats()]);
   try {
     const k = await api(`/api/dashboard/kpis?${qs({month: state.month, store: state.store, channel: state.channel})}`);
@@ -527,6 +604,8 @@ $("#f-channel").addEventListener("change", e => { state.channel = e.target.value
 $("#prev").addEventListener("click", () => { const ms = state.opts.months, i = ms.indexOf(state.month); if (i < ms.length - 1) { state.month = ms[i + 1]; $("#f-month").value = state.month; loadAll(); } });
 $("#next").addEventListener("click", () => { const ms = state.opts.months, i = ms.indexOf(state.month); if (i > 0) { state.month = ms[i - 1]; $("#f-month").value = state.month; loadAll(); } });
 $("#ptabs").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (b) { state.pillar = b.dataset.p; renderPillar(); } });
+$("#ask-form").addEventListener("submit", e => { e.preventDefault(); ask($("#ask-q").value); });
+document.querySelectorAll(".chip[data-q]").forEach(b => b.addEventListener("click", () => ask(b.dataset.q)));
 $("#by-revenue").addEventListener("click", () => { state.catBy = "revenue"; loadCats(); });
 $("#by-margin").addEventListener("click", () => { state.catBy = "margin"; loadCats(); });
 // redraw charts with the other theme's tokens when the theme flips

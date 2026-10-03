@@ -10,7 +10,7 @@
 # Goodwill shares the chart of accounts (question 6 for Amanda). Only these codes come from the deck (slide 38):
 #   GL 10009 (OSM / Pitney Bowes / EasyPost shipping, 1st Source acct 0101), GL 40356 + Dept 180 + Vendor V00122 (FedEx).
 
-version: "2026.10.03-1"
+version: "2026.10.03-2"           # -2 = Close v1.4 (revenue only on the AR invoice)
 timezone: America/New_York          # business_date for harmonized rows; bank / FedEx dates are already local dates
 posting_date: month_end             # every journal line is dated the last day of the close month
 doc_no_format: "ECOM-{yyyy}-{mm}-{suffix}"
@@ -27,14 +27,18 @@ accounts:
   marketplace_fees: {account_type: "G/L Account",  account_no: "6xxxx-FEES",    placeholder: true, label: "PLACEHOLDER marketplace & payment fees"}
   jewelry_revenue:  {account_type: "G/L Account",  account_no: "4xxxx-JEWELRY", placeholder: true, label: "PLACEHOLDER jewelry program revenue"}
 
-# One entry per marketplace. revenue / customer accounts are PLACEHOLDERS. Revenue lines carry store_id (store credit:
-# the originating store gets the sale, Debie's rule). The Customer line is the marketplace receivable = AR invoice.
+# One entry per marketplace. revenue / customer accounts are PLACEHOLDERS.
+# Close v1.4 (PM): revenue is booked ONCE, by the AR invoice (Dr customer / Cr revenue by store) = CloseRun.revenue.
+# Revenue lines carry store_id (store credit: the originating store gets the sale, Debie's rule). The channel journal
+# documents carry NO revenue: fees (Dr fees / Cr customer), refunds (Dr refunds contra / Cr customer) and payout
+# settlement (Dr Bank 0101 / Cr customer, bank lines whose description starts with payout_description).
+# Invariant: invoice total - fees - refunds - payouts = open customer balance (CloseRun.customer_balances()).
 channels:
-  shopgoodwill:  {label: ShopGoodwill,  doc_suffix: SGW,    revenue: "4xxxx-SGW",  customer: "CUST-SGW",  tool: upright}
-  ebay:          {label: eBay,          doc_suffix: EBAY,   revenue: "4xxxx-EBAY", customer: "CUST-EBAY", tool: both}
-  amazon:        {label: Amazon,        doc_suffix: AMAZON, revenue: "4xxxx-AMZ",  customer: "CUST-AMZ",  tool: cashmonkey}
-  goodwillfinds: {label: GoodwillFinds, doc_suffix: GWF,    revenue: "4xxxx-GWF",  customer: "CUST-GWF",  tool: upright}
-  goodwillbooks: {label: Goodwillbooks, doc_suffix: GWB,    revenue: "4xxxx-GWB",  customer: "CUST-GWB",  tool: cashmonkey}
+  shopgoodwill:  {label: ShopGoodwill,  doc_suffix: SGW,    revenue: "4xxxx-SGW",  customer: "CUST-SGW",  tool: upright,    payout_description: "SHOPGOODWILL REMIT"}
+  ebay:          {label: eBay,          doc_suffix: EBAY,   revenue: "4xxxx-EBAY", customer: "CUST-EBAY", tool: both,       payout_description: "EBAY PAYOUT"}
+  amazon:        {label: Amazon,        doc_suffix: AMAZON, revenue: "4xxxx-AMZ",  customer: "CUST-AMZ",  tool: cashmonkey, payout_description: "AMAZON SETTLEMENT"}
+  goodwillfinds: {label: GoodwillFinds, doc_suffix: GWF,    revenue: "4xxxx-GWF",  customer: "CUST-GWF",  tool: upright,    payout_description: "GOODWILLFINDS PAYOUT"}
+  goodwillbooks: {label: Goodwillbooks, doc_suffix: GWB,    revenue: "4xxxx-GWB",  customer: "CUST-GWB",  tool: cashmonkey, payout_description: "GOODWILLBOOKS PAYMENT"}
 
 # Exception owners (slide 41 workstream 5: every exception has an owner).
 owners:
@@ -97,7 +101,7 @@ rules:
     statement_tolerance: 1.00                    # $ difference statement vs detail before an exception
 
   # Slide 38 #1, #2, #8, #9: Cash Monkey / Upright exports, eBay listing sales report, Amazon payments summary.
-  # Detail-based revenue journal for the month (business_date in America/New_York).
+  # Detail-based for the month (business_date in America/New_York): invoice revenue + fee / refund / payout journal.
   - {id: revenue_ebay,          kind: channel_revenue, channel: ebay,          doc_suffix: EBAY,   source: harmonized.fct_orders, owner: revenue}
   - {id: revenue_amazon,        kind: channel_revenue, channel: amazon,        doc_suffix: AMAZON, source: harmonized.fct_orders, owner: revenue}
   - {id: revenue_goodwillfinds, kind: channel_revenue, channel: goodwillfinds, doc_suffix: GWF,    source: harmonized.fct_orders, owner: revenue}
@@ -117,11 +121,12 @@ rules:
 
   # Slide 38 #3: "Jewelry - Jewelry Report - Request report; Co-Pivot populates Supplier".
   # Enrich: blank Supplier is filled by SKU lookup against harmonized items / order lines (the Co-Pivot step).
-  # Rule: reclassify jewelry sales out of the channel revenue account into the jewelry revenue account, per store.
-  # Rows whose SKU cannot be matched are held out of the journal and raised as an exception (no store to credit).
+  # Rule: jewelry sales are invoiced to the jewelry revenue account per store instead of the channel revenue account
+  # (Close v1.4: this reshapes the AR invoice lines; there is no JEWELRY journal document). Rows whose SKU cannot be
+  # matched stay in channel revenue and raise an exception (no store to credit).
   - id: jewelry_reclass
     kind: jewelry_reclass
-    doc_suffix: JEWELRY
+    doc_suffix: JEWELRY                          # used only as an exception / source-total label
     source: jewelry_report
     owner: jewelry
     credit: jewelry_revenue

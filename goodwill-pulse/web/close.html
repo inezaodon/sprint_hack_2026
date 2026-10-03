@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>E-Commerce Month-End Close</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: the same operations console as the Daily Pulse. Sticky bar (month + close status), stage tracker,
+   then the evidence a controller needs in order: sources → control totals → journal → workbook check → approve. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18221f; --muted:#5b6762; --line:#d8dedb; --soft:#eaefec;
+  --accent:#0f6b62; --accent-soft:#dcefeb;
+  --ok:#23784a; --ok-soft:#e1f2e7; --warn:#9a5b00; --warn-soft:#fcefd9; --bad:#b0362c; --bad-soft:#fae3e0;
+  --display:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --body:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a; color-scheme:dark}
+
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);margin:0}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+@media (max-width:480px){.wrap,.bar-in{padding-inline:16px}}
+button,input,select{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand b{font:800 17px var(--display);letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--muted)}
+.links{display:flex;gap:14px;font-size:14px;font-weight:600}
+.links a{text-decoration:none;color:var(--muted)} .links a:hover{color:var(--ink)}
+select{font:500 14px var(--body);border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--body);padding:5px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)} .p-info{background:var(--accent-soft);color:var(--accent)}
+.p-muted{background:var(--soft);color:var(--muted)}
+
+section{padding-top:28px}
+.headline{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px;margin-bottom:16px}
+h1{font:800 clamp(1.5rem,3vw,2rem)/1.15 var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+h2{font:700 1.05rem var(--display);margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px}
+.sec-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;margin-bottom:12px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.tscroll{overflow-x:auto}
+.banner{margin-bottom:16px;padding:12px 16px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:14px}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* stage tracker: the six stages of slide 40, in order */
+ol.stages{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:900px){ol.stages{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){ol.stages{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:4px;min-width:0}
+.stage .n{font:600 11px var(--mono);letter-spacing:.08em;color:var(--muted)}
+.stage b{font:700 15px var(--display)}
+.stage small{color:var(--muted);font-size:12.5px;line-height:1.35}
+.stage.ok{border-top-color:var(--ok)} .stage.warn{border-top-color:var(--warn)} .stage.bad{border-top-color:var(--bad)}
+.stage .st{font:600 12px var(--body)}
+.stage.ok .st{color:var(--ok)} .stage.warn .st{color:var(--warn)} .stage.bad .st{color:var(--bad)}
+
+/* sources */
+.srcgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.srcgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.srcgrid{grid-template-columns:minmax(0,1fr)}}
+.src{display:grid;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);align-content:start}
+.src-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.src b{font-weight:700}
+.src small{color:var(--muted);font-size:12.5px}
+.src .meta{font:500 12px var(--mono);color:var(--muted)}
+
+table{border-collapse:collapse;width:100%}
+.list th,.list td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+.list th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);white-space:nowrap}
+.list td.r,.list th.r{text-align:right}
+.list td.r{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list tfoot td{border-bottom:0;border-top:2px solid var(--ink);font-weight:800}
+.list tr.hl td{background:var(--warn-soft)}
+.list tr.hl-bad td{background:var(--bad-soft)}
+.w-recon{min-width:900px} .w-lines{min-width:860px} .w-diff{min-width:880px} .w-exc{min-width:760px}
+.mono{font-family:var(--mono);font-size:12.5px}
+.clamp{max-width:340px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:13px}
+.muted{color:var(--muted)}
+.zero{color:var(--muted)}
+.nz{color:var(--bad);font-weight:600}
+.ph{font:600 10px var(--mono);letter-spacing:.06em;color:var(--warn);background:var(--warn-soft);padding:1px 5px;border-radius:4px;margin-left:6px;white-space:nowrap}
+
+details.doc{border-bottom:1px solid var(--line)}
+details.doc:last-child{border-bottom:0}
+details.doc summary{list-style:none;cursor:pointer;padding:12px 16px;display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr)) auto;gap:8px 16px;align-items:center}
+details.doc summary::-webkit-details-marker{display:none}
+details.doc summary .doc-no{font:600 14px var(--mono);word-break:break-all}
+details.doc summary .doc-no::before{content:"▸ ";color:var(--muted)}
+details.doc[open] summary .doc-no::before{content:"▾ "}
+details.doc summary .amt{font:500 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+details.doc summary .amt span{display:block;font:600 10px var(--mono);letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+@media (max-width:640px){details.doc summary{grid-template-columns:minmax(0,1fr) auto}details.doc summary .amt{display:none}}
+details.doc .tscroll{border-top:1px solid var(--line)}
+
+.kpis{display:flex;flex-wrap:wrap;gap:8px 24px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.kpi{display:grid}
+.kpi span{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font:600 18px var(--mono);font-variant-numeric:tabular-nums}
+
+.approve{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;padding:18px}
+@media (max-width:760px){.approve{grid-template-columns:minmax(0,1fr)}}
+.field{display:grid;gap:4px;font-size:13px;font-weight:600}
+.field input[type=text],.field textarea{font:14px var(--body);border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:var(--surface);color:var(--ink);width:100%}
+.field textarea{min-height:64px;resize:vertical}
+.check{display:flex;gap:8px;align-items:center;font-size:14px}
+.stack{display:grid;gap:12px;align-content:start}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;border-radius:6px;font-weight:600;font-size:14px;text-decoration:none;display:inline-flex;align-items:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:default;pointer-events:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(92vw,560px);z-index:10}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+@media (prefers-reduced-motion:no-preference){.card,.src,.stage{transition:border-color .2s}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>E-Commerce Month-End Close</b><span>Goodwill Michiana · SprintHack prototype · synthetic data</span></div>
+    <nav class="links" aria-label="Pages"><a href="/">Daily Pulse</a><a href="/dashboard">Dashboard</a></nav>
+    <label class="sub" for="month">Month</label>
+    <select id="month" aria-label="Close month"></select>
+    <span id="status" class="pill p-info">Loading</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <div class="headline">
+      <h1 id="title">Month-end close</h1>
+      <span class="sub" id="subtitle"></span>
+    </div>
+    <div id="banner" class="banner" hidden></div>
+    <ol class="stages" id="stages" aria-label="Close stages"></ol>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Sources</h2><span class="sub">The nine month-end inputs from today's process, and what the rules did with each.</span></div>
+    <div class="srcgrid" id="sources"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Control totals</h2><span class="sub">Source file → loaded → rules output → journal. Differences must be zero or explained.</span></div>
+    <div class="card tscroll">
+      <table class="list w-recon"><thead><tr><th>Source</th><th class="r">Rows</th><th class="r">File total</th><th class="r">Loaded</th><th class="r">Rules output</th><th class="r">Journal</th><th class="r">Difference</th><th>Status</th><th>Note</th></tr></thead>
+      <tbody id="recon-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Business Central journal</h2><span class="sub">General Journal batch GENERAL / ECOM. Open a document to see its lines.</span></div>
+    <div class="card">
+      <div class="kpis" id="journal-kpis"></div>
+      <div id="docs"></div>
+    </div>
+    <p class="note">Accounts tagged <span class="ph">PLACEHOLDER</span> are stand-ins until Goodwill confirms the chart of accounts. Only GL 10009, GL 40356, Dept 180, Vendor V00122 and bank 0101 come from today's process.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Parallel run against the workbook</h2><span class="sub" id="wb-sub"></span></div>
+    <div class="card tscroll">
+      <table class="list w-diff"><thead><tr><th>Document</th><th>Account</th><th>Store / Dept</th><th>Description</th><th class="r">System</th><th class="r">Workbook</th><th class="r">Difference</th><th>Explanation</th></tr></thead>
+      <tbody id="wb-body"></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>AR invoices</h2><span class="sub">One sales invoice per marketplace customer, as Excel and as a Business Central API payload.</span></div>
+    <div class="card tscroll">
+      <table class="list"><thead><tr><th>Customer</th><th>Invoice date</th><th class="r">Lines</th><th class="r">Amount</th><th>Ties out</th></tr></thead>
+      <tbody id="inv-body"></tbody></table>
+    </div>
+    <div id="bal-wrap" hidden>
+      <div class="sec-head" style="margin-top:20px"><h2>Customer balances</h2><span class="sub">Revenue is booked once, on the invoice. Per marketplace: invoice − fees − refunds − payouts = open balance.</span></div>
+      <div class="card tscroll">
+        <table class="list w-recon"><thead><tr><th>Customer</th><th class="r">AR invoice</th><th class="r">Fees</th><th class="r">Refunds</th><th class="r">Payouts</th><th class="r">Open balance</th><th class="r">Difference</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody id="bal-body"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Exceptions</h2><span class="sub">Every exception has an owner. Errors block approval.</span></div>
+    <div class="card tscroll">
+      <table class="list w-exc"><thead><tr><th>Severity</th><th>Source</th><th>What happened</th><th class="r">Amount</th><th>Owner</th></tr></thead>
+      <tbody id="exc-body"></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Approve and export</h2><span class="sub" id="approve-sub"></span></div>
+    <div class="card approve">
+      <form class="stack" id="approve-form">
+        <label class="field" for="approver">Approver<input type="text" id="approver" value="Controller" autocomplete="name"></label>
+        <label class="check" id="override-wrap" hidden><input type="checkbox" id="override"> Override open errors</label>
+        <label class="field" for="note" id="note-wrap" hidden>Override note (required)<textarea id="note" placeholder="Why it is safe to post with these errors open"></textarea></label>
+        <div class="btns"><button class="btn primary" id="approve-btn" type="submit">Approve close</button></div>
+      </form>
+      <div class="stack">
+        <div id="approval-state" class="sub"></div>
+        <div class="btns">
+          <a class="btn" id="dl-journal" aria-disabled="true">Journal (Excel)</a>
+          <a class="btn" id="dl-invoice" aria-disabled="true">AR invoice (Excel)</a>
+          <a class="btn" id="dl-invoice-json" aria-disabled="true">AR invoice (BC JSON)</a>
+          <a class="btn" id="dl-recon">Reconciliation report</a>
+        </div>
+        <span class="note" id="out-dir"></span>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money = v => v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(Number(v)).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const int = v => v == null ? "—" : Number(v).toLocaleString("en-US");
+const PILL = {ok: ["p-ok", "OK"], warn: ["p-warn", "Check"], bad: ["p-bad", "Blocked"]};
+let data = null, month = null;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { const d = body.detail; throw new Error(typeof d === "string" ? d : d?.message || r.statusText); }
+  return body;
+}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 5000); }
+const isPh = a => /x{4}|PLACEHOLDER|^CUST-/i.test(a || "");
+
+function renderStages(stages) {
+  $("#stages").innerHTML = stages.map((s, i) => `<li class="stage ${s.status}">
+    <span class="n">0${i + 1}</span><b>${esc(s.label)}</b>
+    <span class="st">${{ok: "Done", warn: "Needs review", bad: "Blocked"}[s.status] || s.status}</span>
+    <small>${esc(s.detail)}</small></li>`).join("");
+}
+
+function renderSources(sources) {
+  const P = {ok: ["p-ok", "Reconciled"], warning: ["p-warn", "Review"], error: ["p-bad", "Error"], missing: ["p-bad", "Missing"], not_tracked: ["p-muted", "Via orders"]};
+  $("#sources").innerHTML = sources.map(s => { const [c, l] = P[s.status] || ["p-info", s.status];
+    const meta = [s.rows != null ? `${int(s.rows)} rows` : "", s.file_total != null ? money(s.file_total) : "", s.documents.length ? s.documents.map(d => d.replace(/^ECOM-\d{4}-\d{2}-/, "")).join(", ") : ""].filter(Boolean).join(" · ");
+    return `<div class="src"><div class="src-top"><b>${esc(s.label)}</b><span class="pill ${c}">${l}</span></div>
+      <small>${esc(s.workflow)}</small>${meta ? `<span class="meta">${esc(meta)}</span>` : ""}
+      <small>${esc(s.detail)}${s.exceptions ? ` · ${s.exceptions} exception${s.exceptions > 1 ? "s" : ""}` : ""}</small></div>`; }).join("");
+}
+
+function diffCell(v) { return v == null ? '<td class="r zero">—</td>' : `<td class="r ${Math.abs(v) < 0.005 ? "zero" : "nz"}">${money(v)}</td>`; }
+function renderRecon(rows) {
+  const P = {ok: ["p-ok", "OK"], explained: ["p-warn", "Explained"], "break": ["p-bad", "Break"], missing: ["p-bad", "Missing"]};
+  $("#recon-body").innerHTML = rows.length ? rows.map(r => { const [c, l] = P[r.status] || ["p-info", r.status];
+    const diffs = [r.diff_file_loaded, r.diff_loaded_rules, r.diff_rules_journal].filter(v => v != null && Math.abs(v) >= 0.005);
+    return `<tr class="${r.status === "break" || r.status === "missing" ? "hl-bad" : ""}"><td class="mono">${esc(r.doc_no ? r.doc_no.replace(/^ECOM-\d{4}-\d{2}-/, "") : "")}<br><span class="muted">${esc(r.source)}</span></td><td class="r">${int(r.rows)}</td>
+      <td class="r">${money(r.file_total)}</td><td class="r">${money(r.loaded_total)}</td><td class="r">${money(r.rules_total)}</td><td class="r">${money(r.journal_total)}</td>
+      ${diffCell(diffs.length ? diffs[0] : (r.rules_total == null ? null : 0))}<td><span class="pill ${c}">${l}</span></td><td class="muted"><span class="clamp" title="${esc(r.note)}">${esc(r.note)}</span></td></tr>`; }).join("")
+    : `<tr><td colspan="9" class="empty">No source totals in this run.</td></tr>`;
+}
+
+function renderJournal(j) {
+  $("#journal-kpis").innerHTML = [["Documents", int(j.documents.length)], ["Lines", int(j.lines)], ["Debits", money(j.total_debit)], ["Credits", money(j.total_credit)]]
+    .map(([k, v]) => `<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("")
+    + `<div class="kpi"><span>Balance</span><b><span class="pill ${j.balanced ? "p-ok" : "p-bad"}">${j.balanced ? "Every document balances" : `${j.unbalanced_documents.length} unbalanced`}</span></b></div>`;
+  $("#docs").innerHTML = j.documents.length ? j.documents.map(d => `<details class="doc">
+    <summary><span class="doc-no">${esc(d.document_no)}</span>
+      <span class="amt"><span>Lines</span>${int(d.line_count)}</span><span class="amt"><span>Debit</span>${money(d.total_debit)}</span><span class="amt"><span>Credit</span>${money(d.total_credit)}</span>
+      <span class="pill ${d.balanced ? "p-ok" : "p-bad"}">${d.balanced ? "Balanced" : "Off " + money(d.difference)}</span></summary>
+    <div class="tscroll"><table class="list w-lines"><thead><tr><th class="r">Line</th><th>Account</th><th>Description</th><th>Dept</th><th>Store</th><th class="r">Debit</th><th class="r">Credit</th><th>Source ref</th></tr></thead><tbody>
+    ${d.lines.map(l => `<tr><td class="r">${l.line_no}</td><td class="mono">${esc(l.account_type)} ${esc(l.account_no)}${l.placeholder_account ? '<span class="ph">PLACEHOLDER</span>' : ""}</td>
+      <td>${esc(l.description)}</td><td class="mono">${esc(l.department_code)}</td><td class="mono">${esc(l.store_code)}</td>
+      <td class="r">${l.debit ? money(l.debit) : ""}</td><td class="r">${l.credit ? money(l.credit) : ""}</td><td class="mono muted">${esc(l.source_ref)}</td></tr>`).join("")}
+    </tbody><tfoot><tr><td></td><td colspan="4">Document total</td><td class="r">${money(d.total_debit)}</td><td class="r">${money(d.total_credit)}</td><td></td></tr></tfoot></table></div>
+  </details>`).join("") : `<div class="empty">No journal lines for this month.</div>`;
+}
+
+function renderWorkbook(c) {
+  if (c.status === "no_workbook") {
+    $("#wb-sub").textContent = c.message;
+    $("#wb-body").innerHTML = `<tr><td colspan="8" class="empty">No manual workbook to compare for this month.</td></tr>`;
+    return;
+  }
+  const n = c.differences.length;
+  $("#wb-sub").textContent = `${c.workbook || "Manual workbook"}: ${int(c.matches)} of ${int(c.system_lines)} system lines match` + (n ? `; ${n} difference${n > 1 ? "s" : ""} highlighted.` : ". No differences.");
+  $("#wb-body").innerHTML = n ? c.differences.map(d => `<tr class="hl"><td class="mono">${esc(d.doc_no)}${d.workbook_row ? `<br><span class="muted">workbook row ${d.workbook_row}</span>` : ""}</td>
+      <td class="mono">${esc(d.account_no)}${d.workbook_account_no && d.workbook_account_no !== d.account_no ? ` → ${esc(d.workbook_account_no)}` : ""}</td>
+      <td class="mono">${esc([d.store_id, d.department_code].filter(Boolean).join(" / "))}</td><td>${esc(d.description)}</td>
+      <td class="r">${money(d.system_amount)}</td><td class="r">${money(d.workbook_amount)}</td><td class="r nz">${money(d.difference)}</td><td>${esc(d.explanation)}</td></tr>`).join("")
+    : `<tr><td colspan="8" class="empty">Every journal line matches the workbook.</td></tr>`;
+}
+
+function renderInvoices(invs) {
+  $("#inv-body").innerHTML = invs.length ? invs.map(i => `<tr><td><b>${esc(i.customer_name)}</b> <span class="mono muted">${esc(i.customer_number)}</span>${i.placeholder ? '<span class="ph">PLACEHOLDER</span>' : ""}</td>
+    <td class="mono">${esc(i.invoice_date)}</td><td class="r">${int(i.lines)}</td><td class="r">${money(i.total)}</td>
+    <td><span class="pill ${i.ties_out ? "p-ok" : "p-bad"}">${i.ties_out ? "Ties out" : "Off " + money(i.total - i.expected_total)}</span></td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">No marketplace receivables in this month's journal.</td></tr>`;
+}
+
+function renderBalances(rows) {
+  $("#bal-wrap").hidden = !rows || !rows.length;
+  if (!rows || !rows.length) return;
+  $("#bal-body").innerHTML = rows.map(b => `<tr class="${b.status === "break" ? "hl-bad" : ""}"><td class="mono">${esc(b.customer_no)}<br><span class="muted">${esc(b.channel)}</span></td>
+    <td class="r">${money(b.invoice_total)}</td><td class="r">${money(b.fees)}</td><td class="r">${money(b.refunds)}</td><td class="r">${money(b.payouts)}</td>
+    <td class="r">${money(b.open_balance)}</td>${diffCell(b.difference)}<td><span class="pill ${b.status === "ok" ? "p-ok" : "p-bad"}">${b.status === "ok" ? "OK" : "Break"}</span></td>
+    <td class="muted"><span class="clamp" title="${esc(b.note)}">${esc(b.note)}</span></td></tr>`).join("");
+}
+
+function renderExceptions(list) {
+  const order = {error: 0, warning: 1, info: 2};
+  const rows = [...list].sort((a, b) => (order[a.severity] ?? 3) - (order[b.severity] ?? 3));
+  const P = {error: ["p-bad", "Error"], warning: ["p-warn", "Warning"], info: ["p-info", "Info"]};
+  $("#exc-body").innerHTML = rows.length ? rows.map(e => { const [c, l] = P[e.severity] || ["p-info", e.severity];
+    return `<tr class="${e.blocking ? "hl-bad" : ""}"><td><span class="pill ${c}">${l}</span></td><td class="mono">${esc(e.source)}</td>
+      <td>${esc(e.message)}</td><td class="r">${e.amount == null ? "" : money(e.amount)}</td><td>${esc(e.owner)}</td></tr>`; }).join("")
+    : `<tr><td colspan="5" class="empty">No exceptions.</td></tr>`;
+}
+
+function renderApproval(d) {
+  const a = d.approval, approved = a && a.approved;
+  const blocked = d.blocking_count > 0;
+  $("#override-wrap").hidden = !blocked || approved;
+  $("#note-wrap").hidden = !blocked || approved || !$("#override").checked;
+  $("#approve-btn").disabled = approved || (blocked && !($("#override").checked && $("#note").value.trim()));
+  $("#approve-btn").textContent = approved ? "Approved" : "Approve close";
+  $("#approve-sub").textContent = blocked && !approved ? `${d.blocking_count} open error${d.blocking_count > 1 ? "s" : ""} block approval. Resolve them, or override with a note.` : "Approval unlocks the Business Central files.";
+  $("#approval-state").innerHTML = approved
+    ? `<span class="pill ${a.override ? "p-warn" : "p-ok"}">${a.override ? "Approved with override" : "Approved"}</span> by ${esc(a.approver)} · ${new Date(a.approved_at).toLocaleString("en-US", {dateStyle: "medium", timeStyle: "short"})}${a.override ? `<br>Note: ${esc(a.note)}` : ""}`
+    : `<span class="pill p-warn">Not approved</span> Journal and invoice downloads unlock after approval.`;
+  const link = (id, kind, on) => { const el = $(id); el.href = `/api/close/export?month=${d.month}&kind=${kind}`; el.setAttribute("aria-disabled", on ? "false" : "true"); };
+  link("#dl-journal", "journal", approved); link("#dl-invoice", "invoice", approved); link("#dl-invoice-json", "invoice_json", approved); link("#dl-recon", "reconciliation", true);
+  $("#out-dir").textContent = `Files are also saved in data/out/close/${d.month}/ with the run record.`;
+}
+
+function render(d) {
+  data = d;
+  $("#title").textContent = `${d.label} close`;
+  $("#subtitle").textContent = `Rules version ${d.rules_version || "n/a"} · run ${new Date(d.generated_at).toLocaleString("en-US", {dateStyle: "medium", timeStyle: "short"})}`;
+  const bad = d.stages.filter(s => s.status === "bad").length, warn = d.stages.filter(s => s.status === "warn").length;
+  const st = $("#status");
+  if (d.approval?.approved) { st.className = "pill p-ok"; st.textContent = "Approved"; }
+  else if (d.blocking_count) { st.className = "pill p-bad"; st.textContent = `${d.blocking_count} blocking`; }
+  else { st.className = "pill p-warn"; st.textContent = "Ready to approve"; }
+  const banner = $("#banner");
+  const wbd = d.comparison.differences?.length || 0;
+  banner.hidden = !(bad || wbd);
+  banner.className = "banner" + (bad ? " bad" : "");
+  banner.textContent = [bad ? `${bad} stage${bad > 1 ? "s" : ""} blocked.` : "", wbd ? `The manual workbook differs from the system on ${wbd} line${wbd > 1 ? "s" : ""}; see the parallel run below.` : ""].filter(Boolean).join(" ");
+  renderStages(d.stages); renderSources(d.sources); renderRecon(d.control_totals); renderJournal(d.journal);
+  renderWorkbook(d.comparison); renderInvoices(d.invoices); renderBalances(d.customer_balances); renderExceptions(d.exceptions); renderApproval(d);
+}
+
+function showError(msg) {
+  $("#status").className = "pill p-bad"; $("#status").textContent = "Not ready";
+  $("#banner").hidden = false; $("#banner").className = "banner bad"; $("#banner").textContent = msg;
+  $("#recon-body").innerHTML = `<tr><td colspan="9" class="empty">${esc(msg)}</td></tr>`;
+}
+
+async function load(refresh) {
+  try { render(await api(`/api/close/run?month=${month}${refresh ? "&refresh=true" : ""}`)); }
+  catch (e) { showError(e.message); }
+}
+
+async function init() {
+  try {
+    const m = await api("/api/close/months");
+    $("#month").innerHTML = m.months.map(x => `<option value="${x.month}">${esc(x.label)}${x.complete ? "" : " (in progress)"}</option>`).join("");
+    month = m.default; $("#month").value = month;
+    await load();
+  } catch (e) { showError(e.message); }
+}
+
+$("#month").addEventListener("change", e => { month = e.target.value; load(); });
+$("#override").addEventListener("change", () => data && renderApproval(data));
+$("#note").addEventListener("input", () => data && renderApproval(data));
+$("#approve-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = $("#approve-btn"); btn.disabled = true;
+  try {
+    await api(`/api/close/approve?month=${month}`, {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({approver: $("#approver").value, override: $("#override").checked, note: $("#note").value})});
+    toast("Close approved. Journal and invoice files are ready.");
+    await load();
+  } catch (err) { toast(err.message); btn.disabled = false; }
+});
+init();
+</script>
+</body>
+</html>

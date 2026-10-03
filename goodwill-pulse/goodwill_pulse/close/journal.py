@@ -232,7 +232,7 @@ def build_journal(run, *, strict: bool = False) -> Journal:
                            "amount": None, "owner": "Accounting"})
     placeholders = sorted({l.account_no for l in (l for d in documents for l in d.lines) if l.placeholder_account})
     if placeholders:
-        issues.append({"source": "journal", "rule_id": "placeholder_accounts", "severity": "warning",
+        issues.append({"source": "journal", "rule_id": "placeholder_accounts", "severity": "info",
                        "message": ("Placeholder accounts until Goodwill confirms the chart of accounts: "
                                    + ", ".join(placeholders)),
                        "amount": None, "owner": "Accounting"})

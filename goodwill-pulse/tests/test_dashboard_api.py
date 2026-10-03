@@ -284,3 +284,19 @@ def test_real_kpi_module_on_tiny_db(tmp_path, monkeypatch):
     assert [p["month"] for p in s["points"]] == ["2026-08", "2026-09"]
     assert s["points"][1]["value"] == pytest.approx(240.0)
     assert c.get("/api/dashboard/options").json()["kpi_ready"] is True
+
+
+def test_page_has_ai_brief_hooks():
+    html = PAGE.read_text()
+    for needle in ('id="ai-brief"', "/api/ai/narrative/month?", "engine: ", "numbers checked ✓",
+                   "box.hidden = true"):                          # hides on 503 / any error
+        assert needle in html, needle
+
+
+def test_page_has_ask_the_data_hooks():
+    html = PAGE.read_text()
+    for needle in ('id="ask-form"', 'id="ask-q"', '"/api/ai/ask"', "question: q, month: state.month",
+                   "What was revenue on eBay last month?", "Top categories by revenue last month",
+                   "Which stores sent the most items to e-commerce last month?", "tool: ", "filters: "):
+        assert needle in html, needle
+    assert html.count('class="chip"') == 3

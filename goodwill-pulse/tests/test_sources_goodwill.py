@@ -48,14 +48,14 @@ except Exception:  # noqa: BLE001
 
 CATS = ["Jewelry", "Home Decor", "Toys & Games", "Clothing", "Watches"]
 CH = {  # channel: (tool, sku prefix, n orders, local tz used for its payout periods)
-    "shopgoodwill": ("upright", "UP", 40, PT),
+    "shopgoodwill": ("upright", "UP", 40, ET),
     "goodwillfinds": ("upright", "UP", 25, ET),
     "goodwillbooks": ("cashmonkey", "GWM", 25, ET),
 }
 # fixed edge-case timestamps (UTC): DST in Jan, Pacific/Eastern month-end split, period boundary 10/11
 EDGES = [datetime(2026, 1, 15, 17, 5, tzinfo=timezone.utc),
          datetime(2026, 10, 1, 5, 30, tzinfo=timezone.utc),      # Sep 30 22:30 PT, Oct 1 01:30 ET
-         datetime(2026, 9, 11, 6, 30, tzinfo=timezone.utc),      # Sep 10 23:30 PT (SGW period 1)
+         datetime(2026, 9, 11, 6, 30, tzinfo=timezone.utc),      # Sep 10 23:30 PT = Sep 11 ET (SGW period 2)
          datetime(2026, 3, 8, 6, 59, tzinfo=timezone.utc)]       # just before spring-forward in ET
 
 
@@ -64,7 +64,7 @@ def _period(ch: str, d: date) -> tuple[date, date, date]:
         s = d.replace(day=1 if d.day <= 10 else 11 if d.day <= 20 else 21)
         nxt = (d.replace(day=28) + timedelta(days=4)).replace(day=1)
         e = s + timedelta(days=9) if s.day < 21 else nxt - timedelta(days=1)
-        return s, e, e + timedelta(days=5)
+        return s, e, e + timedelta(days=2)
     if ch == "goodwillfinds":
         s = d - timedelta(days=d.weekday())
         return s, s + timedelta(days=6), s + timedelta(days=9)
@@ -141,7 +141,7 @@ def make_truth(path: Path, seed: int = 1) -> Path:
             g[1] += mfee + pfee
             refs = []
             if k % 4 == 0:      # full refund, two hours later
-                refs.append((paid + timedelta(hours=2), sub + ship + hand + tax))
+                refs.append((paid + timedelta(hours=2), sub + ship + hand))   # refunds exclude tax
             elif k % 4 == 1:    # partial refunds; a second one 20 days later (other period / month)
                 refs += [(paid + timedelta(hours=26), D(sub / 3)), (paid + timedelta(days=20), D(5))]
             for when, amt in refs:
@@ -223,6 +223,9 @@ def test_dirty_rows_documented_and_present(built):
     sgw, gf, gwb = (built[n][0] for n in ("shopgoodwill", "goodwillfinds", "goodwillbooks"))
     assert q(sgw, "SELECT count(*) FROM auctions WHERE SellerItemCode LIKE 'up-%'")[0][0] == 1
     assert q(sgw, "SELECT count(*) FROM sales WHERE BuyerID = 'TEST'")[0][0] == 1
+    # the TEST auction gets an ItemID above every real auction (incl. later unsold/open ones)
+    assert q(sgw, "SELECT max(ItemID) FROM auctions")[0][0] == q(
+        sgw, "SELECT ItemID FROM auctions WHERE SellerItemCode = 'UP-03-999999'")[0][0]
     assert q(gf, "SELECT count(*) FROM line_items WHERE vendor = 'Goodwil Michiana #07'")[0][0] == 1
     assert q(gwb, "SELECT count(*) FROM sales_order_lines WHERE store_code IS NULL")[0][0] == 1
     assert q(gwb, "SELECT count(*) FROM sales_orders WHERE customer_ref = 'TEST'")[0][0] == 1
@@ -262,12 +265,13 @@ def test_sgw_quirks(built):
     assert rel and all(r == ("Sold", "Unsold") for r in rel)
     assert {r[0] for r in q(sgw, "SELECT DISTINCT Status FROM auctions")} == {"Open", "Sold", "Unsold"}
     assert q(sgw, "SELECT count(*) FROM auctions WHERE Status='Sold' AND (HighBid < StartingBid OR NumBids < 1)")[0][0] == 0
-    # statements: period 1/2/3 boundaries; the Sep 10 23:30 PT sale is in period 1
+    # statements: period 1/2/3 boundaries; the Sep 10 23:30 PT sale (02:30 ET Sep 11) belongs to period 2
     st = q(sgw, "SELECT Period, day(PeriodStart), PeriodEnd, RemitDate FROM periodic_statements")
     for per, d0, end, remit in st:
         assert d0 == {1: 1, 2: 11, 3: 21}[per] and remit > end
-    p1 = q(sgw, "SELECT GrossSales FROM periodic_statements WHERE Year=2026 AND Month=9 AND Period=1")[0][0]
-    assert p1 > 0
+    assert q(sgw, "SELECT PaidDate FROM sales WHERE OrderID = 90000002")[0][0].day == 10
+    p2 = q(sgw, "SELECT GrossSales FROM periodic_statements WHERE Year=2026 AND Month=9 AND Period=2")[0][0]
+    assert p2 > 0
 
 
 def test_sgw_reconciles(built):
@@ -275,7 +279,7 @@ def test_sgw_reconciles(built):
     r = q(sgw, """SELECT count(DISTINCT OrderID), sum(HammerPrice), sum(ShippingCharged + Handling), sum(SalesTax),
                          sum(RefundAmount), count(*) FROM sales WHERE BuyerID <> 'TEST'""")[0]
     assert r == (tt["orders"], tt["subtotal"], tt["ship"], tt["tax"], tt["refunds"], tt["items"])
-    # statements equal the period's native activity (dates in Pacific), apart from multi-refund orders whose
+    # statements equal the period's native activity (ET business dates), apart from multi-refund orders whose
     # second refund is shown inline under the latest date: compare gross + fees exactly, refunds in total
     act = dict(((y, m, p), (g, c, pf)) for y, m, p, g, c, pf in q(sgw, """
         SELECT year(d), month(d), CASE WHEN day(d)<=10 THEN 1 WHEN day(d)<=20 THEN 2 ELSE 3 END,

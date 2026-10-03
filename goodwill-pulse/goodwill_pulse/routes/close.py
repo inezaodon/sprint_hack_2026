@@ -39,21 +39,17 @@ OUT_ROOT = OUT_DIR / "close"
 STAGES = [("acquire", "Acquire"), ("archive", "Archive"), ("enrich", "Enrich"), ("rules", "Apply rules"),
           ("output", "BC output"), ("reconcile", "Post + reconcile")]
 
-# The nine source workflows on slide 38, with the CloseRun `source` names (and journal doc suffixes) that feed them.
+# The nine source workflows on slide 38, and the journal documents (doc_no suffix) each one feeds.
 SOURCES = [
-    ("cashmonkey", "Cash Monkey", "Orders, full month", ["cashmonkey", "cash_monkey", "harmonized.fct_orders:amazon",
-                                                         "harmonized.fct_orders:goodwillbooks"]),
-    ("upright", "Upright", "Paid order items, full month", ["upright", "paid_order_items",
-                                                           "harmonized.fct_orders:goodwillfinds"]),
-    ("jewelry", "Jewelry", "Jewelry Report; Co-Pivot fills Supplier", ["jewelry_report", "jewelry"]),
-    ("postage", "OSM / Pitney Bowes / EasyPost", "Bank 0101 → GL 10009", ["bank_0101", "shipping", "postage"]),
-    ("fedex", "FedEx", "GL 40356 · Dept 180 · V00122, net BNKDEPOSIT refunds", ["fedex_invoices", "fedex"]),
-    ("shopgoodwill", "ShopGoodwill", "Period 1 periodic only; Period 3 all reports",
-     ["shopgoodwill", "sgw", "harmonized.fct_payouts+fct_orders"]),
-    ("goodwillbooks", "Goodwill Books", "Prior-month payment statement (PDF)", ["gwb_statement", "goodwillbooks",
-                                                                              "gwb"]),
-    ("ebay", "eBay", "Listing sales report", ["ebay"]),
-    ("amazon", "Amazon", "Payments summary", ["amazon"]),
+    ("cashmonkey", "Cash Monkey", "Orders export, full month (books: Amazon, eBay, Goodwillbooks)", ["AMAZON", "EBAY"]),
+    ("upright", "Upright", "Paid order items, full month (ShopGoodwill, eBay, GoodwillFinds)", ["GWF", "EBAY"]),
+    ("jewelry", "Jewelry", "Jewelry Report; Co-Pivot fills Supplier; reshapes the AR invoice lines", ["JEWELRY"]),
+    ("postage", "OSM / Pitney Bowes / EasyPost", "Bank 0101 → GL 10009", ["SHIPPING"]),
+    ("fedex", "FedEx", "GL 40356 · Dept 180 · V00122, net of BNKDEPOSIT refunds", ["FEDEX"]),
+    ("shopgoodwill", "ShopGoodwill", "Period 1 periodic only; Period 3 all reports", ["SGW"]),
+    ("goodwillbooks", "Goodwill Books", "Prior-month payment statement (PDF)", ["GWB"]),
+    ("ebay", "eBay", "Listing sales report", ["EBAY"]),
+    ("amazon", "Amazon", "Payments summary", ["AMAZON"]),
 ]
 
 _lock = threading.Lock()
@@ -77,6 +73,7 @@ class CloseView:
     generated_at: str
     approval: rec_mod.Approval | None = None
     files: dict[str, Path] = field(default_factory=dict)
+    balances: list = field(default_factory=list)          # Close v1.4 per-channel customer invariant
 
 
 # --- helpers ----------------------------------------------------------------------------------------------------
@@ -144,15 +141,50 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def _channels_cfg() -> dict:
+    try:
+        import yaml
+        return yaml.safe_load(RULES_PATH.read_text()).get("channels", {}) or {}
+    except Exception:
+        return {}
+
+
+def _revenue_accounts() -> set[str] | None:
+    try:
+        import yaml
+        cfg = yaml.safe_load(RULES_PATH.read_text())
+        return {str(c["revenue"]) for c in cfg.get("channels", {}).values() if c.get("revenue")} or None
+    except Exception:
+        return None
+
+
+def _invoice_revenue(invoices: list, month: date) -> dict:
+    """doc_no -> AR invoice revenue (revenue-account lines only) per channel, for the revenue control totals."""
+    cfg, rev_accts = _channels_cfg(), _revenue_accounts()
+    out = {}
+    for inv in invoices:
+        suffix = str(cfg.get(inv.channel, {}).get("doc_suffix") or inv.channel).upper()
+        out[f"ECOM-{month:%Y-%m}-{suffix}"] = sum((l.amount for l in inv.lines
+                                                   if not rev_accts or l.account_no in rev_accts),
+                                                  rec_mod.Decimal("0.00"))
+    return out
+
+
 def build_view(month: date, run) -> CloseView:
     """Everything after the rules engine: journal, invoices, reconciliation, workbook compare, files."""
     journal = build_journal(run)
-    invoices, inv_issues = inv_mod.build_invoices(journal)
+    invoices, inv_issues = inv_mod.build_invoices(journal, run, _channels_cfg())
+    balances = rec_mod.channel_balances(invoices, journal) if inv_mod.revenue_frame(run) is not None else []
     base_exc = [dict(e) for e in (run.exceptions or [])]
-    recon = rec_mod.reconcile(list(run.source_totals or []), journal, base_exc)
+    recon = rec_mod.reconcile(list(run.source_totals or []), journal, base_exc, _revenue_accounts(),
+                              _invoice_revenue(invoices, month) if balances else None,
+                              invoices if balances else None)
     comparison = wc_mod.compare_with_file(journal, wc_mod.workbook_path(CLOSE_INPUTS_DIR, month))
-    exceptions = (base_exc + journal.issues + inv_issues + rec_mod.recon_exceptions(recon)
-                  + wc_mod.comparison_exceptions(comparison))
+    run_rules = {e.get("rule_id") for e in base_exc}
+    j_issues = [e for e in journal.issues
+                if not (e["rule_id"] in run_rules or (e["rule_id"] == "journal_balance" and "balance_check" in run_rules))]
+    exceptions = (base_exc + j_issues + inv_issues + rec_mod.recon_exceptions(recon)
+                  + rec_mod.balance_exceptions(balances) + wc_mod.comparison_exceptions(comparison))
     seen, uniq = set(), []
     for e in exceptions:
         e.setdefault("status", "open")
@@ -161,7 +193,7 @@ def build_view(month: date, run) -> CloseView:
             seen.add(e["id"])
             uniq.append(e)
     out_dir = OUT_ROOT / f"{month:%Y-%m}"
-    view = CloseView(month, run, journal, invoices, recon, comparison, uniq, out_dir, _now())
+    view = CloseView(month, run, journal, invoices, recon, comparison, uniq, out_dir, _now(), balances=balances)
     _write_outputs(view)
     return view
 
@@ -171,11 +203,13 @@ def _write_outputs(v: CloseView) -> None:
     v.files["invoice"] = inv_mod.write_invoice_xlsx(v.journal, v.invoices, v.out_dir)
     v.files["invoice_json"] = inv_mod.write_invoice_json(v.journal, v.invoices, v.out_dir)
     v.files["reconciliation"] = rec_mod.write_reconciliation_xlsx(v.month, v.recon, v.journal, v.exceptions,
-                                                                  v.comparison, v.approval, v.out_dir)
+                                                                  v.comparison, v.approval, v.out_dir,
+                                                                  v.balances or None)
     record = {"month": f"{v.month:%Y-%m}", "generated_at": v.generated_at,
               "rules_version": v.journal.rules_version, "journal": v.journal.summary(),
               "invoices": [i.to_dict() for i in v.invoices],
               "reconciliation": [r.to_dict() for r in v.recon],
+              "customer_balances": [b.to_dict() for b in v.balances],
               "workbook_comparison": {k: v.comparison.get(k) for k in ("status", "matches", "workbook")}
               | {"differences": len(v.comparison.get("differences", []))},
               "exceptions": v.exceptions, "approval": v.approval.to_dict() if v.approval else None,
@@ -202,27 +236,34 @@ def get_view(month: date, refresh: bool = False) -> CloseView:
 
 
 # --- presentation -----------------------------------------------------------------------------------------------
-def _match_source(aliases: list[str], recon: list, journal: Journal) -> tuple[list, list]:
-    def hit(name: str) -> bool:
-        n = name.lower()
-        return any(a == n or n.endswith(":" + a) or a in n.split(".") or n.startswith(a + ":") or n == a
-                   for a in aliases) or n in aliases
-    return [r for r in recon if hit(r.source)], [d for d in journal.documents if hit(d.source)]
+def _suffix(doc_no: str) -> str:
+    return doc_no.rsplit("-", 1)[-1].upper() if doc_no else ""
+
+
+def _exceptions_for(v: CloseView, rows: list) -> list[dict]:
+    """Exceptions raised by the rules that produced these reconciliation rows."""
+    out = []
+    for e in v.exceptions:
+        src = str(e.get("source", ""))
+        msg = str(e.get("message", "")).lower()
+        for r in rows:
+            base, _, channel = r.source.partition(":")
+            if src == r.source or (src == base and (not channel or channel in msg)) or src == r.doc_no:
+                out.append(e)
+                break
+    return out
 
 
 def _sources(v: CloseView) -> list[dict]:
-    out, used = [], set()
-    for sid, label, workflow, aliases in SOURCES:
-        rows, docs = _match_source(aliases, v.recon, v.journal)
-        rows = [r for r in rows if r.source not in used] or rows
-        for r in rows:
-            used.add(r.source)
-        exc = [e for e in v.exceptions if str(e.get("source", "")).lower() in
-               {a for a in aliases} | {r.source.lower() for r in rows}]
-        if any(r.status == "missing" for r in rows) or any(e.get("rule_id") == "missing_source" for e in exc):
-            status, detail = "missing", "Not received for this month"
-        elif not rows and not docs:
-            status, detail = "not_tracked", "Covered by the harmonized orders; no separate file in this run"
+    out = []
+    for sid, label, workflow, suffixes in SOURCES:
+        rows = [r for r in v.recon if _suffix(r.doc_no) in suffixes or r.source.lower().startswith(sid)]
+        docs = [d for d in v.journal.documents if _suffix(d.document_no) in suffixes]
+        exc = [e for e in _exceptions_for(v, rows) if e.get("severity") != "info"]
+        if not rows and not docs:
+            status, detail = "missing", "No rule produced a document for this source"
+        elif any(r.status == "missing" for r in rows):
+            status, detail = "missing", next(r.note for r in rows if r.status == "missing")
         elif any(r.status == "break" for r in rows) or any(e.get("severity") == "error" for e in exc):
             status, detail = "error", "Received; a rule or total needs attention"
         elif any(r.status == "explained" for r in rows) or exc:
@@ -246,22 +287,25 @@ def _sum(vals):
 def _stages(v: CloseView, sources: list[dict]) -> list[dict]:
     exc = v.exceptions
     def worst(items):
-        sev = {str(e.get("severity")) for e in items if e.get("status", "open") == "open"}
+        sev = {str(e.get("severity")) for e in items if e.get("status", "open") == "open"}  # info never colors
         return "bad" if "error" in sev else "warn" if "warning" in sev else "ok"
     missing = [s["label"] for s in sources if s["status"] == "missing"]
-    enrich_exc = [e for e in exc if any(k in str(e.get("rule_id", "")) for k in ("enrich", "supplier", "copivot"))]
+    enrich_exc = [e for e in exc if any(k in str(e.get("rule_id", "")) for k in ("enrich", "supplier", "copivot"))
+                  or any(k in str(e.get("message", "")).lower() for k in ("supplier", "no store", "has no store"))]
     rule_exc = [e for e in exc if e.get("rule_id") not in ("journal_balance", "journal_posting_date",
                                                             "placeholder_accounts", "invoice_total",
                                                             "invoice_customer", "invoice_line_type",
-                                                            "reconciliation", "workbook_compare")
-                and e not in enrich_exc]
-    out_exc = [e for e in exc if str(e.get("rule_id", "")).startswith(("journal_", "invoice_", "placeholder"))]
-    rec_breaks = [r for r in v.recon if r.status == "break"]
+                                                            "reconciliation", "workbook_compare", "balance_check",
+                                                            "channel_invariant")
+                and e not in enrich_exc and e.get("severity") != "info"]
+    out_exc = [e for e in exc if str(e.get("rule_id", "")).startswith(("journal_", "invoice_", "balance_check"))
+               and e.get("severity") != "info"]
+    rec_breaks = [r for r in v.recon if r.status == "break"] + [b for b in v.balances if b.status == "break"]
     approved = bool(v.approval and v.approval.approved)
     stages = {
         "acquire": ("bad" if missing else "ok",
                     f"Missing: {', '.join(missing)}" if missing else
-                    f"{sum(1 for s in sources if s['status'] != 'not_tracked')} source files in, "
+                    f"{sum(1 for s in sources if s['status'] != 'missing')} of {len(sources)} sources in, "
                     f"{len(v.recon)} source totals"),
         "archive": ("ok", f"Run stored with inputs, rule version {v.journal.rules_version or 'n/a'} and outputs "
                           f"in data/out/close/{v.month:%Y-%m}"),
@@ -290,6 +334,7 @@ def view_json(v: CloseView) -> dict:
         "stages": _stages(v, sources),
         "sources": sources,
         "control_totals": [r.to_dict() for r in v.recon],
+        "customer_balances": [b.to_dict() for b in v.balances],
         "journal": v.journal.summary() | {"documents": [d.to_dict() for d in v.journal.documents]},
         "invoices": [i.to_dict() for i in v.invoices],
         "comparison": v.comparison,

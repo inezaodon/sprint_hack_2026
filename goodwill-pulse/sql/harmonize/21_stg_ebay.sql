@@ -50,8 +50,10 @@ SELECT 'ebay:' || transactionId AS refund_key, 'ebay' AS channel, orderId AS mar
 FROM stg_ebay_txn WHERE transactionType = 'REFUND';
 
 -- Fees: final value fees on SALE transactions (per order) + NON_SALE_CHARGE (account-level: promoted listings,
--- store subscription) whose amount is the charge. SHIPPING_LABEL is postage cost, not a marketplace fee, and is
--- deliberately excluded (fee_type has no shipping value; see report: contract change request).
+-- store subscription) whose amount is the charge + SHIPPING_LABEL (postage bought through eBay; contract v1.2:
+-- fee_type 'shipping_label', positive = cost, order_key set when the label belongs to an order).
+-- Shipping labels are a cost of fulfilment, not a marketplace fee, so they are NOT part of
+-- fct_orders.marketplace_fees (that stays = marketplace + payment fees); margin KPIs read them from fct_fees.
 CREATE OR REPLACE TEMP TABLE stg_ebay_fees AS
 SELECT * FROM (
     SELECT 'ebay:' || transactionId AS fee_key, 'ebay' AS channel, orderId AS marketplace_order_id,
@@ -61,6 +63,11 @@ SELECT * FROM (
     SELECT 'ebay:' || transactionId, 'ebay', orderId, 'other',
            CAST(abs(coalesce(amount_num,0)) + fee_num AS DECIMAL(12,2)), txn_at_utc
     FROM stg_ebay_txn WHERE transactionType = 'NON_SALE_CHARGE'
+    UNION ALL
+    -- a label is a DEBIT; eBay sends the amount unsigned (or negative), so abs() = cost
+    SELECT 'ebay:' || transactionId, 'ebay', orderId, 'shipping_label',
+           CAST(abs(coalesce(amount_num,0)) AS DECIMAL(12,2)), txn_at_utc
+    FROM stg_ebay_txn WHERE transactionType = 'SHIPPING_LABEL'
 ) WHERE amount <> 0;
 
 -- Payouts (daily). paid_on = payout date in Eastern (the bank's business day). Period = span of the
@@ -71,7 +78,8 @@ WITH t AS (
            min(et_date(txn_at_utc)) AS period_start, max(et_date(txn_at_utc)) AS period_end,
            sum(CASE WHEN transactionType = 'SALE' THEN coalesce(amount_num,0) + fee_num ELSE 0 END) AS gross,
            sum(CASE WHEN transactionType = 'SALE' THEN fee_num
-                    WHEN transactionType = 'NON_SALE_CHARGE' THEN abs(coalesce(amount_num,0)) + fee_num ELSE 0 END) AS fees,
+                    WHEN transactionType IN ('NON_SALE_CHARGE', 'SHIPPING_LABEL') THEN abs(coalesce(amount_num,0)) + fee_num
+                    ELSE 0 END) AS fees,   -- everything eBay deducts before paying out, labels included
            sum(CASE WHEN transactionType = 'REFUND' THEN abs(coalesce(amount_num,0)) ELSE 0 END) AS refunds
     FROM stg_ebay_txn WHERE payoutId IS NOT NULL GROUP BY 1
 )

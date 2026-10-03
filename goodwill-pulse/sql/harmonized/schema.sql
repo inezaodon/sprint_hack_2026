@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS fct_fees (
     fee_key           VARCHAR PRIMARY KEY,
     order_key         VARCHAR,                 -- null for account-level fees
     channel           VARCHAR,
-    fee_type          VARCHAR,                 -- final_value | commission | payment | referral | other
+    fee_type          VARCHAR,                 -- final_value | commission | payment | referral | shipping_label | other
     amount            DECIMAL(12,2),           -- positive = cost
     business_date     DATE
 );

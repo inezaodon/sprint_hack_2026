@@ -8,7 +8,8 @@ Native shape: sql/sources/shopgoodwill.sql
   * seller_fees: Commission per item (truth fee_alloc, or marketplace_fee prorated), PaymentProcessing per order
     on its first item
   * periodic_statements: Period 1 = days 1-10, 2 = 11-20, 3 = 21-EOM, amounts taken from truth payouts
-    (Commission = commission booked in the period, PaymentFees = remaining fees)
+    (Commission = commission booked in the period, PaymentFees = remaining fees). Periods follow the Eastern
+    business date (as truth does), so a sale at 23:30 PT on the 10th lands in Period 2 although PaidDate shows the 10th
 
 Run: .venv/bin/python -m goodwill_pulse.sources.shopgoodwill [--truth PATH] [--out PATH] [--seed N]
 
@@ -199,17 +200,22 @@ def _seller_fees(con) -> None:
         FROM f WHERE Amount > 0 ORDER BY OrderID, line_no, FeeType""")
 
 
+def _et_date(col: str) -> str:
+    """SQL: Pacific naive timestamp -> Eastern business date (truth payout periods use the ET business date)."""
+    return f"CAST(timezone('{ET}', timezone('{PT}', {col})) AS DATE)"
+
+
 def _period_activity_sql() -> str:
-    """Native activity per Pacific calendar date (gross = hammer + shipping + handling)."""
-    return """
+    """Native activity per Eastern business date (gross = hammer + shipping + handling)."""
+    return f"""
         WITH d AS (
-            SELECT CAST(PaidDate AS DATE) AS d, HammerPrice + ShippingCharged + Handling AS gross,
+            SELECT {_et_date('PaidDate')} AS d, HammerPrice + ShippingCharged + Handling AS gross,
                    0 AS commission, 0 AS payment, 0 AS refunds FROM sales
             UNION ALL
-            SELECT CAST(FeeDate AS DATE), 0, CASE WHEN FeeType='Commission' THEN Amount ELSE 0 END,
+            SELECT {_et_date('FeeDate')}, 0, CASE WHEN FeeType='Commission' THEN Amount ELSE 0 END,
                    CASE WHEN FeeType='PaymentProcessing' THEN Amount ELSE 0 END, 0 FROM seller_fees
             UNION ALL
-            SELECT CAST(RefundDate AS DATE), 0, 0, 0, RefundAmount FROM sales WHERE Refunded)
+            SELECT {_et_date('RefundDate')}, 0, 0, 0, RefundAmount FROM sales WHERE Refunded)
         SELECT d, sum(gross) gross, sum(commission) commission, sum(payment) payment, sum(refunds) refunds
         FROM d GROUP BY d"""
 
@@ -230,7 +236,7 @@ def _statements(con) -> None:
             LEFT JOIN LATERAL (SELECT sum(commission) AS commission FROM sgw_daily
                                WHERE d BETWEEN p.period_start AND p.period_end) c ON true
             WHERE p.channel = '{CHANNEL}' ORDER BY p.period_start""")
-    else:   # no truth payouts: derive periods from native activity, remit 5 days after period end
+    else:   # no truth payouts: derive periods (ET business dates) from native activity, remit 2 days after end
         con.execute("""
             INSERT INTO periodic_statements
             WITH p AS (
@@ -240,7 +246,7 @@ def _statements(con) -> None:
             q AS (SELECT *, make_date(y, m, CASE per WHEN 1 THEN 1 WHEN 2 THEN 11 ELSE 21 END) AS ps FROM p)
             SELECT 5000 + row_number() OVER (ORDER BY ps), y, m, per, ps,
                    CASE per WHEN 3 THEN last_day(ps) ELSE ps + 9 END, g, c, pf, r, g - c - pf - r,
-                   CASE per WHEN 3 THEN last_day(ps) ELSE ps + 9 END + 5
+                   CASE per WHEN 3 THEN last_day(ps) ELSE ps + 9 END + 2
             FROM q ORDER BY ps""")
 
 
@@ -259,7 +265,8 @@ def _dirty_rows(con, seed: int) -> None:
         con.execute("UPDATE auctions SET SellerItemCode = lower(SellerItemCode) WHERE ItemID = ?", [row[0]])
         record_dirty(con, "auctions", row[0], "lowercase_sku", f"SellerItemCode '{row[1].lower()}' should be '{row[1]}'")
     # 3. test order: a fake auction bought by BuyerID 'TEST' (exclude both rows)
-    last = con.execute("SELECT max(PaidDate), max(ItemID), max(OrderID) FROM sales").fetchone()
+    last = con.execute("SELECT (SELECT max(PaidDate) FROM sales), (SELECT max(ItemID) FROM auctions), "
+                       "(SELECT max(OrderID) FROM sales)").fetchone()
     if last[0] is not None:
         item_id, order_id = (last[1] or 0) + 1, (last[2] or 0) + 1
         con.execute("INSERT INTO auctions VALUES (?, 'UP-03-999999', 'TEST LISTING - DO NOT BUY', 'Collectibles', "

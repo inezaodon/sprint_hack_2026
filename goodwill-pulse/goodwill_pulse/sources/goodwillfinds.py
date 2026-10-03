@@ -5,7 +5,7 @@ Native shape: sql/sources/goodwillfinds.sql
   * store only from line_items.vendor 'Goodwill Michiana #03'
   * product_type: canonical category with messy casing ('jewelry', 'Jewelry', 'JEWELRY'), seeded per row
   * total_shipping_price = shipping + handling; marketplace_fee = marketplace fee + payment fee (Shopify bundles them)
-  * financial_status: paid | refunded (refunds >= total) | partially_refunded
+  * financial_status: paid | refunded (refunds >= subtotal + shipping + handling; refunds exclude tax) | partially_refunded
   * payouts: truth weekly payouts verbatim (amount = net, charges_gross = gross)
 
 Run: .venv/bin/python -m goodwill_pulse.sources.goodwillfinds [--truth PATH] [--out PATH] [--seed N]
@@ -60,7 +60,7 @@ def _orders(con) -> None:
         INSERT INTO orders
         SELECT gf_id, gf_order_name, {iso_et('paid_at')},
                CASE WHEN coalesce(refund_total, 0) = 0 THEN 'paid'
-                    WHEN refund_total >= total THEN 'refunded' ELSE 'partially_refunded' END,
+                    WHEN refund_total >= subtotal + shipping_charged + handling THEN 'refunded' ELSE 'partially_refunded' END,
                coalesce(TRY_CAST(nullif(regexp_extract(native_buyer_ref, '(\\d+)', 1), '') AS BIGINT),
                         CAST(hash(coalesce(native_buyer_ref, buyer_id)) % 1000000000000 AS BIGINT)),
                left(md5(coalesce(native_buyer_ref, buyer_id)), 16), state,

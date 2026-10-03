@@ -5,7 +5,7 @@ Native shape: sql/sources/goodwillbooks.sql
   * order_date / refund_date are TEXT 'MM/DD/YYYY HH:MM' in Eastern wall time, no zone
   * store only from store_code '03' (2-digit text)
   * shipping_cents = shipping + handling; fee_cents = marketplace fee + payment fee
-  * status COMPLETE | REFUNDED (refunds >= total) | PARTIAL_REFUND; refund_cents = all refunds, refund_date = latest
+  * status COMPLETE | REFUNDED (refunds >= items + shipping; refunds exclude tax) | PARTIAL_REFUND; refund_cents = all refunds, refund_date = latest
   * monthly_statements: truth monthly payouts verbatim, paid the following month
   * inventory: one row per SKU (latest Goodwillbooks listing of the item)
 
@@ -51,7 +51,7 @@ def _orders(con) -> None:
                {cents('subtotal')}, {cents('shipping_charged + handling')}, {cents('tax')},
                {cents('marketplace_fee + payment_fee')}, {cents('total')},
                CASE WHEN coalesce(refund_total, 0) = 0 THEN 'COMPLETE'
-                    WHEN refund_total >= total THEN 'REFUNDED' ELSE 'PARTIAL_REFUND' END,
+                    WHEN refund_total >= subtotal + shipping_charged + handling THEN 'REFUNDED' ELSE 'PARTIAL_REFUND' END,
                {cents('refund_total')}, {us_et('last_refund')}
         FROM gwb_o ORDER BY paid_at, marketplace_order_id""")
 

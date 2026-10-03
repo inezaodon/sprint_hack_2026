@@ -17,6 +17,9 @@ SEPT = date(2026, 9, 1)
 PD = date(2026, 9, 30)
 
 
+from goodwill_pulse.close.rules import REVENUE_COLUMNS  # noqa: E402
+
+
 @dataclass
 class FakeRun:
     month: date
@@ -24,6 +27,8 @@ class FakeRun:
     allocations: pd.DataFrame
     exceptions: list = field(default_factory=list)
     source_totals: list = field(default_factory=list)
+    # v1.4: per-channel revenue booked by the AR invoice (empty here = pre-v1.4 style run)
+    revenue: pd.DataFrame = field(default_factory=lambda: pd.DataFrame(columns=REVENUE_COLUMNS))
 
 
 def _row(doc, source, atype, acct, amount, desc, dept="", store="", rule="r", ph=False, ref="t:1"):
@@ -50,10 +55,13 @@ def fake_run(unbalanced: bool = False, exceptions=None) -> FakeRun:
              store="Store02", ph=True),
     ]
     totals = [
-        {"source": "fedex_invoices", "rows": 30, "file_total": 1234.56, "loaded_total": 1234.56,
-         "rules_total": 1234.56},
-        {"source": "bank_0101", "rows": 12, "file_total": 800.00, "loaded_total": 800.00, "rules_total": 800.00},
-        {"source": "ebay", "rows": 50, "file_total": 1000.00, "loaded_total": 1000.00, "rules_total": 1000.00},
+        {"source": "fedex_invoices", "doc_no": "ECOM-2026-09-FEDEX", "measure": "FedEx charges net of refunds",
+         "rows": 30, "file_total": 1192.46, "loaded_total": 1192.46, "rules_total": 1192.46},
+        {"source": "bank_0101", "doc_no": "ECOM-2026-09-SHIPPING", "measure": "postage paid from bank 0101",
+         "rows": 12, "file_total": 800.00, "loaded_total": 800.00, "rules_total": 800.00},
+        {"source": "harmonized.fct_orders:ebay", "doc_no": "ECOM-2026-09-EBAY",
+         "measure": "item revenue (order subtotal)", "rows": 50, "file_total": 1000.00, "loaded_total": 1000.00,
+         "rules_total": 1000.00},
     ]
     return FakeRun(SEPT, "test-1", pd.DataFrame(rows), list(exceptions or []), totals)
 
@@ -127,20 +135,26 @@ def test_invoice_json_shape(tmp_path):
 # --- reconciliation + approval ------------------------------------------------------------------------------------
 def test_reconciliation_diffs_and_status():
     run = fake_run()
-    run.source_totals[0]["loaded_total"] = 1200.00                       # 34.56 short, unexplained
+    run.source_totals[0]["loaded_total"] = 1158.00                       # 34.46 short, unexplained
     run.source_totals.append({"source": "jewelry_report", "rows": 0, "file_total": None, "loaded_total": None,
                               "rules_total": None})
     rows = {r.source: r for r in reconcile.reconcile(run.source_totals, build_journal(run))}
     assert rows["bank_0101"].status == "ok" and rows["bank_0101"].diff_rules_journal == 0
-    assert rows["ebay"].status == "ok" and rows["ebay"].journal_total == Decimal("1000.00")
+    eb = rows["harmonized.fct_orders:ebay"]
+    assert eb.status == "ok" and eb.journal_total == Decimal("1000.00")          # revenue credits, not debits
     f = rows["fedex_invoices"]
-    assert f.status == "break" and f.diff_file_loaded == Decimal("34.56")
+    assert f.journal_total == Decimal("1192.46")                                # vendor net, not gross debits
+    assert f.status == "break" and f.diff_file_loaded == Decimal("34.46")
     assert rows["jewelry_report"].status == "missing"
     # explained by an exception with the same amount
     exc = [{"source": "fedex_invoices", "rule_id": "x", "severity": "warning", "message": "late file",
-            "amount": 34.56}]
+            "amount": 34.46}]
     rows2 = {r.source: r for r in reconcile.reconcile(run.source_totals, build_journal(run), exc)}
     assert rows2["fedex_invoices"].status == "explained"
+    # explained by several exceptions that sum to the difference (e.g. held-out jewelry SKUs)
+    exc3 = [dict(exc[0], amount=30.00), dict(exc[0], amount=4.46, message="another")]
+    rows3 = {r.source: r for r in reconcile.reconcile(run.source_totals, build_journal(run), exc3)}
+    assert rows3["fedex_invoices"].status == "explained" and "2 exceptions" in rows3["fedex_invoices"].note
 
 
 def test_approval_gate():
@@ -187,6 +201,20 @@ def test_workbook_compare_finds_planted_transposition(tmp_path):
     assert d["system_amount"] == 1234.56 and d["workbook_amount"] == 1243.56 and d["difference"] == 9.0
     assert "Transposed" in d["explanation"] and "out of balance by 9.00" in d["explanation"]
     assert d["workbook_row"] == 3
+
+
+def test_workbook_compare_catches_rules_planted_error(tmp_path):
+    """Engineer 8's planted error moves an input AND its balancing line; we must report it once."""
+    rules = pytest.importorskip("goodwill_pulse.close.rules")
+    run = fake_run()
+    path = rules.write_manual_workbook(run, tmp_path)
+    res = workbook_compare.compare(run, path)
+    assert len(res["differences"]) == 1, res["differences"]
+    d = res["differences"][0]
+    assert d["doc_no"] == "ECOM-2026-09-FEDEX" and d["account_no"] == "40356" and d["system_amount"] == 1234.56
+    assert d["follow_on"]["account_no"] == "V00122"
+    assert "Transposed" in d["explanation"] and "still balances" in d["explanation"]
+    assert res["matches"] == len(run.allocations) - 2
 
 
 def test_workbook_compare_clean_and_coding_diff(tmp_path):
@@ -272,3 +300,91 @@ def test_api_503_when_not_ready(tmp_path, monkeypatch):
     r = c.get("/api/close/run?month=2026-09")
     assert r.status_code == 503 and "not available" in r.json()["detail"]
     assert c.get("/api/close/months").status_code == 503
+
+
+# --- Close v1.4: revenue only on the AR invoice --------------------------------------------------------------------
+def fake_run_v14(revenue_left_in_journal: bool = False) -> FakeRun:
+    """eBay doc carries only fees, refunds and the payout against CUST-EBAY; revenue comes in a per-channel table."""
+    run = fake_run()
+    a = run.allocations
+    a = a[a["doc_no"] != "ECOM-2026-09-EBAY"]
+    ebay = [
+        _row("ECOM-2026-09-EBAY", "ebay", "G/L Account", "6xxxx-FEES", 100.00, "eBay fees", ph=True),
+        _row("ECOM-2026-09-EBAY", "ebay", "G/L Account", "4xxxx-REFUNDS", 50.00, "eBay refunds", ph=True),
+        _row("ECOM-2026-09-EBAY", "ebay", "Bank Account", "0101", 700.00, "eBay payouts to 1st Source 0101"),
+        _row("ECOM-2026-09-EBAY", "ebay", "Customer", "CUST-EBAY", -850.00, "eBay settled", ph=True),
+    ]
+    if revenue_left_in_journal:
+        ebay += [_row("ECOM-2026-09-EBAY", "ebay", "G/L Account", "4xxxx-EBAY", -25.00, "stray revenue", ph=True),
+                 _row("ECOM-2026-09-EBAY", "ebay", "Customer", "CUST-EBAY", 25.00, "stray receivable", ph=True)]
+    run.allocations = pd.concat([a, pd.DataFrame(ebay)], ignore_index=True)
+    run.revenue = pd.DataFrame([
+        {"channel": "ebay", "customer_no": "CUST-EBAY", "account_no": "4xxxx-EBAY", "store_id": "Store01",
+         "description": "eBay sales Store01", "amount": 400.00, "placeholder_account": True},
+        {"channel": "ebay", "customer_no": "CUST-EBAY", "account_no": "4xxxx-EBAY", "store_id": "Store01",
+         "description": "eBay sales Store01 (books)", "amount": 200.00, "placeholder_account": True},
+        {"channel": "ebay", "customer_no": "CUST-EBAY", "account_no": "4xxxx-EBAY", "store_id": "Store02",
+         "description": "eBay sales Store02", "amount": 400.00, "placeholder_account": True},
+        {"channel": "ebay", "customer_no": "CUST-EBAY", "account_no": "4xxxx-SHIPINC", "store_id": None,
+         "description": "eBay shipping", "amount": 60.00, "placeholder_account": True},
+    ])
+    return run
+
+
+def test_v14_invoice_from_revenue_table(tmp_path):
+    run = fake_run_v14()
+    j = build_journal(run)
+    invs, issues = invoice.build_invoices(j, run, {"ebay": {"label": "eBay", "doc_suffix": "EBAY"}})
+    assert not issues and len(invs) == 1
+    inv = invs[0]
+    assert inv.customer_number == "CUST-EBAY" and inv.channel == "ebay" and inv.placeholder
+    assert inv.total == Decimal("1060.00")
+    by = {(l.account_no, l.store_code): l.unit_price for l in inv.lines}
+    assert by == {("4xxxx-EBAY", "Store01"): Decimal("600.00"), ("4xxxx-EBAY", "Store02"): Decimal("400.00"),
+                  ("4xxxx-SHIPINC", ""): Decimal("60.00")}
+    p = invoice.invoices_json(j, invs)["salesInvoices"][0]
+    assert p["customerNumber"] == "CUST-EBAY" and len(p["salesInvoiceLines"]) == 3
+    assert all(l["lineType"] == "Account" and l["quantity"] == 1 for l in p["salesInvoiceLines"])
+    assert {"code": "STORE", "valueCode": "Store02"} in p["salesInvoiceLines"][1]["dimensionSetLines"]
+    # credit-signed revenue tables are accepted too
+    run.revenue["amount"] = -run.revenue["amount"]
+    assert invoice.build_invoices(j, run)[0][0].total == Decimal("1060.00")
+
+
+def test_v14_channel_invariant():
+    run = fake_run_v14()
+    j = build_journal(run)
+    invs, _ = invoice.build_invoices(j, run)
+    rows = {b.customer_no: b for b in reconcile.channel_balances(invs, j)}
+    b = rows["CUST-EBAY"]
+    assert (b.invoice_total, b.fees, b.refunds, b.payouts) == (Decimal("1060.00"), Decimal("100.00"),
+                                                               Decimal("50.00"), Decimal("700.00"))
+    assert b.open_balance == Decimal("210.00") and b.difference == 0 and b.status == "ok"
+    assert b.documents == ["ECOM-2026-09-EBAY"]
+    # revenue left in the channel doc breaks the invariant and becomes a blocking error
+    run2 = fake_run_v14(revenue_left_in_journal=True)
+    j2 = build_journal(run2)
+    b2 = {r.customer_no: r for r in reconcile.channel_balances(invoice.build_invoices(j2, run2)[0], j2)}["CUST-EBAY"]
+    assert b2.status == "break" and b2.difference == Decimal("-25.00") and "Close v1.4" in b2.note
+    assert reconcile.balance_exceptions([b2])[0]["severity"] == "error"
+
+
+def test_v14_revenue_control_uses_invoice():
+    run = fake_run_v14()
+    j = build_journal(run)
+    rows = {r.source: r for r in reconcile.reconcile(run.source_totals, j, None, {"4xxxx-EBAY"},
+                                                     {"ECOM-2026-09-EBAY": Decimal("1000.00")})}
+    assert rows["harmonized.fct_orders:ebay"].journal_total == Decimal("1000.00")
+    assert rows["harmonized.fct_orders:ebay"].status == "ok"
+
+
+def test_v14_api_reports_customer_balances(client):
+    client.state["run"] = fake_run_v14()
+    body = client.get("/api/close/run?month=2026-09").json()
+    bal = body["customer_balances"]
+    assert len(bal) == 1 and bal[0]["customer_no"] == "CUST-EBAY" and bal[0]["status"] == "ok"
+    assert bal[0]["open_balance"] == 210.0
+    assert body["invoices"][0]["total"] == 1060.0
+    assert client.post("/api/close/approve?month=2026-09", json={}).status_code == 200
+    assert client.get("/api/close/export?month=2026-09&kind=invoice_json").json()["salesInvoices"][0][
+        "customerNumber"] == "CUST-EBAY"

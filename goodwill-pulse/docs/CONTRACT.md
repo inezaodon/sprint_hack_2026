@@ -32,7 +32,7 @@ Each stage must also run alone: `python -m goodwill_pulse.gen.truth`, `python -m
 `python -m goodwill_pulse.harmonize`, `python -m goodwill_pulse.quality`.
 
 ## Rules of engagement
-- Work only inside `/Users/odon/Desktop/Hackathon/goodwill-pulse`. Never write or delete outside it.
+- Work only inside `/Users/odon/Desktop/Hackathon/goodwill-pulse`. Never write or delete outside it — temp/scratch files go in `data/_tmp/<your area>/` (not /tmp, not the session scratchpad); pytest `tmp_path` is fine.
 - Python: `.venv/bin/python` (3.12). Installed: pandas, numpy, duckdb, fastapi, httpx, openpyxl, pyyaml, anthropic, pytest.
   **Do not pip install.** Need a package? Say so in your report and work around it.
 - Only edit files you own (table below). Shared files (`api.py`, `web/index.html`, `db.py`, `config.py`, this doc,
@@ -88,10 +88,10 @@ All timestamps TIMESTAMPTZ (UTC). Money DECIMAL(12,2). Tables:
 | `items` | item_id (= SKU: `UP-<2-digit store>-<6 digits>` for general merch, `GWM-<store>-<6 digits>` for books), store_id, line_of_business (general_merch/books), category (canonical: Jewelry, Collectibles, Electronics, Clothing, Shoes, Home Decor, Toys & Games, Art, Watches, Books), title, isbn (books), identified_at, flagged_by (ai/person), manifest_id, manifested_at, posted_at (null = backlog), poster_id, list_minutes |
 | `listings` | listing_id (globally unique text), item_id, channel (shopgoodwill/ebay/amazon/goodwillfinds/goodwillbooks), tool (upright/cashmonkey), native_listing_id (SGW ItemID / eBay legacyItemId / GF product id / Amazon & GWB = sku), listed_at, ended_at (null = active), status (active/sold/unsold), price, relist_of (listing_id) |
 | `buyers` | buyer_id, channel, native_buyer_ref (eBay username / SGW BuyerID / Amazon relay email / GF customer id / GWB customer_ref), state |
-| `orders` | order_id (truth id), channel, tool, marketplace_order_id (native format: SGW numeric, eBay '12-34567-89012', Amazon '113-…', GF numeric id + name '#GF…', GWB 'GWB123456'), upright_order_id (Upright orders only), buyer_id, paid_at, item_count, subtotal, shipping_charged, handling (Upright: $3/item; else 0), tax, marketplace_fee, payment_fee, shipping_label_cost, total, payment_type |
+| `orders` | order_id (truth id), channel, tool, marketplace_order_id (native format: SGW numeric, eBay 'NN-NNNNN-NNNNN', Amazon '113-…', GF numeric id + name '#GF…', GWB 'GWB123456'), upright_order_id (Upright orders only), buyer_id, paid_at, item_count, subtotal, shipping_charged, handling (Upright: $3/item; else 0), tax, marketplace_fee, payment_fee, shipping_label_cost, total, payment_type |
 | `order_lines` | order_id, line_no, item_id, listing_id, quantity (1), sale_price, fee_alloc |
 | `refunds` | refund_id, order_id, refunded_at, amount, reason (≈2–3% of orders; some cross midnight / month end) |
-| `payouts` | payout_id, channel, period_start, period_end, paid_on, gross, fees, refunds, net (eBay daily, Amazon every 14 days, SGW per period 1/2/3, GF weekly, GWB monthly paid next month) |
+| `payouts` | payout_id, channel, period_start, period_end (Eastern business dates), paid_on, gross, fees, refunds, net (eBay daily, Amazon every 14 days, SGW per period 1/2/3, GF weekly, GWB monthly paid next month) |
 | `shipping_charges` | charge_id, carrier (fedex/osm/pitney_bowes/easypost), order_id, charged_at, amount (positive charge, negative refund/adjustment), tracking |
 | `labor` | employee_id, work_date, hours (timeclock) |
 | `productivity` | employee_id, work_date, accepted, rejected, photographed, posted |
@@ -139,8 +139,7 @@ def connect_harmonized(path=None) -> duckdb.DuckDBPyConnection   # read_only
 ```
 `con` is a connection to harmonized.duckdb. Missing data → `None`, never 0.
 Adopted (v1.1): `pct` values are fractions (0.52, not 52); cards carry `scorecard_row`; `series(..., end=month)` is supported.
-Open: shipping label cost is not in the harmonized model yet (only eBay SHIPPING_LABEL and finance carrier charges carry it);
-net/gross margin exclude it until the PM adds it.
+Shipping label cost: `fct_fees.fee_type = 'shipping_label'` (v1.2; eBay SHIPPING_LABEL transactions). Margins read it from there.
 
 ## 5. Month-end close (Engineers 8 → 9)
 
@@ -170,3 +169,17 @@ Narratives are number-checked: every number in generated text must match the fac
 Each `goodwill_pulse/routes/<x>.py` defines `router = APIRouter(prefix="/api/<x>")`. Pages: `web/<x>.html` served at `/<x>`
 (full standalone HTML documents with their own `<!doctype html>`; same visual language as `web/index.html`: read its
 CSS tokens and copy them; Chart.js from cdnjs only).
+
+AI endpoints (v1.3, Engineer 10): `POST /api/ai/narrative/pulse?d=`, `POST /api/ai/narrative/month?month=&store=&channel=`,
+`POST /api/ai/map-columns` (multipart `file` or JSON `{header, rows, filename}`), `POST /api/ai/ask {question, month?}`,
+`GET /api/ai/status`. Every response has `engine: claude|fallback`; narratives add `checked_numbers`, `unmatched_numbers`.
+`api._db()` and `api._lock` are stable accessors for the warehouse connection.
+
+Close v1.4 (PM decision, Sat 5 PM):
+- **Revenue is booked once, by the AR invoice** (Dr marketplace customer / Cr revenue by store). Channel journal documents
+  (SGW, EBAY, AMAZON, GWF, GWB, JEWELRY) carry NO revenue lines: only fees (Dr fee expense / Cr customer), refunds
+  (Dr revenue-refunds contra / Cr customer) and payout settlement (Dr Bank 0101 / Cr customer). FEDEX and SHIPPING unchanged.
+  Invariant: per channel, invoice total − fees − refunds − payouts = open customer balance (reported in reconciliation).
+- `source_totals` rows carry `doc_no` and `measure`.
+- `rules.write_manual_workbook(close_run, out_dir, seed)` writes the manual workbook; its planted error changes the keyed
+  amount AND its balancing line; the comparison reports that as ONE difference.

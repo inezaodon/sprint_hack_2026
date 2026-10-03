@@ -58,6 +58,11 @@ class Order:
     shipping: float = 0.0
     tax_rate: float = 0.0
     payment_type: str = ""
+    # set when the order comes from the truth world (gen/truth.py); writers then use them as-is
+    tax_amount: float | None = None
+    handling: float | None = None
+    final_value_fee: float | None = None
+    payment_fee: float | None = None
 
     @property
     def item_count(self) -> int:

@@ -186,6 +186,7 @@ def compare_lines(journal: Journal, workbook_rows: list[dict]) -> dict:
         for w in w_rows:
             doc_diffs.append(_diff("extra_in_workbook", doc, None, w,
                                    "Line is in the workbook but the system has no matching line."))
+        doc_diffs = _fold_follow_on(doc_diffs)
         wb_total = sum((w["amount"] for w in wb_by_doc.get(doc, [])), Decimal("0.00"))
         if doc in wb_by_doc and wb_total != 0:
             for d in doc_diffs:
@@ -198,6 +199,32 @@ def compare_lines(journal: Journal, workbook_rows: list[dict]) -> dict:
     return {"matches": matches, "differences": differences, "documents": doc_summary,
             "system_lines": len(journal.lines), "workbook_lines": len(workbook_rows),
             "status": "match" if not differences else "differences"}
+
+
+BALANCING_TYPES = ("Vendor", "Customer", "Bank Account")
+
+
+def _fold_follow_on(diffs: list[dict]) -> list[dict]:
+    """A re-keyed input flows through the workbook's formulas into the document's balancing line (vendor / customer /
+    bank), so one keying error shows as two changed lines. Report it once, at the root cause, and attach the
+    balancing line as `follow_on`."""
+    inputs = [d for d in diffs if d["kind"] == "amount" and d["account_type"] not in BALANCING_TYPES]
+    out = []
+    for d in diffs:
+        root = None
+        if d["kind"] == "amount" and d["account_type"] in BALANCING_TYPES:
+            root = next((i for i in inputs if abs(i["difference"] + d["difference"]) < 0.005
+                         and "follow_on" not in i), None)
+        if root is None:
+            out.append(d)
+            continue
+        root["follow_on"] = {k: d[k] for k in ("account_type", "account_no", "description", "system_amount",
+                                                "workbook_amount", "difference", "workbook_row")}
+        root["explanation"] += (f" The workbook's balancing line ({d['account_type']} {d['account_no']}, row "
+                                f"{d['workbook_row']}) follows the wrong input: {d['workbook_amount']:,.2f} instead of "
+                                f"{d['system_amount']:,.2f}, so the document still balances and the error is "
+                                "invisible in the workbook.")
+    return out
 
 
 def _diff(kind: str, doc: str, s: dict | None, w: dict | None, explanation: str) -> dict:

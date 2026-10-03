@@ -249,7 +249,8 @@ class IdMaker:
 def load_truth_channel(con: duckdb.DuckDBPyConnection, channel: str) -> dict[str, list[dict]]:
     """Everything a marketplace builder needs for one channel, timestamps as naive UTC, sorted deterministically.
 
-    Keys: orders, lines, refunds, payouts, listings, labels_billed_by_carrier (set of order_ids), now (max timestamp).
+    Keys: orders, lines, refunds, payouts, listings, labels_billed_by_carrier (set of order_ids),
+    shipping_charges (rows for this channel's orders, any carrier), now (max paid_at, naive UTC).
     `lines` rows carry item fields (category, title, isbn) and the listing's native_listing_id.
     """
     q = lambda sql: fetch_dicts(con, sql, [channel])  # noqa: E731
@@ -283,6 +284,9 @@ def load_truth_channel(con: duckdb.DuckDBPyConnection, channel: str) -> dict[str
         WHERE li.channel = ? ORDER BY li.listed_at, li.listing_id""")
     carrier = {r["order_id"] for r in q("""
         SELECT DISTINCT s.order_id FROM shipping_charges s JOIN orders o USING (order_id) WHERE o.channel = ?""")}
+    charges = q("""
+        SELECT s.charge_id, s.order_id, s.carrier, timezone('UTC', s.charged_at) AS charged_at, s.amount, s.tracking
+        FROM shipping_charges s JOIN orders o USING (order_id) WHERE o.channel = ? ORDER BY s.charged_at, s.charge_id""")
     now = con.execute("SELECT timezone('UTC', max(paid_at)) FROM orders").fetchone()[0]
     return {"orders": orders, "lines": lines, "refunds": refunds, "payouts": payouts, "listings": listings,
-            "labels_billed_by_carrier": carrier, "now": now}
+            "labels_billed_by_carrier": carrier, "shipping_charges": charges, "now": now}

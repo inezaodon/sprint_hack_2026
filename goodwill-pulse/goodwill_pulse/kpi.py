@@ -43,12 +43,12 @@ WATCH_BAND_REL = 0.05                    # other KPIs: within 5 % of last year (
 
 PILLARS = ("growth", "profitability", "productivity", "inventory", "engagement")
 ANCHORS = ("net_margin", "revenue_per_labor_hour", "sell_through")
-# Slide 35 COO scorecard, 5 rows x 3 in reading order.
+# Slide 35 COO scorecard, 5 rows x 3 in reading order (first two cells per row exact; third inferred, cropped).
 SCORECARD = (
     "total_revenue", "revenue_growth_yoy", "net_margin",                         # Financial
-    "revenue_per_labor_hour", "listings_created", "listings_per_employee",       # Productivity
-    "sell_through", "days_donation_to_listing", "unlisted_backlog",              # Inventory
-    "unsold_pct", "avg_selling_price", "sales_per_employee",                     # Sales
+    "listings_created", "revenue_per_labor_hour", "listings_per_employee",       # Productivity
+    "days_donation_to_listing", "unlisted_backlog", "unsold_pct",                # Inventory
+    "avg_selling_price", "sell_through", "sales_per_employee",                   # Sales
     "top_categories_by_revenue", "top_categories_by_margin", "repeat_buyer_rate",  # Category + Customer
 )
 SCORECARD_ROWS = ("Financial", "Productivity", "Inventory", "Sales", "Category + Customer")
@@ -706,15 +706,25 @@ def buyers(ctx: _Ctx, start: date, end: date) -> dict:
     return {m: (None if v is None else float(v[0])) for m, v in _b_buyers(ctx, start, end).items()}
 
 
+def _history_known(ctx: _Ctx, m: date) -> bool:
+    """True when order history exists before month m (m is after the first month with orders). In the first
+    month every buyer looks 'new', which is unknowable, not a fact -> callers return None."""
+    cov = _cov_orders(ctx)
+    return bool(cov) and m > min(cov)
+
+
 def new_buyers(ctx: _Ctx, start: date, end: date) -> dict:
-    """New buyers: buyers whose first-ever order (in the harmonized history) is in the month."""
-    return {m: (None if v is None else float(v[2])) for m, v in _b_buyers(ctx, start, end).items()}
+    """New buyers: buyers whose first-ever order (in the harmonized history) is in the month. None in the first
+    month with orders (no history to tell new from returning)."""
+    return {m: (None if v is None or not _history_known(ctx, m) else float(v[2]))
+            for m, v in _b_buyers(ctx, start, end).items()}
 
 
 def repeat_buyer_rate(ctx: _Ctx, start: date, end: date) -> dict:
     """Repeat buyer rate: buyers in the month with any order before the 1st of the month ÷ buyers in the month.
-    Note: history starts 2025-09-01, so early months understate repeats."""
-    return {m: (None if v is None else _div(v[1], v[0])) for m, v in _b_buyers(ctx, start, end).items()}
+    None in the first month with orders (no prior history); early months after that still understate repeats."""
+    return {m: (None if v is None or not _history_known(ctx, m) else _div(v[1], v[0]))
+            for m, v in _b_buyers(ctx, start, end).items()}
 
 
 def refund_rate(ctx: _Ctx, start: date, end: date) -> dict:

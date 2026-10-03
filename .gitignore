@@ -1,1 +1,7 @@
 .DS_Store
+*.duckdb
+*.duckdb.wal
+__pycache__/
+goodwill-pulse/data/_tmp/
+.autocommit.log
+.autocommit-stop

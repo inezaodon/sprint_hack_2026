@@ -25,5 +25,6 @@ SELECT listing_key, channel, sku, store_id,
             ELSE coalesce(canon_category(master_category), canon_category(category_native)) END AS category,
        line_of_business, listed_at_utc, ended_at_utc, status, price, relist_of
 FROM r
+WHERE sku IS NULL OR sku NOT IN (SELECT sku FROM test_skus)   -- test items are not inventory (see 30_fct_orders)
 QUALIFY row_number() OVER (PARTITION BY listing_key ORDER BY listed_at_utc) = 1
 ORDER BY listing_key;

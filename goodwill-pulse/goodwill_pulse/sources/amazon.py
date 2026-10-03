@@ -16,7 +16,7 @@ Money rules (so the harmonizer can reconcile):
   item_tax = truth tax (allocated by price); order_total_amount = truth total.
   Order event: product_sales = item_price, shipping_credits = shipping_price, selling_fees = -marketplace_fee share,
   other_transaction_fees = -payment_fee share. Refund event: -amount split product first, then shipping.
-  Events are assigned to the settlement whose [start, end] contains the event's date in PAYOUT_TZ.
+  Events are assigned to the settlement whose [start, end] contains the event's ET business date (as truth does).
   Sum of non-Transfer events in a settlement == settlement total_amount. If truth has a residual the events do not
   explain, a balancing 'Service Fee' event is added and counted in build stats (`_residual_events`).
 """
@@ -31,14 +31,14 @@ from decimal import Decimal
 from pathlib import Path
 
 from ._common import (
-    PACIFIC, SOURCES_DIR, SQL_SOURCES_DIR, TRUTH_PATH, IdMaker, PeriodIndex, allocate, atomic_duckdb,
+    EASTERN, PACIFIC, SOURCES_DIR, SQL_SOURCES_DIR, TRUTH_PATH, IdMaker, PeriodIndex, allocate, atomic_duckdb,
     create_from_ddl, insert_rows, iso_utc, load_truth_channel, local_date, money, open_truth, pacific_amazon,
     pacific_text, record_dirty, table_counts, to_utc, UTC,
 )
 
 DDL = SQL_SOURCES_DIR / "amazon.sql"
 OUT_PATH = SOURCES_DIR / "amazon.duckdb"
-PAYOUT_TZ = UTC  # timezone used to decide which settlement period an event date falls in
+PAYOUT_TZ = EASTERN  # truth: payout periods are by business date (America/New_York)
 ZERO = Decimal("0.00")
 
 

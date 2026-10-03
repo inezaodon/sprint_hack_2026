@@ -11,6 +11,7 @@ CREATE OR REPLACE TEMP VIEW dq_native_lines AS
 SELECT 'amazon' AS source_db, i.amazon_order_id AS order_ref, i.seller_sku AS sku,
        CAST(i.item_price AS DECIMAL(12,2)) AS sale_price
 FROM amazon.order_items i
+WHERE NOT EXISTS (SELECT 1 FROM amazon.orders o WHERE o.amazon_order_id = i.amazon_order_id AND o.order_status = 'Canceled')
 UNION ALL
 SELECT 'ebay', l.orderId, l.sku, TRY_CAST(l.lineItemCost AS DECIMAL(12,2))
 FROM ebay.line_items l
@@ -30,7 +31,7 @@ WITH lc AS (SELECT source_db, order_ref, count(*) AS line_count, sum(sale_price)
 o AS (
     SELECT 'amazon' AS source_db, amazon_order_id AS order_ref, NULL::VARCHAR AS order_ref_alt,
            NULL::DECIMAL(12,2) AS header_subtotal
-    FROM amazon.orders
+    FROM amazon.orders WHERE coalesce(order_status, '') <> 'Canceled'   -- canceled = never revenue
     UNION ALL
     SELECT 'ebay', orderId, legacyOrderId, TRY_CAST(pricingSummary_priceSubtotal AS DECIMAL(12,2)) FROM ebay.orders
     UNION ALL

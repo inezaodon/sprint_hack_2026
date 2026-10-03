@@ -36,6 +36,7 @@ SELECT r.run_id, r.started_at, now(),
          'ops.monthly_inputs', (SELECT count(*) FROM ops.monthly_inputs),
          -- what staging dropped on purpose, so a reviewer can tell exclusions from losses
          'excluded.test_orders', (SELECT count(*) FROM stg_orders_all WHERE exclude_reason = 'test'),
+         'excluded.test_skus', (SELECT count(*) FROM test_skus),
          'excluded.canceled_orders', (SELECT count(*) FROM stg_orders_all WHERE exclude_reason = 'canceled'),
          'excluded.unparseable_paid_at', (SELECT count(*) FROM stg_orders_all WHERE exclude_reason IS NULL AND paid_at_utc IS NULL)
        ),

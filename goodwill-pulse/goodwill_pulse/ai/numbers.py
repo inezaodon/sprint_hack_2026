@@ -6,7 +6,8 @@ Rules
 - Numbers are read with their displayed precision: "$13.2K" means 13,200 ± 50, "18%" means 18 ± 0.5,
   "13,247.50" means 13,247.50 ± 0.005. A fact matches if it rounds to what the text shows.
 - Percent numbers also match fractional facts (0.183 -> "18%"). Signs are ignored ("down 16%" vs -16.2).
-- Dates and times inside the facts (ISO strings) contribute their year/month/day/hour/minute, so
+- Dates and times inside the facts (ISO strings) contribute their year/month/day/hour/minute, which only vouch
+  for numbers written as dates or times ("October 3", "2026", "10 PM"; not "9 weeks"), so
   "Saturday, October 3, 2026" or "as of 10 PM" pass when the facts say so.
 - Digits glued to letters (Store07, Q3, ISBNs inside words) are identifiers, not numbers, and are skipped.
 """
@@ -30,6 +31,15 @@ NUM_RE = re.compile(r"""
     (?![\w])                                           # ...nor followed by letters: 3rd, 2x, 10am
 """, re.VERBOSE)
 _ORDINAL_RE = re.compile(r"(?<![\w.])(\d+)(?:st|nd|rd|th)\b")
+_MONTH_WORD = (r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?")
+_BEFORE_DATE = re.compile(rf"(?:\b{_MONTH_WORD}|\d[-/:]|\bthe)\s*$", re.I)
+_AFTER_DATE = re.compile(rf"^(?:\s*(?:a\.?m\.?|p\.?m\.?)\b|[-/:]\d|,?\s*(?:19|20)\d\d\b|\s+{_MONTH_WORD}\b)", re.I)
+
+
+def _is_datey(text: str, start: int, end: int, raw: str, value: float) -> bool:
+    if re.fullmatch(r"(19|20)\d\d", raw):
+        return True
+    return bool(_BEFORE_DATE.search(text[max(0, start - 12):start]) or _AFTER_DATE.match(text[end:end + 12]))
 
 
 @dataclass
@@ -39,6 +49,7 @@ class Found:
     unit: float          # resolution implied by the displayed precision
     percent: bool
     start: int
+    datey: bool = False  # sits in a date/time context ("September 30", "2026", "10 PM", "2026-09-30")
 
 
 @dataclass
@@ -58,9 +69,11 @@ def extract_numbers(text: str) -> list[Found]:
         decimals = len(raw.split(".")[1]) if "." in raw else 0
         mult = _MULT[m.group("suf").strip().lower()] if m.group("suf") else 1.0
         value = float(raw) * mult
-        out.append(Found(m.group(0).strip(), value, (10 ** -decimals) * mult, bool(m.group("pct")), m.start()))
+        plain = not (m.group("cur") or m.group("suf") or m.group("pct") or "," in m.group("num"))
+        datey = plain and _is_datey(text, m.start(), m.end(), raw, value)
+        out.append(Found(m.group(0).strip(), value, (10 ** -decimals) * mult, bool(m.group("pct")), m.start(), datey))
     for m in _ORDINAL_RE.finditer(text):   # "the 3rd" -> 3 (dates written as ordinals)
-        out.append(Found(m.group(0), float(m.group(1)), 1.0, False, m.start()))
+        out.append(Found(m.group(0), float(m.group(1)), 1.0, False, m.start(), True))
     return sorted(out, key=lambda f: f.start)
 
 
@@ -97,6 +110,12 @@ def fact_values(facts: Any, path: str = "") -> Iterator[tuple[str, float]]:
         elif re.match(r"\d{4}-\d{2}-\d{2}", s):
             for v in _date_parts(s):
                 yield f"{path}(date)", float(v)
+        elif m := re.fullmatch(r"(\d{4})-(\d{2})", s):   # a month, "2026-09"
+            yield f"{path}(month)", float(m.group(1))
+            yield f"{path}(month)", float(m.group(2))
+        else:   # numbers written inside fact text, e.g. a label "Sell-through rate (30-day)"
+            for f in extract_numbers(s):
+                yield f"{path}(text)", f.value
     elif isinstance(facts, dict):
         for k, v in facts.items():
             yield from fact_values(v, f"{path}.{k}" if path else str(k))
@@ -117,7 +136,9 @@ def check_numbers(text: str, facts: Any) -> NumberCheck:
     values = list(fact_values(facts))
     res = NumberCheck(ok=True)
     for f in extract_numbers(text):
-        hit = next(((p, v) for p, v in values if _matches(f, v)), None)
+        # date/time parts only vouch for numbers written as dates or times: "9 weeks" is not "September"
+        hit = next(((p, v) for p, v in values if (f.datey or not p.endswith(("(date)", "(month)")))
+                    and _matches(f, v)), None)
         if hit:
             res.checked.append({"text": f.text, "value": f.value, "matched_path": hit[0], "fact_value": hit[1]})
         else:

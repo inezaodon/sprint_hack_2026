@@ -77,7 +77,7 @@ def fill_supplier(df: pd.DataFrame, lookup: dict[str, str], sku_col: str = "sku"
         else:
             stores.append(None)
             how.append("unmatched")
-    out["store_id"] = stores
+    out["store_id"] = pd.Series(stores, index=out.index, dtype=object)
     out["supplier_source"] = how
     return out
 

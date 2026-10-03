@@ -1,9 +1,12 @@
-"""AR sales invoices, one per marketplace customer, from the journal (replaces workbook step 06).
+"""AR sales invoices, one per marketplace customer (replaces workbook step 06).
 
-Which lines become an invoice: every journal document that has a `Customer` line is the receivable from that
-marketplace. The document's G/L Account lines become the invoice lines (credit = positive unit price, so revenue is
-positive and fees the marketplace withholds are negative). The invoice total must equal the customer line's debit;
-otherwise the invoice is flagged.
+Close v1.4 (docs/CONTRACT.md): revenue is booked ONLY by the AR invoice (Dr marketplace customer / Cr revenue by
+store). The channel journal documents carry only fees, refunds and payout settlement against that customer.
+So the invoice is built from the CloseRun's per-channel revenue table (`revenue_frame(run)`): one invoice per channel
+customer, one line per (revenue account, store).
+
+Fallback (pre-v1.4 runs with no revenue table): every journal document with a Customer debit is the receivable and its
+G/L lines become the invoice lines (`build_invoices_from_journal`).
 
 Customer numbers come from the close rules and are PLACEHOLDERS until Goodwill names the AR customers
 (PLAN question 7), so every output labels them.
@@ -59,6 +62,7 @@ class SalesInvoice:
     placeholder: bool
     expected_total: Decimal
     lines: list[InvoiceLine] = field(default_factory=list)
+    channel: str = ""
 
     @property
     def total(self) -> Decimal:
@@ -89,7 +93,7 @@ class SalesInvoice:
         }
 
     def to_dict(self) -> dict:
-        return {"customer_number": self.customer_number, "customer_name": self.customer_name,
+        return {"channel": self.channel, "customer_number": self.customer_number, "customer_name": self.customer_name,
                 "placeholder": self.placeholder, "note": PLACEHOLDER_NOTE if self.placeholder else "",
                 "invoice_date": self.invoice_date.isoformat(), "external_document_number":
                     self.external_document_number, "lines": len(self.lines), "total": float(self.total),
@@ -109,15 +113,131 @@ def _customer_name(line: JournalLine) -> str:
     return line.description.split(" ")[0] if line.description else line.account_no
 
 
-def build_invoices(journal: Journal) -> tuple[list[SalesInvoice], list[dict]]:
-    """Return (invoices, issues). One invoice per customer number, lines from every document carrying it."""
+# --- v1.4: invoices from the CloseRun revenue table ------------------------------------------------------------------
+REVENUE_ATTRS = ("revenue", "revenue_lines", "channel_revenue", "invoice_lines", "ar_revenue", "revenue_by_channel",
+                 "ar_invoice_lines", "invoices")
+COL_ALIASES = {
+    "channel": ["channel"],
+    "customer_no": ["customer_no", "customer_number", "customer_account", "customer", "account_customer"],
+    "account_no": ["account_no", "revenue_account", "gl_account", "revenue_account_no"],
+    "store_id": ["store_id", "store", "store_code"],
+    "amount": ["amount", "revenue", "net_sales", "sales", "line_amount"],
+    "description": ["description"],
+    "placeholder_account": ["placeholder_account", "placeholder"],
+    "source_ref": ["source_ref"],
+    "doc_no": ["doc_no", "document_no"],
+    "posting_date": ["posting_date", "invoice_date"],
+    "department_code": ["department_code", "department"],
+}
+
+
+def revenue_frame(run):
+    """The run's per-channel revenue table as a DataFrame with canonical columns, or None if the run has none."""
+    import pandas as pd
+    src = None
+    for name in REVENUE_ATTRS:
+        v = getattr(run, name, None)
+        if v is not None and not callable(v):
+            src = v
+            break
+    if src is None:
+        return None
+    df = src.copy() if isinstance(src, pd.DataFrame) else pd.DataFrame(list(src))
+    if df.empty:
+        return None                              # an empty table means "no revenue table": use the journal fallback
+    out = pd.DataFrame(index=df.index)
+    for canon, names in COL_ALIASES.items():
+        col = next((c for c in df.columns if str(c).lower() in names), None)
+        out[canon] = df[col] if col is not None else None
+    if out["amount"].isna().all():
+        raise ValueError(f"revenue table has no amount column (columns: {list(df.columns)})")
+    out["amount"] = out["amount"].astype(float)
+    if len(out) and (out["amount"] <= 0).all() and (out["amount"] < 0).any():
+        out["amount"] = -out["amount"]          # credit-signed revenue -> positive invoice amounts
+    return out
+
+
+def _s(v) -> str:
+    if v is None:
+        return ""
+    try:
+        if v != v:
+            return ""
+    except TypeError:
+        pass
+    return str(v)
+
+
+def build_invoices_from_revenue(rev, journal: Journal, channels: dict | None = None
+                                ) -> tuple[list[SalesInvoice], list[dict]]:
+    """One invoice per channel: lines by (revenue account, store). Customer number from the table, else the rules'
+    channel config, else the Customer account on the channel's journal document."""
+    channels = channels or {}
+    issues: list[dict] = []
+    invoices: list[SalesInvoice] = []
+    posting = journal.documents[0].posting_date if journal.documents else None
+    if posting is None:
+        from .journal import _month_end
+        posting = _month_end(journal.month)
+    for ch, g in rev.groupby(rev["channel"].fillna("").astype(str), sort=True):
+        cfg = channels.get(ch, {})
+        cust = next((_s(v) for v in g["customer_no"] if _s(v)), "") or _s(cfg.get("customer"))
+        if not cust:
+            suffix = _s(cfg.get("doc_suffix")).upper()
+            doc = next((d for d in journal.documents if suffix and d.document_no.upper().endswith("-" + suffix)), None)
+            cust = next((l.account_no for l in (doc.lines if doc else []) if l.account_type == "Customer"), "")
+        if not cust:
+            issues.append({"source": "ar_invoice", "rule_id": "invoice_customer", "severity": "error",
+                           "message": f"No customer number for channel '{ch}'; cannot build its AR invoice.",
+                           "amount": round(float(g["amount"].sum()), 2), "owner": "Accounting"})
+            continue
+        label = _s(cfg.get("label")) or CHANNEL_NAMES.get(ch.upper(), ch)
+        placeholder = ("PLACEHOLDER" in cust.upper() or cust.upper().startswith("CUST-")
+                       or bool(g["placeholder_account"].fillna(False).astype(bool).any()))
+        inv = SalesInvoice(customer_number=cust, customer_name=label, invoice_date=posting, posting_date=posting,
+                           external_document_number=f"AR-{journal.month:%Y-%m}-{_s(cfg.get('doc_suffix')) or ch.upper()}",
+                           placeholder=placeholder, expected_total=Decimal("0.00"), channel=ch)
+        keys = ["account_no", "store_id", "department_code"]
+        gg = g.assign(**{k: g[k].map(_s) for k in keys})
+        seq = 0
+        for (acct, store, dept), lines in gg.groupby(keys, sort=True):
+            amt = sum((Decimal(str(a)).quantize(Decimal("0.01")) for a in lines["amount"]), Decimal("0.00"))
+            if amt == 0:
+                continue
+            if not acct:
+                issues.append({"source": "ar_invoice", "rule_id": "invoice_line_account", "severity": "error",
+                               "message": f"{label}: {amt:,.2f} of revenue has no revenue account.",
+                               "amount": float(amt), "owner": "Accounting"})
+                continue
+            seq += 10000
+            desc = next((_s(d) for d in lines["description"] if _s(d)), "") if len(lines) == 1 else ""
+            desc = desc or f"{label} sales {journal.month:%B %Y}" + (f" - {store}" if store else "")
+            inv.lines.append(InvoiceLine(seq, acct, desc, Decimal("1"), amt, dept, store,
+                                         _s(lines["doc_no"].iloc[0]) or inv.external_document_number))
+        inv.expected_total = inv.total           # the control is the reconciliation invariant (reconcile.py)
+        if not inv.lines:
+            continue
+        invoices.append(inv)
+    return sorted(invoices, key=lambda i: i.customer_number), issues
+
+
+def build_invoices(journal: Journal, run=None, channels: dict | None = None) -> tuple[list[SalesInvoice], list[dict]]:
+    """v1.4: from the run's revenue table when it has one; otherwise from the journal (pre-v1.4 runs)."""
+    rev = revenue_frame(run) if run is not None else None
+    if rev is not None:
+        return build_invoices_from_revenue(rev, journal, channels)
+    return build_invoices_from_journal(journal)
+
+
+def build_invoices_from_journal(journal: Journal) -> tuple[list[SalesInvoice], list[dict]]:
+    """Pre-v1.4: one invoice per customer number, lines from every document carrying a Customer debit."""
     by_customer: dict[str, SalesInvoice] = {}
     issues: list[dict] = []
     seq: dict[str, int] = {}
     for doc in journal.documents:
         customers = [l for l in doc.lines if l.account_type == "Customer"]
-        if not customers:
-            continue
+        if not customers or sum((c.amount for c in customers), Decimal("0.00")) <= 0:
+            continue                    # v1.4 channel docs only credit the customer: no revenue to invoice here
         if len({c.account_no for c in customers}) > 1:
             issues.append({"source": doc.source, "rule_id": "invoice_customer", "severity": "error",
                            "message": f"{doc.document_no} has more than one customer; cannot build one invoice.",

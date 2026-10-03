@@ -49,6 +49,21 @@ SELECT r.* EXCLUDE (master_category),
 FROM r
 WHERE order_key IN (SELECT order_key FROM kept_orders);   -- lines of test / canceled / duplicate orders go too
 
+-- SKUs that only ever appear on TEST orders are test items (e.g. SGW 'UP-03-999999'): 35_fct_listings drops their
+-- listings/products/inventory rows on every channel, consistent with dropping the test orders themselves.
+CREATE OR REPLACE TEMP TABLE test_skus AS
+WITH lines_all AS (
+    SELECT channel, marketplace_order_id, sku FROM stg_amazon_lines
+    UNION ALL SELECT channel, marketplace_order_id, sku FROM stg_ebay_lines
+    UNION ALL SELECT channel, marketplace_order_id, sku FROM stg_shopgoodwill_lines
+    UNION ALL SELECT channel, marketplace_order_id, sku FROM stg_goodwillfinds_lines
+    UNION ALL SELECT channel, marketplace_order_id, sku FROM stg_goodwillbooks_lines
+)
+SELECT DISTINCT l.sku
+FROM lines_all l JOIN stg_orders_all o USING (channel, marketplace_order_id)
+WHERE o.exclude_reason = 'test' AND l.sku IS NOT NULL
+  AND l.sku NOT IN (SELECT sku FROM lines_resolved WHERE sku IS NOT NULL);
+
 CREATE OR REPLACE TEMP TABLE refunds_all AS
 SELECT * FROM stg_amazon_refunds
 UNION ALL BY NAME SELECT * FROM stg_ebay_refunds

@@ -12,11 +12,11 @@ Native quirks reproduced (see sql/sources/ebay.sql):
     into the buyer's shipping on eBay); pricingSummary_total = truth total; tax is collected & remitted by eBay
   * totalMarketplaceFee = truth marketplace_fee + payment_fee (managed payments: one fee line)
   * transactions: SALE (transactionId = orderId, CREDIT, amount = subtotal + delivery - fees),
-    REFUND (DEBIT, amount = refund), SHIPPING_LABEL (DEBIT, eBay-purchased label = truth shipping_label_cost, only
-    for orders whose label is NOT billed by an outside carrier in truth shipping_charges), NON_SALE_CHARGE (only to
+    REFUND (DEBIT, amount = refund), SHIPPING_LABEL (one per truth shipping_charges row with carrier 'ebay':
+    DEBIT for a charge, CREDIT for a label refund; other carriers are billed outside eBay), NON_SALE_CHARGE (only to
     balance a truth payout residual, counted in `_residual_events`)
   * daily payouts (truth payouts) to bankLast4 '0101'; every transaction carries the payoutId of the payout whose
-    period contains its date (PAYOUT_TZ); pending ones have payoutId NULL
+    period contains its ET business date (as truth does); pending ones have payoutId NULL
   * listings: a relist gets a NEW legacyItemId with relistParentId = previous legacyItemId
 """
 from __future__ import annotations
@@ -30,13 +30,13 @@ from decimal import Decimal
 from pathlib import Path
 
 from ._common import (
-    SOURCES_DIR, SQL_SOURCES_DIR, TRUTH_PATH, UTC, IdMaker, PeriodIndex, allocate, atomic_duckdb, create_from_ddl,
+    EASTERN, SOURCES_DIR, SQL_SOURCES_DIR, TRUTH_PATH, UTC, IdMaker, PeriodIndex, allocate, atomic_duckdb, create_from_ddl,
     insert_rows, iso_utc, load_truth_channel, local_date, money, money_text, open_truth, record_dirty, table_counts,
 )
 
 DDL = SQL_SOURCES_DIR / "ebay.sql"
 OUT_PATH = SOURCES_DIR / "ebay.duckdb"
-PAYOUT_TZ = UTC
+PAYOUT_TZ = EASTERN  # truth: payout periods are by business date (America/New_York)
 ZERO = Decimal("0.00")
 
 # canonical category -> eBay US leaf-ish category id
@@ -79,6 +79,7 @@ def build(truth_path: Path = TRUTH_PATH, out_path: Path = OUT_PATH, seed: int = 
     payout_for = lambda ts: pidx.find(local_date(ts, PAYOUT_TZ))  # noqa: E731
 
     orders, line_items, txns = [], [], []  # txns: (ts, sortkey, row)
+    mkt_of = {o["order_id"]: o["marketplace_order_id"] for o in t["orders"]}
     for o in t["orders"]:
         oid = o["marketplace_order_id"]
         lines = lines_by_order.get(o["order_id"], [])
@@ -113,22 +114,24 @@ def build(truth_path: Path = TRUTH_PATH, out_path: Path = OUT_PATH, seed: int = 
             "transactionId": oid, "orderId": oid, "transactionType": "SALE", "transactionDate": iso_utc(paid, True),
             "amount": sub + delivery - fee, "totalFeeAmount": fee, "bookingEntry": "CREDIT",
             "payoutId": payout_for(paid)}))
-        label = money(o["shipping_label_cost"])
-        if label > 0 and o["order_id"] not in t["labels_billed_by_carrier"]:
-            # label bought later the same (PAYOUT_TZ) day, so it lands in the same payout as the sale
-            day_end = datetime.combine(local_date(paid, PAYOUT_TZ) + timedelta(days=1), dtime(0), PAYOUT_TZ)
-            room = int((day_end - paid.replace(tzinfo=UTC)).total_seconds() * 1000) - 1
-            lts = paid + timedelta(milliseconds=rng.randint(0, max(0, min(room, 6 * 3600 * 1000))))
-            txns.append((lts, (oid, 1), {
-                "transactionId": ids.digits(12, "3"), "orderId": oid, "transactionType": "SHIPPING_LABEL",
-                "transactionDate": iso_utc(lts, True), "amount": label, "totalFeeAmount": ZERO,
-                "bookingEntry": "DEBIT", "payoutId": payout_for(lts)}))
         for j, r in enumerate(refs):
             rts = _ms(rng, r["refunded_at"])
             txns.append((rts, (oid, 2 + j), {
                 "transactionId": ids.digits(10, "5"), "orderId": oid, "transactionType": "REFUND",
                 "transactionDate": iso_utc(rts, True), "amount": money(r["amount"]), "totalFeeAmount": ZERO,
                 "bookingEntry": "DEBIT", "payoutId": payout_for(r["refunded_at"])}))
+
+    # ---- eBay-purchased labels: truth shipping_charges rows with carrier 'ebay' (deducted from eBay payouts)
+    for ch in t["shipping_charges"]:
+        if ch["carrier"] != "ebay":
+            continue  # fedex / osm / pitney_bowes / easypost are billed outside eBay (bank 0101)
+        amt = money(ch["amount"])
+        cts = _ms(rng, ch["charged_at"])
+        oid = mkt_of.get(ch["order_id"])
+        txns.append((cts, (oid or "", ch["charge_id"]), {
+            "transactionId": ids.digits(12, "3"), "orderId": oid, "transactionType": "SHIPPING_LABEL",
+            "transactionDate": iso_utc(cts, True), "amount": abs(amt), "totalFeeAmount": ZERO,
+            "bookingEntry": "DEBIT" if amt > 0 else "CREDIT", "payoutId": payout_for(ch["charged_at"])}))
 
     # ---- balance each payout against its transactions
     signed = defaultdict(lambda: ZERO)

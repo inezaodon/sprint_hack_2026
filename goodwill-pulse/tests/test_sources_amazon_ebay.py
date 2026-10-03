@@ -10,6 +10,7 @@ import re
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import duckdb
 import pytest
@@ -18,6 +19,8 @@ from goodwill_pulse.sources import amazon, ebay
 from goodwill_pulse.sources._common import allocate, iso_utc, money_text, pacific_amazon, pacific_text
 
 UTC = timezone.utc
+ET = ZoneInfo("America/New_York")
+et = lambda ts: ts.astimezone(ET).date()  # noqa: E731  business date, as truth defines payout periods
 D = Decimal
 
 try:  # prefer Engineer 1's DDL so the fixture tracks the real truth schema
@@ -121,18 +124,18 @@ def make_truth(path: Path, seed: int = 1) -> Path:
             lid = new_listing(iid, channel, tool, paid - timedelta(days=5), "sold", p, ended=paid)
             _ins(con, "order_lines", {"order_id": oid, "line_no": k + 1, "item_id": iid, "listing_id": lid,
                                       "quantity": 1, "sale_price": p, "fee_alloc": fees[k]})
-        labels = D("0.00")
-        if carrier:
-            _ins(con, "shipping_charges", {"charge_id": f"C{oid}", "carrier": "pitney_bowes", "order_id": oid,
-                                           "charged_at": paid + timedelta(hours=3), "amount": label, "tracking": "9400"})
-        elif channel == "ebay":
-            labels = label
-        ledger.append((channel, paid.date(), sub + ship + hand, mfee + pfee, D("0.00"), labels))
+        if channel == "ebay":  # eBay labels bought on eBay (carrier 'ebay') are deducted from the eBay payout
+            cat = paid + timedelta(hours=3)
+            _ins(con, "shipping_charges", {"charge_id": f"C{oid}", "carrier": "pitney_bowes" if carrier else "ebay",
+                                           "order_id": oid, "charged_at": cat, "amount": label, "tracking": "9400"})
+            if not carrier:
+                ledger.append((channel, et(cat), D("0.00"), D("0.00"), D("0.00"), label))
+        ledger.append((channel, et(paid), sub + ship + hand, mfee + pfee, D("0.00"), D("0.00")))
         if ref_amount is not None:
             rat = paid + timedelta(days=2, hours=5)
             _ins(con, "refunds", {"refund_id": f"R{oid}", "order_id": oid, "refunded_at": rat,
                                   "amount": ref_amount, "reason": "not as described"})
-            ledger.append((channel, rat.date(), D("0.00"), D("0.00"), ref_amount, D("0.00")))
+            ledger.append((channel, et(rat), D("0.00"), D("0.00"), ref_amount, D("0.00")))
         return oid
 
     for d in days:
@@ -271,18 +274,19 @@ def test_ebay_quirks(built):
     types = {r[0] for r in q(p, "SELECT DISTINCT transactionType FROM transactions")}
     assert {"SALE", "REFUND", "SHIPPING_LABEL"} <= types
     assert q(p, "SELECT count(*) FROM transactions WHERE transactionType <> 'NON_SALE_CHARGE' AND payoutId IS NULL "
-                "AND transactionDate BETWEEN '2026-09-01' AND '2026-10-03'")[0][0] == 0  # dates covered by fixture payouts
+                "AND transactionDate >= '2026-09-01T04:00' AND transactionDate < '2026-10-03T04:00'")[0][0] == 0  # ET days with payouts
     clean = [r[0] for r in q(p, "SELECT sku FROM line_items WHERE lineItemId NOT IN (SELECT native_key FROM _dirty_data)")]
     assert all(re.fullmatch(r"(UP|GWM)-\d{2}-\d{6}", s) for s in clean)
     assert any(s.startswith("UP-") for s in clean) and any(s.startswith("GWM-") for s in clean)
     chain = q(p, """SELECT c.listingStatus, p.listingStatus FROM listings c JOIN listings p
                     ON c.relistParentId = p.legacyItemId""")
     assert chain == [("ACTIVE", "ENDED")]
-    # orders whose label is billed by an outside carrier get no eBay SHIPPING_LABEL
+    # SHIPPING_LABEL rows = exactly the truth label charges bought on eBay; outside carriers are not on eBay
     t = built["truth"]
-    carrier_mkt = {r[0] for r in q(t, "SELECT o.marketplace_order_id FROM shipping_charges s JOIN orders o USING (order_id)")}
+    sql = "SELECT o.marketplace_order_id FROM shipping_charges s JOIN orders o USING (order_id) WHERE s.carrier {} 'ebay'"
+    on_ebay, outside = ({r[0] for r in q(t, sql.format(op))} for op in ("=", "<>"))
     labelled = {r[0] for r in q(p, "SELECT orderId FROM transactions WHERE transactionType='SHIPPING_LABEL'")}
-    assert carrier_mkt and not (carrier_mkt & labelled)
+    assert outside and labelled == on_ebay
     assert built["e_counts"]["_residual_events"] == 0
 
 

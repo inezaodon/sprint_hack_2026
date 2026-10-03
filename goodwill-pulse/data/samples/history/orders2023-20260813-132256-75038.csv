@@ -1,0 +1,54 @@
+Order Date,Order ID,Account,Channel,SKU,ASIN,Title,Condition,Source,Quantity,Item Price,Shipping Credit,Market Fees,Shipping Cost,Net Revenue,Buyer
+2026-08-12 00:47:49,113-0638333-9328201,276 - Goodwill Michiana,Amazon-MF,GWM-02-118006,0863253682,Beloved,Used - Like New,Store02,1,26.02,3.99,6.09,3.36,20.56,2b83e4804019bc@marketplace.amazon.com
+2026-08-12 00:47:49,113-0638333-9328201,276 - Goodwill Michiana,Amazon-MF,GWM-02-117263,0283278245,Dune,Used - Good,Store02,1,16.77,3.99,3.93,3.36,13.47,2b83e4804019bc@marketplace.amazon.com
+2026-08-12 00:51:44,12-81728-01509,276 - Goodwill Michiana,eBay,GWM-02-114005,0356810242,Man's Search for Meaning,Used - Like New,Store02,1,16.49,3.99,3.01,3.49,13.98,treasure_29481
+2026-08-12 01:12:21,113-0638395-6115085,276 - Goodwill Michiana,Amazon-MF,GWM-03-112295,0542519996,The Silent Patient,Used - Like New,Store03,1,3.99,3.99,2.40,3.88,1.70,2e4c52de408a9e@marketplace.amazon.com
+2026-08-12 02:03:03,113-0638476-7294865,276 - Goodwill Michiana,Amazon-MF,GWM-11-124751,0428743205,Lessons in Chemistry,Used - Acceptable,Store11,1,3.99,3.99,2.40,4.06,1.52,b0a89f7ed01fd3@marketplace.amazon.com
+2026-08-12 03:32:47,113-0638496-9453643,276 - Goodwill Michiana,Amazon-MF,GWM-06-111274,0235841112,The Great Gatsby,Used - Acceptable,Store06,1,5.27,3.99,2.59,4.25,2.42,a78fe85aa01079@marketplace.amazon.com
+2026-08-12 03:44:57,113-0638557-3761477,276 - Goodwill Michiana,Amazon-MF,GWM-05-110081,0757534281,The Outsiders,Used - Good,Store05,1,10.34,3.99,3.35,4.39,6.59,96a9af182000be@marketplace.amazon.com
+2026-08-12 05:08:18,113-0638588-1820405,276 - Goodwill Michiana,Amazon-MF,GWM-11-120862,0455951724,1984,Used - Very Good,Store11,1,10.50,3.99,3.38,3.81,7.30,3f68f820a0eff6@marketplace.amazon.com
+2026-08-12 08:27:32,113-0638605-1522634,276 - Goodwill Michiana,Amazon-MF,GWM-02-117057,0856402238,Goodnight Moon,Used - Acceptable,Store02,1,14.87,3.99,4.03,3.77,11.06,f4e9b259f023be@marketplace.amazon.com
+2026-08-12 08:45:18,113-0638651-4747318,276 - Goodwill Michiana,Amazon-MF,GWM-03-118375,0309248913,Introduction to Algorithms,Used - Acceptable,Store03,1,5.80,3.99,2.67,4.24,2.88,be81efb6f0ed8b@marketplace.amazon.com
+2026-08-12 11:38:54,12-81797-07035,276 - Goodwill Michiana,eBay,GWM-02-117906,0536854380,The Martian,Used - Like New,Store02,1,11.13,3.99,2.30,4.07,8.75,deal.34484
+2026-08-12 12:20:07,113-0638661-8932647,276 - Goodwill Michiana,Amazon-MF,GWM-03-116380,0993563926,Moosewood Cookbook,Used - Good,Store03,1,4.41,3.99,2.46,4.28,1.66,f3d282b920007f@marketplace.amazon.com
+2026-08-12 13:27:28,113-0638669-0673032,276 - Goodwill Michiana,Amazon-MF,GWM-02-116885,0560309567,Matilda,Used - Good,Store02,1,3.99,3.99,2.40,3.59,1.99,cf2a826110d760@marketplace.amazon.com
+2026-08-12 14:57:59,113-0638677-0375553,276 - Goodwill Michiana,Amazon-MF,GWM-22-116178,0493796701,Educated,Used - Very Good,Store22,1,32.42,3.99,6.66,3.31,26.44,ae6d17e3801a76@marketplace.amazon.com
+2026-08-12 15:08:17,12-81810-35262,276 - Goodwill Michiana,eBay,GWM-15-112880,0329292075,The Martian,Used - Like New,Store15,1,13.41,3.99,2.61,3.42,11.37,shop.04697
+2026-08-12 15:09:13,113-0638685-2414904,276 - Goodwill Michiana,Amazon-MF,GWM-15-111931,0714696061,Sapiens,Used - Very Good,Store15,1,12.23,3.99,3.63,3.88,8.71,db8955fd30ecc7@marketplace.amazon.com
+2026-08-12 16:25:42,113-0638686-7217373,276 - Goodwill Michiana,Amazon-MF,GWM-08-105709,0914043330,Harry Potter and the Sorcerer's Stone,Used - Good,Store08,1,7.71,3.99,2.64,4.00,5.06,76ad0901b0a5da@marketplace.amazon.com
+2026-08-12 16:25:42,113-0638686-7217373,276 - Goodwill Michiana,Amazon-MF,GWM-13-119209,0697062792,Man's Search for Meaning,Used - Acceptable,Store13,1,6.50,3.99,2.23,4.00,4.26,76ad0901b0a5da@marketplace.amazon.com
+2026-08-12 16:25:42,113-0638686-7217373,276 - Goodwill Michiana,Amazon-MF,GWM-13-118104,0730092910,Wonder,Used - Acceptable,Store13,1,13.73,3.99,4.72,4.00,9.00,76ad0901b0a5da@marketplace.amazon.com
+2026-08-12 16:46:26,113-0638730-7938009,276 - Goodwill Michiana,Amazon-MF,GWM-03-114531,0783289450,Moosewood Cookbook,Used - Good,Store03,1,8.37,3.99,3.06,3.75,5.55,b12ad87c70c190@marketplace.amazon.com
+2026-08-12 17:01:46,113-0638828-7906493,276 - Goodwill Michiana,Amazon-MF,GWM-17-109351,0308568712,Campbell Biology,Used - Good,Store17,1,10.84,3.99,3.43,3.58,7.82,ab551433d0dbf0@marketplace.amazon.com
+2026-08-12 17:02:38,113-0638895-9776762,276 - Goodwill Michiana,Amazon-MF,GWM-16-109209,0632756116,Little Fires Everywhere,Used - Like New,Store16,1,13.17,3.99,3.78,4.35,9.03,333e27c3e01739@marketplace.amazon.com
+2026-08-12 17:07:48,113-0638941-4309022,276 - Goodwill Michiana,Amazon-MF,GWM-10-108824,0124936671,Holes,Used - Good,Store10,1,13.99,3.99,3.90,3.41,10.67,6e53d64430f187@marketplace.amazon.com
+2026-08-12 17:10:40,12-81814-81308,276 - Goodwill Michiana,eBay,GWM-11-123853,0874475778,Anatomy & Physiology,Used - Like New,Store11,1,11.36,3.99,2.33,3.27,9.75,hunt.09848
+2026-08-12 17:13:48,12-81825-72704,276 - Goodwill Michiana,eBay,GWM-22-113786,0137182273,Goodnight Moon,Used - Acceptable,Store22,1,3.99,3.99,1.36,3.62,3.00,deal_19704
+2026-08-12 17:15:46,113-0638993-7577164,276 - Goodwill Michiana,Amazon-MF,GWM-13-117176,0810324520,The Outsiders,Used - Very Good,Store13,1,8.02,3.99,3.00,3.77,5.24,2e6ee748e000c1@marketplace.amazon.com
+2026-08-12 17:41:04,113-0639003-6592954,276 - Goodwill Michiana,Amazon-MF,GWM-24-110174,0865228731,Gone Girl,Used - Very Good,Store24,1,5.20,3.99,2.58,3.26,3.35,0d064972a0785b@marketplace.amazon.com
+2026-08-12 17:57:34,113-0639100-3462223,276 - Goodwill Michiana,Amazon-MF,GWM-02-116745,0396825913,The Old Man and the Sea,Used - Acceptable,Store02,1,10.46,3.99,3.37,3.55,7.53,46954bb040c734@marketplace.amazon.com
+2026-08-12 18:03:59,113-0639191-1479705,276 - Goodwill Michiana,Amazon-MF,GWM-05-111798,0189819831,Gone Girl,Used - Very Good,Store05,1,3.99,3.99,2.40,3.66,1.92,fb2b1153205cf1@marketplace.amazon.com
+2026-08-12 18:29:37,113-0639235-3544431,276 - Goodwill Michiana,Amazon-MF,GWM-03-119028,0269285499,Project Hail Mary,Used - Good,Store03,1,8.99,3.99,3.79,3.22,5.97,a107c6a8f07c96@marketplace.amazon.com
+2026-08-12 18:29:37,113-0639235-3544431,276 - Goodwill Michiana,Amazon-MF,GWM-11-124785,0975062567,Matilda,Used - Good,Store11,1,4.22,3.99,1.79,3.22,3.20,a107c6a8f07c96@marketplace.amazon.com
+2026-08-12 18:36:01,113-0639253-4267801,276 - Goodwill Michiana,Amazon-MF,GWM-20-112144,0610240873,The Silent Patient,Used - Acceptable,Store20,1,6.31,3.99,2.75,3.74,3.81,7fb4dee390091e@marketplace.amazon.com
+2026-08-12 18:45:55,113-0639296-0692123,276 - Goodwill Michiana,Amazon-MF,GWM-24-110324,0400273904,Circe,Used - Acceptable,Store24,1,7.61,3.99,2.94,4.05,4.61,e5c33eb170dc9e@marketplace.amazon.com
+2026-08-12 19:24:35,12-81838-27741,276 - Goodwill Michiana,eBay,GWM-07-107163,0785058941,The Catcher in the Rye,Used - Like New,Store07,1,9.29,3.99,2.06,3.70,7.52,thrift_00030
+2026-08-12 19:28:49,113-0639297-4028186,276 - Goodwill Michiana,Amazon-MF,GWM-03-117567,0468428549,Atomic Habits,Used - Very Good,Store03,1,6.49,3.99,2.77,3.58,4.13,b333d85900b98f@marketplace.amazon.com
+2026-08-12 19:42:04,113-0639359-9158304,276 - Goodwill Michiana,Amazon-MF,GWM-02-117644,0251185182,Quiet,Used - Acceptable,Store02,1,8.36,3.99,3.05,3.42,5.88,e515b186703c25@marketplace.amazon.com
+2026-08-12 20:13:37,12-81839-83003,276 - Goodwill Michiana,eBay,GWM-07-107299,0916740934,The Very Hungry Caterpillar,Used - Good,Store07,1,4.15,3.99,1.38,3.44,3.32,gem_09519
+2026-08-12 20:33:04,12-81852-41640,276 - Goodwill Michiana,eBay,GWM-19-110874,0571321002,The Catcher in the Rye,Used - Like New,Store19,1,8.45,3.99,1.95,3.60,6.89,find.16745
+2026-08-12 20:33:10,113-0639459-0673409,276 - Goodwill Michiana,Amazon-MF,GWM-13-117918,0595160732,The Catcher in the Rye,Used - Good,Store13,1,15.23,3.99,4.08,4.10,11.04,9b1065c3f070de@marketplace.amazon.com
+2026-08-12 21:08:31,113-0639495-2197057,276 - Goodwill Michiana,Amazon-MF,GWM-11-121967,0958526826,Where the Crawdads Sing,Used - Acceptable,Store11,1,9.61,3.99,3.61,3.22,6.77,9f105e5210a32e@marketplace.amazon.com
+2026-08-12 21:08:31,113-0639495-2197057,276 - Goodwill Michiana,Amazon-MF,GWM-02-117530,0462406143,The Martian,Used - Very Good,Store02,1,6.31,3.99,2.38,3.22,4.70,9f105e5210a32e@marketplace.amazon.com
+2026-08-12 21:20:06,113-0639549-9992739,276 - Goodwill Michiana,Amazon-MF,GWM-15-113539,0361654352,Introduction to Algorithms,Used - Good,Store15,1,5.59,3.99,2.64,4.08,2.86,611549ece02712@marketplace.amazon.com
+2026-08-12 21:27:30,113-0639607-5578844,276 - Goodwill Michiana,Amazon-MF,GWM-22-117787,0781792526,The Four Agreements,Used - Acceptable,Store22,1,8.53,3.99,3.08,4.02,5.42,79ecfbafb00015@marketplace.amazon.com
+2026-08-12 21:30:54,113-0639639-2188561,276 - Goodwill Michiana,Amazon-MF,GWM-16-109769,0827304515,Project Hail Mary,Used - Good,Store16,1,9.40,3.99,3.21,4.04,6.14,3a4bc93c704913@marketplace.amazon.com
+2026-08-12 21:32:34,113-0639649-0387508,276 - Goodwill Michiana,Amazon-MF,GWM-20-111826,0121676726,Born a Crime,Used - Very Good,Store20,1,4.86,3.99,2.53,3.65,2.67,f56c559f307de5@marketplace.amazon.com
+2026-08-12 21:48:52,113-0639739-5487802,276 - Goodwill Michiana,Amazon-MF,GWM-02-113623,0247770429,The Catcher in the Rye,Used - Very Good,Store02,1,11.13,3.99,3.47,3.41,8.24,d9ff8678406207@marketplace.amazon.com
+2026-08-12 22:31:15,113-0639795-4054459,276 - Goodwill Michiana,Amazon-MF,GWM-22-116686,0315299552,Quiet,Used - Like New,Store22,1,6.48,3.99,1.76,3.39,5.32,8571bcb7e0d70d@marketplace.amazon.com
+2026-08-12 22:31:15,113-0639795-4054459,276 - Goodwill Michiana,Amazon-MF,GWM-05-112877,0443202351,The 7 Habits of Highly Effective People,Used - Good,Store05,1,22.85,3.99,6.24,3.39,17.21,8571bcb7e0d70d@marketplace.amazon.com
+2026-08-12 22:43:10,GWB118475,276 - Goodwill Michiana,Goodwillbooks,GWM-09-119262,0624613332,The 7 Habits of Highly Effective People,Used - Acceptable,Store09,1,12.08,3.99,1.01,3.64,11.42,C121174
+2026-08-12 22:43:10,GWB118475,276 - Goodwill Michiana,Goodwillbooks,GWM-17-106281,0690037828,Beloved,Used - Acceptable,Store17,1,5.85,3.99,0.49,3.64,5.71,C121174
+2026-08-12 22:54:11,113-0639838-9950128,276 - Goodwill Michiana,Amazon-MF,GWM-18-105830,0527312011,Moosewood Cookbook,Used - Very Good,Store18,1,11.07,3.99,3.46,4.01,7.59,89ef1b9dd037ee@marketplace.amazon.com
+2026-08-12 23:04:21,113-0639856-0428900,276 - Goodwill Michiana,Amazon-MF,GWM-24-111007,0848275559,The Midnight Library,Used - Very Good,Store24,1,13.17,3.99,3.78,3.34,10.04,aba8ade6c0789f@marketplace.amazon.com
+2026-08-12 23:41:15,GWB118482,276 - Goodwill Michiana,Goodwillbooks,GWM-16-109484,0830729559,Wonder,Used - Like New,Store16,1,9.48,3.99,0.77,4.39,8.31,C100136
