@@ -1,0 +1,636 @@
+<title>Goodwill E-Com Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header with four tabs; each tab is a stack of full-width sections, summary first, detail below. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --ink:#14201E; --muted:#566663; --line:#D8DFDD;
+  --accent:#0B6E6E; --accent-soft:#DCEEEC; --accent-ink:#FFFFFF;
+  --good:#1E7B45; --good-soft:#DDF1E4; --warn:#9A5B00; --warn-soft:#FBEBCB; --bad:#B3261E; --bad-soft:#FADDDA;
+  --c1:#0B6E6E; --c2:#C2570C; --c3:#5B4BB7; --c4:#B0307A; --c5:#6B7A00;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1514; --surface:#162120; --ink:#E6EFED; --muted:#93A5A1; --line:#263634;
+  --accent:#4FC2BC; --accent-soft:#15332F; --accent-ink:#0E1514;
+  --good:#5CCB8A; --good-soft:#143324; --warn:#E3A63D; --warn-soft:#3A2B0E; --bad:#F07A72; --bad-soft:#3F1B18;
+  --c1:#4FC2BC; --c2:#F0934F; --c3:#9D90F0; --c4:#EA7DB8; --c5:#B5C443; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1514; --surface:#162120; --ink:#E6EFED; --muted:#93A5A1; --line:#263634;
+  --accent:#4FC2BC; --accent-soft:#15332F; --accent-ink:#0E1514;
+  --good:#5CCB8A; --good-soft:#143324; --warn:#E3A63D; --warn-soft:#3A2B0E; --bad:#F07A72; --bad-soft:#3F1B18;
+  --c1:#4FC2BC; --c2:#F0934F; --c3:#9D90F0; --c4:#EA7DB8; --c5:#B5C443; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1180px;margin-inline:auto}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 0;border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.top-in{max-width:1180px;margin-inline:auto}
+.brand{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:10px}
+h1{font:700 22px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.brand .sub{color:var(--muted);font-size:13px}
+.tag{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:5px 8px;border-radius:4px;background:var(--warn-soft);color:var(--warn)}
+nav{display:flex;gap:2px;overflow-x:auto}
+nav button{font:600 13px/1 var(--body);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:11px 14px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav button:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:22px;display:flex;flex-direction:column;gap:28px}
+section{min-width:0}
+h2{font:700 17px/1.2 var(--display);margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 12px;max-width:70ch}
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+input[type=date],select{font:500 14px var(--body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:150px}
+.seg-btn{font:600 13px var(--body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.pad{padding:16px}
+.grid{display:grid;gap:12px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{font:500 11px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.r{text-align:right}.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:var(--mono);font-size:12.5px}
+.muted{color:var(--muted)}
+tr.total td{font-weight:600;background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 11.5px/1 var(--body);padding:5px 9px;border-radius:99px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--good-soft);color:var(--good)}.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}.p-info{background:var(--accent-soft);color:var(--accent)}
+.up{color:var(--good)}.down{color:var(--bad)}.flat{color:var(--muted)}
+.kpi{padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .l{font:500 12px/1.3 var(--body);color:var(--muted)}
+.kpi .v{font:700 28px/1.1 var(--display);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kpi.anchor .v{font-size:36px}
+.kpi .d{font-size:12px;display:flex;flex-wrap:wrap;gap:2px 12px}
+.kpi svg{display:block;width:100%;height:44px;margin-top:4px}
+.rowlab{font:500 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 8px}
+.rowlab:first-child{margin-top:0}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.step{padding:12px;display:flex;flex-direction:column;gap:6px}
+.step b{font:600 13px var(--body)}.step small{color:var(--muted);font-size:12px}
+.bartrack{height:8px;background:var(--accent-soft);border-radius:4px;min-width:90px;overflow:hidden}
+.bartrack i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+details{border-top:1px solid var(--line)}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸";color:var(--muted);font-size:11px}
+details[open]>summary::before{content:"▾"}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.banner{padding:12px 14px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-weight:500}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:500 13px var(--body);background:var(--surface);color:var(--muted);border:0;padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.chartwrap svg{width:100%;height:auto;display:block}
+.chartwrap text{fill:var(--muted);font:11px var(--mono)}
+.chip{font:500 12.5px var(--body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.brow{display:grid;grid-template-columns:minmax(120px,200px) 1fr minmax(70px,auto);gap:10px;align-items:center}
+.bl{overflow-wrap:anywhere}.bv{text-align:right}
+.tree ul{list-style:none;margin:8px 0;padding:0 0 0 14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.tree .tq{font:600 15px/1.35 var(--display)}
+@media (max-width:520px){.brow{grid-template-columns:1fr auto}.brow .bartrack{grid-column:1/-1;order:3}}
+footer{margin-top:36px;color:var(--muted);font-size:12.5px;max-width:80ch}
+@media (max-width:520px){.kpi.anchor .v{font-size:30px}select{min-width:0;width:100%}label.f{flex:1 1 140px}}
+@media (prefers-reduced-motion:no-preference){.bartrack i{transition:width .3s}}
+
+</style>
+
+<div class="wrap">
+<header class="top"><div class="top-in">
+  <div class="brand"><h1>Goodwill E-Com Pulse</h1><span class="sub">Daily pulse, monthly dashboard and month-end close for e-commerce</span><span class="tag">Synthetic data</span></div>
+  <nav role="tablist" aria-label="Sections" id="tabs"></nav>
+</div></header>
+<main id="main"><div class="empty">Loading from the database…</div></main>
+<footer id="foot"></footer>
+</div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nf = (v, d = 0) => v == null || isNaN(v) ? "n/a" : Number(v).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
+const usd = (v, d = 0) => v == null ? "n/a" : (v < 0 ? "−" : "") + "$" + nf(Math.abs(v), d);
+const pct = (v, d = 1) => v == null ? "n/a" : nf(v * 100, d) + "%";
+const CH = {amazon: "var(--c1)", ebay: "var(--c2)", goodwillbooks: "var(--c3)", goodwillfinds: "var(--c4)", shopgoodwill: "var(--c5)"};
+const monthLabel = m => new Date(m + "-01T12:00:00").toLocaleDateString("en-US", {month: "long", year: "numeric"});
+const monthShort = m => new Date(m.slice(0, 7) + "-01T12:00:00").toLocaleDateString("en-US", {month: "short", year: "2-digit"});
+
+function fmt(unit, v) {
+  if (v == null) return "n/a";
+  switch (unit) {
+    case "usd": return usd(v, Math.abs(v) < 1000 ? 2 : 0);
+    case "pct": return pct(v);
+    case "usd_per_hour": return usd(v, 2) + "/hr";
+    case "days": return nf(v, 1) + " d";
+    default: return nf(v, Math.abs(v) < 100 && v % 1 ? 1 : 0);
+  }
+}
+function delta(card, key) {
+  const base = card[key];
+  if (card.value == null || base == null || base === 0) return `<span class="flat">n/a</span>`;
+  const rel = card.unit === "pct" ? card.value - base : (card.value - base) / Math.abs(base);
+  const txt = card.unit === "pct" ? (rel >= 0 ? "+" : "−") + nf(Math.abs(rel) * 100, 1) + " pts" : (rel >= 0 ? "+" : "−") + nf(Math.abs(rel) * 100, 1) + "%";
+  const good = card.better === "up" ? rel > 0 : card.better === "down" ? rel < 0 : null;
+  const cls = Math.abs(rel) < 0.0005 || good == null ? "flat" : good ? "up" : "down";
+  return `<span class="${cls}">${rel >= 0 ? "▲" : "▼"} ${txt}</span>`;
+}
+function spark(points, w = 240, h = 44) {
+  const vs = points.map(p => p.value).filter(v => v != null);
+  if (vs.length < 2) return "";
+  const lo = Math.min(...vs), hi = Math.max(...vs), rng = hi - lo || 1, pad = 4;
+  const xy = points.map((p, i) => p.value == null ? null : [pad + i * (w - 2 * pad) / (points.length - 1), h - pad - (p.value - lo) / rng * (h - 2 * pad)]).filter(Boolean);
+  const line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ");
+  const last = xy[xy.length - 1];
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polygon points="${pad},${h} ${line} ${last[0]},${h}" fill="var(--accent-soft)"/><polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--accent)"/></svg>`;
+}
+function lineChart(series, unit) {
+  const W = 760, H = 280, L = 62, R = 14, T = 12, B = 30;
+  const all = series.flatMap(s => s.points.map(p => p.value)).filter(v => v != null);
+  if (!all.length) return `<div class="empty">No data for this measure.</div>`;
+  let lo = Math.min(0, ...all), hi = Math.max(...all); if (hi === lo) hi = lo + 1;
+  const step = (() => { const raw = (hi - lo) / 4, p = 10 ** Math.floor(Math.log10(raw)), n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; })();
+  const top = Math.ceil(hi / step) * step, bot = Math.floor(lo / step) * step;
+  const n = series[0].points.length, x = i => L + i * (W - L - R) / (n - 1), y = v => T + (top - v) / (top - bot) * (H - T - B);
+  let g = "";
+  for (let v = bot; v <= top + 1e-9; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${esc(unit === "usd" ? (v >= 1000 ? "$" + nf(v / 1000) + "k" : "$" + nf(v)) : unit === "pct" ? nf(v * 100) + "%" : nf(v, step < 1 ? 1 : 0))}</text>`;
+  const every = Math.max(1, Math.ceil(n / 7));
+  series[0].points.forEach((p, i) => { if ((n - 1 - i) % every === 0) g += `<text x="${x(i)}" y="${H - 8}" text-anchor="${i === n - 1 ? "end" : i === 0 ? "start" : "middle"}">${esc(p.label ?? monthShort(p.month))}</text>`; });
+  const lines = series.map(s => {
+    const pts = s.points.map((p, i) => p.value == null ? null : [x(i), y(p.value)]).filter(Boolean);
+    const d = pts.map(p => p.map(v => v.toFixed(1)).join(",")).join(" "), e = pts[pts.length - 1];
+    return `<polyline points="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/><circle cx="${e[0]}" cy="${e[1]}" r="3.5" fill="${s.color}"/>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly trend by marketplace">${g}${lines}</svg>` +
+    `<div class="legend">${series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("")}</div>`;
+}
+const pill = (cls, t) => `<span class="pill ${cls}">${esc(t)}</span>`;
+const STATUS = {ok: ["p-ok", "OK"], warn: ["p-warn", "Check"], bad: ["p-bad", "Blocked"]};
+
+/* ---------------- data access ---------------- */
+let db = null;
+const cache = {};
+function invalidate(prefix) { for (const k of Object.keys(cache)) if (!prefix || k.startsWith(prefix)) delete cache[k]; }
+async function read(path) {
+  if (cache[path]) return cache[path];
+  const snap = await db.doc(path).get();
+  if (!snap.exists) throw new Error(`Nothing is stored at ${path} yet.`);
+  return (cache[path] = snap.data());
+}
+const state = {tab: "pulse", date: null, month: null, kpi: "total_revenue", catBy: "revenue", closeMonth: null};
+
+/* ---------------- tab registry: every view file registers itself ---------------- */
+const VIEWS = {}, TABS = [];
+function registerTab(id, label, view, order) { VIEWS[id] = view; TABS.push({id, label, order: order ?? 50}); TABS.sort((a, b) => a.order - b.order); }
+
+/* ---------------- date + period helpers (ISO strings, UTC arithmetic) ---------------- */
+const MS = 864e5;
+const D = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+const iso = t => new Date(t).toISOString().slice(0, 10);
+const addDays = (s, n) => iso(D(s) + n * MS);
+const dow = s => (new Date(D(s)).getUTCDay() + 6) % 7;            // Monday = 0
+const weekStart = s => addDays(s, -dow(s));
+const monthStart = s => s.slice(0, 8) + "01";
+const quarterStart = s => `${s.slice(0, 4)}-${String(Math.floor((+s.slice(5, 7) - 1) / 3) * 3 + 1).padStart(2, "0")}-01`;
+const shortDay = s => new Date(D(s)).toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"});
+const longDay = s => new Date(D(s)).toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC"});
+const GRAINS = {
+  day: {key: s => s, label: s => shortDay(s)},
+  week: {key: weekStart, label: s => "Wk " + shortDay(s)},
+  month: {key: monthStart, label: s => monthShort(s)},
+  quarter: {key: quarterStart, label: s => `Q${Math.floor((+s.slice(5, 7) - 1) / 3) + 1} ${s.slice(2, 4)}`},
+};
+const CHN = {amazon: "Amazon", ebay: "eBay", goodwillbooks: "Goodwillbooks", goodwillfinds: "GoodwillFinds", shopgoodwill: "ShopGoodwill"};
+const CHORDER = Object.keys(CHN);
+const MEAS = ["orders", "item_sales", "shipping", "fees", "refunds"];
+
+/* Overlays let other parts change the daily rows before any number is built from them (e.g. an uploaded Excel file).
+   An overlay is async (rows) => rows. Rows are {date, channel, orders, item_sales, shipping, fees, refunds}; an overlay may
+   add a `src` field ("warehouse" | "upload:<id>") so the explain views can say where a cell came from. */
+const OVERLAYS = [];
+function addRowsOverlay(fn) { OVERLAYS.push(fn); }
+async function dailyRows() {
+  const d = await read("daily/all"), ix = Object.fromEntries(d.cols.map((c, i) => [c, i]));
+  let rows = d.rows.map(r => ({date: r[ix.date], channel: r[ix.channel], orders: r[ix.orders], item_sales: r[ix.item_sales], shipping: r[ix.shipping], fees: r[ix.fees], refunds: r[ix.refunds], src: "warehouse"}));
+  for (const fn of OVERLAYS) rows = (await fn(rows)) || rows;
+  return rows;
+}
+async function dailyRowsBase() {   // the warehouse rows only, never overlaid
+  const d = await read("daily/all"), ix = Object.fromEntries(d.cols.map((c, i) => [c, i]));
+  return d.rows.map(r => ({date: r[ix.date], channel: r[ix.channel], orders: r[ix.orders], item_sales: r[ix.item_sales], shipping: r[ix.shipping], fees: r[ix.fees], refunds: r[ix.refunds], src: "warehouse"}));
+}
+function totalsFor(rows, from, to, channel) {
+  const out = Object.fromEntries(CHORDER.map(c => [c, Object.fromEntries(MEAS.map(m => [m, 0]))]));
+  for (const r of rows) if (r.date >= from && r.date <= to && (!channel || r.channel === channel)) for (const m of MEAS) out[r.channel][m] += r[m];
+  return out;
+}
+function presets(last) {
+  const sun = dow(last) === 6 ? last : addDays(last, -(dow(last) + 1));
+  const prevMonthEnd = addDays(monthStart(last), -1);
+  return {
+    latest: {label: "Latest day", from: last, to: last},
+    catchup: {label: "Monday catch-up (Fri–Sun)", from: addDays(sun, -2), to: sun},
+    last7: {label: "Last 7 days", from: addDays(last, -6), to: last},
+    mtd: {label: "Month to date", from: monthStart(last), to: last},
+    lastmonth: {label: "Last month", from: monthStart(prevMonthEnd), to: prevMonthEnd},
+  };
+}
+function reportText(cur, prior, from, to, trust) {
+  const sum = o => Object.fromEntries(MEAS.map(m => [m, CHORDER.reduce((a, c) => a + o[c][m], 0)]));
+  const t = sum(cur), p = sum(prior), pc = (a, b) => b ? `${a >= b ? "+" : "−"}${nf(Math.abs(a - b) / b * 100, 1)}%` : "n/a";
+  const pad = (s, n, left) => left ? String(s).padEnd(n) : String(s).padStart(n);
+  const title = from === to ? `E-commerce report for ${longDay(from)}` : `E-commerce report for ${shortDay(from)} through ${shortDay(to)}, ${to.slice(0, 4)}`;
+  const lines = [title, "", `Item sales ${usd(t.item_sales, 2)} (${pc(t.item_sales, p.item_sales)} vs ${from === to ? "same weekday last week" : "the same days a week earlier"}), ${nf(t.orders)} orders, shipping charged ${usd(t.shipping, 2)}`, "",
+    pad("Marketplace", 15, true) + pad("Orders", 8) + pad("Item sales", 14) + pad("Shipping", 12) + pad("Fees", 12) + pad("Refunds", 12)];
+  for (const c of CHORDER) lines.push(pad(CHN[c], 15, true) + pad(nf(cur[c].orders), 8) + pad(usd(cur[c].item_sales, 2), 14) + pad(usd(cur[c].shipping, 2), 12) + pad(usd(cur[c].fees, 2), 12) + pad(usd(cur[c].refunds, 2), 12));
+  lines.push(pad("Total", 15, true) + pad(nf(t.orders), 8) + pad(usd(t.item_sales, 2), 14) + pad(usd(t.shipping, 2), 12) + pad(usd(t.fees, 2), 12) + pad(usd(t.refunds, 2), 12), "", trust, "Business days are Eastern time. Item sales exclude shipping and tax.");
+  return lines.join("\n");
+}
+const trustLine = q => { const e = q.checks.filter(c => c.status !== "pass" && c.severity === "error").length, w = q.checks.filter(c => c.status !== "pass" && c.severity !== "error").length;
+  return e ? `${e} data check(s) failed. Do not rely on these numbers until finance reviews them.` : `All ${q.total} data checks passed their blocking rules${w ? `, ${w} warning(s) to review` : ""}.`; };
+
+/* ---------------- Daily Pulse ---------------- */
+async function viewPulse(root) {
+  const [all, rows, q] = await Promise.all([read("pulse/all"), dailyRows(), read("quality/latest")]);
+  const dates = Object.keys(all).sort().reverse();
+  if (!state.date || !all[state.date]) state.date = dates[0];
+  const p = all[state.date];
+  const last = rows.reduce((a, r) => r.date > a ? r.date : a, "");
+  const PR = presets(last);
+  if (!state.rng) state.rng = {preset: "latest", from: last, to: last};
+  if (state.rng.preset !== "custom") Object.assign(state.rng, {from: PR[state.rng.preset].from, to: PR[state.rng.preset].to});
+  const {from, to} = state.rng, span = (D(to) - D(from)) / MS + 1;
+  const cur = totalsFor(rows, from, to), prior = totalsFor(rows, addDays(from, -7), addDays(to, -7));
+  const tot = o => Object.fromEntries(MEAS.map(m => [m, CHORDER.reduce((a, c) => a + o[c][m], 0)]));
+  const T = tot(cur), TP = tot(prior);
+  const wow = (a, b) => b ? (a - b) / b : null;
+  const dcell = (a, b) => { const r = wow(a, b); return r == null ? `<span class="flat">n/a</span>` : `<span class="${Math.abs(r) < .005 ? "flat" : r > 0 ? "up" : "down"}">${r >= 0 ? "▲" : "▼"} ${nf(Math.abs(r) * 100, 1)}%</span>`; };
+  const row = (r, cls = "") => `<tr class="${cls}"><td>${esc(r.label ?? "Total e-commerce")}</td><td class="r num">${usd(r.revenue)}</td><td class="r num">${dcell(r.revenue, r.revenue_last_week)}</td><td class="r num">${nf(r.customers)}</td><td class="r num">${dcell(r.customers, r.customers_last_week)}</td><td class="r num">${usd(r.revenue_mtd)}</td></tr>`;
+  const srcs = (p.sources || []).map(s => `<div class="card step"><b>${esc(s.label)}</b>${pill(s.status === "complete" && !s.has_errors ? "p-ok" : "p-warn", s.status === "complete" ? "Complete" : s.status)}<small>${s.files.length} file${s.files.length === 1 ? "" : "s"}${s.latest_order_at ? " · latest order " + new Date(s.latest_order_at).toLocaleString("en-US", {month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}) : ""}</small></div>`).join("");
+  const text = reportText(cur, prior, from, to, trustLine(q));
+  root.innerHTML = `
+  <section><h2>Nightly report</h2><p class="lead">The totals staff add up by hand from the Upright and Cash Monkey downloads: item sales, shipping and order count, by marketplace. Pick a period, including the Monday catch-up for Friday through Sunday. The same report is emailed each night by <span class="mono">python -m goodwill_pulse.digest --send</span>.</p>
+    <div class="bar"><div class="seg" role="group" aria-label="Report period">${Object.entries(PR).map(([k, v]) => `<button data-preset="${k}" aria-pressed="${state.rng.preset === k}">${esc(v.label)}</button>`).join("")}</div>
+      <label class="f">From<input type="date" id="rfrom" value="${from}" min="${rows[0].date}" max="${last}"></label>
+      <label class="f">To<input type="date" id="rto" value="${to}" min="${rows[0].date}" max="${last}"></label></div>
+    <div class="card pad" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline"><span class="kpi"><span class="l">Item sales</span><span class="v">${usd(T.item_sales)}</span></span>
+      <span class="kpi"><span class="l">Orders</span><span class="v">${nf(T.orders)}</span></span><span class="kpi"><span class="l">Shipping charged</span><span class="v">${usd(T.shipping)}</span></span>
+      <span class="muted" style="font-size:13px">${from === to ? longDay(from) : `${longDay(from)} to ${longDay(to)} (${span} days)`} · ${dcell(T.item_sales, TP.item_sales)} vs ${from === to ? "same weekday last week" : "a week earlier"}</span></div>
+    <div class="card scroll" style="margin-top:12px"><table><thead><tr><th>Marketplace</th><th class="r">Orders</th><th class="r">Item sales</th><th class="r">Shipping</th><th class="r">Fees</th><th class="r">Refunds</th><th class="r">vs a week earlier</th></tr></thead><tbody>
+      ${CHORDER.map(c => `<tr><td>${CHN[c]}</td><td class="r num">${nf(cur[c].orders)}</td><td class="r num">${usd(cur[c].item_sales, 2)}</td><td class="r num">${usd(cur[c].shipping, 2)}</td><td class="r num">${usd(cur[c].fees, 2)}</td><td class="r num">${usd(cur[c].refunds, 2)}</td><td class="r num">${dcell(cur[c].item_sales, prior[c].item_sales)}</td></tr>`).join("")}
+      <tr class="total"><td>Total</td><td class="r num">${nf(T.orders)}</td><td class="r num">${usd(T.item_sales, 2)}</td><td class="r num">${usd(T.shipping, 2)}</td><td class="r num">${usd(T.fees, 2)}</td><td class="r num">${usd(T.refunds, 2)}</td><td class="r num">${dcell(T.item_sales, TP.item_sales)}</td></tr></tbody></table></div>
+    <p style="margin:10px 0 0">${pill(q.blocking ? "p-bad" : "p-ok", q.blocking ? "Data checks failing" : "Data checks passing")} <span class="muted" style="font-size:13px">${esc(trustLine(q))} <a href="#quality" data-goto="quality">See the checks</a></span></p>
+    <details style="border:1px solid var(--line);border-radius:8px;margin-top:12px;background:var(--surface)"><summary><b>Email text</b><span class="muted">Paste into Outlook or Teams</span></summary><div style="padding:0 12px 12px">
+      <textarea id="rtext" readonly rows="14" style="width:100%;font:12.5px/1.5 var(--mono);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px;resize:vertical">${esc(text)}</textarea>
+      <div class="bar" style="margin-top:8px"><button class="seg-btn" id="rcopy">Copy report text</button><span class="muted" id="rcopied" style="font-size:13px"></span></div></div></details></section>
+  <section><div class="bar"><div style="flex:1 1 280px"><h2>Daily Pulse</h2><p class="lead" style="margin:0">Revenue and customers by marketplace for one business day (Eastern time), as built from the two report files. It agrees with the warehouse totals above.</p></div>
+    <label class="f">Business day<select id="date">${dates.map(d => `<option value="${d}">${longDay(d)}</option>`).join("")}</select></label></div></section>
+  <section><div class="card scroll"><table><thead><tr><th>Marketplace</th><th class="r">Revenue</th><th class="r">vs last week</th><th class="r">Customers</th><th class="r">vs last week</th><th class="r">Month to date</th></tr></thead>
+    <tbody>${p.rows.map(r => row(r)).join("")}${row({...p.total, label: "Total e-commerce"}, "total")}</tbody></table></div>
+    <p class="muted" style="margin:8px 0 0;font-size:12.5px">Revenue is item subtotal on paid orders. Customers are paid orders. ${p.complete ? "All source reports for the day are in." : "Some source reports for the day are still missing."}${p.open_exceptions ? ` ${p.open_exceptions} open exception${p.open_exceptions > 1 ? "s" : ""}.` : ""}</p></section>
+  <section><h2>Where the numbers came from</h2><p class="lead">Each report is checked for coverage before the day is called complete.</p><div class="steps">${srcs}</div></section>`;
+  $("#date", root).value = state.date;
+  $("#date", root).onchange = e => { state.date = e.target.value; render(); };
+  root.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { state.rng = {preset: b.dataset.preset}; render(); });
+  const custom = () => { const f = $("#rfrom", root).value, t = $("#rto", root).value; if (f && t && f <= t) { state.rng = {preset: "custom", from: f, to: t}; render(); } };
+  $("#rfrom", root).onchange = custom; $("#rto", root).onchange = custom;
+  $("#rcopy", root).onclick = async () => { const ta = $("#rtext", root), msg = $("#rcopied", root);
+    try { await navigator.clipboard.writeText(ta.value); msg.textContent = "Copied."; } catch (e) { ta.select(); msg.textContent = "Select the text and copy it."; } };
+  const g = root.querySelector("[data-goto]"); if (g) g.onclick = e => { e.preventDefault(); setTab("quality"); };
+}
+registerTab("pulse", "Daily Pulse", viewPulse, 10);
+
+/* ---------------- Monthly Dashboard ---------------- */
+async function viewDashboard(root) {
+  const opt = await read("site/options");
+  if (!state.month) state.month = opt.default_month;
+  const [m, ser, drows] = await Promise.all([read("month/" + state.month), read("series/all"), dailyRows()]);
+  state.tg = state.tg || "week"; state.tm = state.tm || "item_sales";
+  const dlast = drows.reduce((a, r) => a > r.date ? a : r.date, "");
+  const win = {day: addDays(dlast, -44), week: addDays(weekStart(dlast), -25 * 7), month: drows[0].date, quarter: drows[0].date}[state.tg];
+  const tkeys = bucketKeys(win < drows[0].date ? drows[0].date : win, dlast, state.tg);
+  const tval = rs => state.tm === "avg_order" ? (rs.reduce((a, r) => a + r.orders, 0) ? rs.reduce((a, r) => a + r.item_sales, 0) / rs.reduce((a, r) => a + r.orders, 0) : 0) : rs.reduce((a, r) => a + r[state.tm], 0);
+  const tseries = CHORDER.map(c => { const rs = drows.filter(r => r.channel === c); return {label: CHN[c], color: CH[c], points: tkeys.map(k => ({label: GRAINS[state.tg].label(k), value: tval(rs.filter(r => GRAINS[state.tg].key(r.date) === k))}))}; });
+  const C = m.cards;
+  const kpi = (id, anchor) => { const c = C[id]; if (!c) return ""; return `<div class="card kpi ${anchor ? "anchor" : ""}"><span class="l">${esc(c.label)}</span><span class="v">${fmt(c.unit, c.value)}</span>
+    <span class="d"><span class="muted">vs last month</span> ${delta(c, "prior_month")}<span class="muted">vs last year</span> ${delta(c, "prior_year")}</span>${spark(c.trend || [])}</div>`; };
+  const sk = ser[state.kpi] || ser.total_revenue;
+  const kpiOpts = Object.keys(ser).filter(k => ser[k]).map(k => `<option value="${k}">${esc(ser[k].label)}</option>`).join("");
+  const PN = {growth: "Growth", profitability: "Profitability", productivity: "Productivity", inventory: "Inventory", engagement: "Engagement"};
+  const avail = c => c.availability && c.availability !== "built" ? pill(c.availability === "input" ? "p-info" : "p-warn", c.availability === "input" ? "Manual input" : "Not yet available") : "";
+  const optKpi = Object.fromEntries(opt.kpis.map(k => [k.id, k]));
+  const pillars = Object.entries(m.pillars).map(([p, ids]) => `<details><summary><b>${PN[p] || esc(p)}</b><span class="muted">${ids.length} measures</span></summary>
+    <div class="scroll"><table><thead><tr><th>Measure</th><th class="r">${monthShort(state.month)}</th><th class="r">vs last month</th><th class="r">vs last year</th><th></th></tr></thead><tbody>${ids.map(id => { const c = C[id]; return `<tr><td>${esc(c.label)}</td><td class="r num">${fmt(c.unit, c.value)}</td><td class="r num">${delta(c, "prior_month")}</td><td class="r num">${delta(c, "prior_year")}</td><td>${avail({availability: optKpi[id]?.availability})}</td></tr>`; }).join("")}</tbody></table></div></details>`).join("");
+  const stores = m.stores.stores, maxRev = Math.max(...stores.map(s => s.revenue), 1);
+  const cats = m.categories[state.catBy].categories;
+  root.innerHTML = `
+  <section><div class="bar"><div style="flex:1 1 280px"><h2>Monthly Dashboard</h2><p class="lead" style="margin:0">Three headline measures, the fifteen on the scorecard, then the detail behind them. Data through ${esc(opt.data_through)}.</p></div>
+    <label class="f">Month<select id="month">${opt.months.map(x => `<option value="${x}">${monthLabel(x)}${x === opt.months[0] ? " (in progress)" : ""}</option>`).join("")}</select></label></div></section>
+  <section><div class="grid g3">${m.anchors.map(id => kpi(id, true)).join("")}</div></section>
+  <section><h2>Scorecard</h2><p class="lead">Each tile shows 13 months. Green means the move is in the better direction for that measure.</p>
+    ${m.scorecard_rows.map(r => `<div class="rowlab">${esc(r.label)}</div><div class="grid g3">${r.ids.map(id => kpi(id)).join("")}</div>`).join("")}</section>
+  <section><div class="bar"><div style="flex:1 1 260px"><h2>Trend by marketplace</h2><p class="lead" style="margin:0">Thirteen months ending ${monthLabel(ser.total_revenue.filters.month)}.</p></div>
+    <label class="f">Measure<select id="kpi">${kpiOpts}</select></label></div>
+    <div class="card pad chartwrap" style="margin-top:12px">${lineChart(sk.series.map(s => ({label: s.label, color: CH[s.key] || "var(--c1)", points: s.points})), sk.unit)}</div></section>
+  <section><div class="bar"><div style="flex:1 1 260px"><h2>Sales over time</h2><p class="lead" style="margin:0">The same warehouse totals by day, week, month or quarter, from the daily orders. The first and last period can be partial.</p></div>
+    <div class="seg" role="group" aria-label="Measure">${[["item_sales", "Item sales"], ["orders", "Orders"], ["shipping", "Shipping"], ["avg_order", "Average order"]].map(([k, l]) => `<button data-tm="${k}" aria-pressed="${state.tm === k}">${l}</button>`).join("")}</div>
+    <div class="seg" role="group" aria-label="Period">${["day", "week", "month", "quarter"].map(g => `<button data-tg="${g}" aria-pressed="${state.tg === g}">${g[0].toUpperCase() + g.slice(1)}</button>`).join("")}</div></div>
+    <div class="card pad chartwrap" style="margin-top:12px">${lineChart(tseries, state.tm === "orders" ? "n" : "usd")}</div></section>
+  <section><h2>Stores</h2><p class="lead">Sales are credited to the store that sent the item. ${esc(stores.length)} stores with activity in ${monthLabel(state.month)}.</p>
+    <div class="card scroll"><table><thead><tr><th>Store</th><th>Revenue</th><th class="r">Share</th><th class="r">Units</th><th class="r">Avg price</th><th class="r">Sent</th><th class="r">Listed</th><th class="r">Backlog</th></tr></thead><tbody>
+    ${stores.map(s => `<tr><td>${esc(s.store_name)}${s.ai_flagging ? ` <span class="pill p-info" title="Uses AI flagging">AI</span>` : ""}</td><td><div style="display:flex;gap:10px;align-items:center"><div class="bartrack"><i style="width:${(s.revenue / maxRev * 100).toFixed(1)}%"></i></div><span class="num">${usd(s.revenue)}</span></div></td>
+    <td class="r num">${pct(s.share)}</td><td class="r num">${nf(s.units)}</td><td class="r num">${s.asp == null ? "n/a" : usd(s.asp, 2)}</td><td class="r num">${nf(s.items_sent)}</td><td class="r num">${nf(s.items_listed)}</td><td class="r num">${nf(s.backlog_end)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><div class="bar"><div style="flex:1 1 260px"><h2>Categories</h2><p class="lead" style="margin:0">Margin is sale price minus marketplace fees and refunds.</p></div>
+    <div class="seg" role="group" aria-label="Rank categories by"><button id="cr" aria-pressed="${state.catBy === "revenue"}">By revenue</button><button id="cm" aria-pressed="${state.catBy === "margin"}">By margin</button></div></div>
+    <div class="card scroll" style="margin-top:12px"><table><thead><tr><th>Category</th><th class="r">Revenue</th><th class="r">Units</th><th class="r">Avg price</th><th class="r">Fees</th><th class="r">Gross profit</th><th class="r">Margin</th></tr></thead><tbody>
+    ${cats.map(c => `<tr><td>${esc(c.category)}</td><td class="r num">${usd(c.revenue)}</td><td class="r num">${nf(c.units)}</td><td class="r num">${usd(c.asp, 2)}</td><td class="r num">${usd(c.fees)}</td><td class="r num">${usd(c.gross_profit)}</td><td class="r num">${pct(c.margin_pct)}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><h2>All measures by pillar</h2><div class="card">${pillars}</div></section>`;
+  $("#month", root).value = state.month; $("#kpi", root).value = state.kpi in ser ? state.kpi : "total_revenue";
+  $("#month", root).onchange = e => { state.month = e.target.value; render(); };
+  $("#kpi", root).onchange = e => { state.kpi = e.target.value; render(); };
+  root.querySelectorAll("[data-tm]").forEach(b => b.onclick = () => { state.tm = b.dataset.tm; render(); });
+  root.querySelectorAll("[data-tg]").forEach(b => b.onclick = () => { state.tg = b.dataset.tg; render(); });
+  $("#cr", root).onclick = () => { state.catBy = "revenue"; render(); };
+  $("#cm", root).onclick = () => { state.catBy = "margin"; render(); };
+}
+registerTab("dashboard", "Monthly Dashboard", viewDashboard, 20);
+
+/* ---------------- Ask: question -> spec -> chart ---------------- */
+const AM = {
+  item_sales: {label: "Item sales", unit: "usd", src: "daily"}, orders: {label: "Orders", unit: "count", src: "daily"},
+  shipping: {label: "Shipping charged", unit: "usd", src: "daily"}, fees: {label: "Marketplace fees", unit: "usd", src: "daily"},
+  refunds: {label: "Refunds", unit: "usd", src: "daily"}, avg_order: {label: "Average order", unit: "usd", src: "daily"},
+  store_revenue: {label: "Sales credited to store", unit: "usd", src: "pipe", col: "revenue"}, units_sold: {label: "Units sold", unit: "count", src: "pipe", col: "sold"},
+  items_identified: {label: "Items identified", unit: "count", src: "pipe", col: "identified"}, items_sent: {label: "Items sent to e-commerce", unit: "count", src: "pipe", col: "sent"},
+  items_listed: {label: "Items listed online", unit: "count", src: "pipe", col: "listed"},
+};
+const BYS = ["time", "channel", "store", "category", "none"], CHARTS = ["line", "bar", "stat", "table"];
+const addMonths = (s, k) => { const d = new Date(D(s)); d.setUTCMonth(d.getUTCMonth() + k, 1); return iso(+d); };
+const monthEnd = s => addDays(addMonths(s, 1), -1);
+const isIso = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(D(s));
+
+async function askContext() {
+  const [rows, sc, opt] = await Promise.all([dailyRows(), read("storecat/all"), read("site/options")]);
+  const ix = Object.fromEntries(sc.cols.map((c, i) => [c, i]));
+  const pipe = sc.rows.map(r => ({month: r[ix.month], store: r[ix.store], category: r[ix.category], identified: r[ix.identified], sent: r[ix.sent], listed: r[ix.listed], sold: r[ix.sold], revenue: r[ix.revenue]}));
+  const stores = {...sc.stores, "": "Unattributed"};
+  const categories = [...new Set(pipe.map(r => r.category).filter(Boolean))].sort();
+  return {rows, pipe, stores, categories, last: rows.reduce((a, r) => r.date > a ? r.date : a, ""), first: rows[0].date, months: opt.months};
+}
+
+function keywordSpec(q, ctx) {
+  const t = q.toLowerCase(), last = ctx.last, sp = {filters: {}};
+  sp.metric = /refund/.test(t) ? "refunds" : /\bfees?\b/.test(t) ? "fees" : /ship/.test(t) ? "shipping" : /average (order|sale)|avg (order|sale)|order value/.test(t) ? "avg_order"
+    : /identif|donat/.test(t) ? "items_identified" : /\bsent\b|\bsend|manifest/.test(t) ? "items_sent" : /list|scan|post/.test(t) ? "items_listed"
+    : /\bunits?\b|pieces|items sold/.test(t) ? "units_sold" : /\borders?\b|transaction|customer|buyer/.test(t) ? "orders" : "item_sales";
+  const timeWord = /\b(daily|weekly|monthly|quarterly|per (day|week|month|quarter)|each (day|week|month|quarter)|over time|trend|by (day|week|month|quarter)|last \d+ (days|weeks|months))\b/.test(t);
+  sp.by = /\bstores?\b/.test(t) ? "store" : /categor/.test(t) ? "category" : timeWord ? "time" : /marketplace|channel|platform/.test(t) ? "channel" : "none";
+  if (sp.by === "time" && /marketplace|channel|platform/.test(t)) sp.split = "channel";
+  sp.grain = /quarterly|per quarter|by quarter/.test(t) ? "quarter" : /monthly|per month|each month|by month/.test(t) ? "month" : /weekly|per week|each week|by week/.test(t) ? "week" : "day";
+  for (const c of ctx.categories) { const l = c.toLowerCase(), w = [l, l.replace(/s$/, ""), l.split(/[ &]+/)[0]]; if (sp.by !== "category" && w.some(x => x.length > 2 && new RegExp(`\\b${x}s?\\b`).test(t))) sp.filters.category = c; }
+  const chans = {amazon: /amazon/, ebay: /ebay/, shopgoodwill: /shop ?goodwill/, goodwillfinds: /goodwill ?finds/, goodwillbooks: /goodwill ?books/};
+  if (sp.by !== "channel" && sp.split !== "channel") for (const [c, re] of Object.entries(chans)) if (re.test(t)) sp.filters.channel = c;
+  for (const [id, name] of Object.entries(ctx.stores)) { const city = name.replace(/^Goodwill /, "").toLowerCase(); if (id && sp.by !== "store" && city.length > 3 && t.includes(city)) sp.filters.store = id; }
+  const pipe = AM[sp.metric].src === "pipe" || sp.by === "store" || sp.by === "category";
+  const n = t.match(/last (\d+) (day|week|month)s?/), prevM = addMonths(monthStart(last), -1);
+  let from, to = last, matched = true;
+  if (n) { const k = +n[1]; if (n[2] === "day") from = addDays(last, -(k - 1)); else if (n[2] === "week") from = addDays(weekStart(last), -(k - 1) * 7); else { from = addMonths(monthStart(last), -k); to = monthEnd(addMonths(monthStart(last), -1)); } }
+  else if (/yesterday|latest day|today|tonight/.test(t)) from = last;
+  else if (/last week/.test(t)) { from = addDays(weekStart(last), -7); to = addDays(weekStart(last), -1); }
+  else if (/this week/.test(t)) from = weekStart(last);
+  else if (/last month/.test(t)) { from = prevM; to = monthEnd(prevM); }
+  else if (/this month|month to date|mtd/.test(t)) from = monthStart(last);
+  else if (/last quarter/.test(t)) { const q0 = quarterStart(last); from = addMonths(q0, -3); to = addDays(q0, -1); }
+  else if (/this quarter/.test(t)) from = quarterStart(last);
+  else if (/year to date|ytd|this year/.test(t)) from = `${last.slice(0, 4)}-01-01`;
+  else if (pipe) { from = prevM; to = monthEnd(prevM); matched = false; }
+  else if (sp.by === "time" && (sp.grain === "month" || sp.grain === "quarter")) { from = ctx.first; matched = false; }
+  else { from = addDays(last, -29); matched = false; }
+  sp.period = {from: from < ctx.first ? ctx.first : from, to};
+  sp.order = /fewest|least|lowest|zero|worst|bottom|smallest|\bno\b/.test(t) ? "asc" : "desc";
+  const top = t.match(/(?:top|bottom|first)\s+(\d+)/) || t.match(/(\d+)\s+(?:stores|categories|marketplaces)/); sp.limit = top ? +top[1] : 10;
+  sp.chart = /\btable\b/.test(t) ? "table" : sp.by === "time" ? "line" : sp.by === "none" ? "stat" : "bar";
+  sp._unmatched = !matched && sp.by === "none" && !Object.keys(sp.filters).length && sp.metric === "item_sales" && !/sales|revenue|sold/.test(t);
+  return sp;
+}
+
+function cleanSpec(s, ctx) {
+  if (!s || typeof s !== "object") throw new Error("No spec returned.");
+  const f = s.filters || {}, p = s.period || {};
+  const sp = {metric: AM[s.metric] ? s.metric : null, by: BYS.includes(s.by) ? s.by : null, grain: GRAINS[s.grain] ? s.grain : "day", split: s.split === "channel" ? "channel" : null,
+    filters: {}, order: s.order === "asc" ? "asc" : "desc", limit: Math.min(30, Math.max(1, parseInt(s.limit) || 10)), chart: CHARTS.includes(s.chart) ? s.chart : null};
+  if (!sp.metric || !sp.by) throw new Error("The spec used a measure or grouping this page does not have.");
+  if (CHN[f.channel]) sp.filters.channel = f.channel;
+  const cat = ctx.categories.find(c => c.toLowerCase() === String(f.category || "").toLowerCase()); if (cat) sp.filters.category = cat;
+  const st = Object.entries(ctx.stores).find(([id, n]) => id && (id === f.store || n.toLowerCase() === String(f.store || "").toLowerCase())); if (st) sp.filters.store = st[0];
+  if (!isIso(p.from) || !isIso(p.to) || p.from > p.to) throw new Error("The spec's period was not a valid date range.");
+  sp.period = {from: p.from < ctx.first ? ctx.first : p.from, to: p.to > ctx.last ? ctx.last : p.to};
+  sp.chart = sp.chart || (sp.by === "time" ? "line" : sp.by === "none" ? "stat" : "bar");
+  return sp;
+}
+
+function bucketKeys(from, to, grain) { const out = []; for (let d = from; d <= to; d = addDays(d, 1)) { const k = GRAINS[grain].key(d); if (out[out.length - 1] !== k) out.push(k); } return out; }
+
+function execSpec(sp, ctx) {
+  const notes = []; let metric = sp.metric, m = AM[metric], {from, to} = sp.period, f = sp.filters;
+  const wantsPipe = sp.by === "store" || sp.by === "category" || ((f.store || f.category) && m.src === "daily" && (metric === "item_sales" || metric === "orders"));
+  if (wantsPipe && m.src === "daily") {
+    if (metric === "item_sales") { metric = "store_revenue"; notes.push("Sales are credited to the store that sent the item."); }
+    else if (metric === "orders") { metric = "units_sold"; notes.push("Orders cannot be split by store or category, so units sold are shown."); }
+    else return {error: `${m.label} cannot be split by ${sp.by}. Try item sales, units sold or items listed.`};
+    m = AM[metric];
+  }
+  const res = {metric, m, from, to, notes, items: null, series: null, total: null};
+  if (m.src === "daily") {
+    if (f.store || f.category) notes.push("Store and category filters apply to item measures, so they were ignored.");
+    const rows = ctx.rows.filter(r => r.date >= from && r.date <= to && (!f.channel || r.channel === f.channel));
+    const val = rs => metric === "avg_order" ? (rs.reduce((a, r) => a + r.orders, 0) ? rs.reduce((a, r) => a + r.item_sales, 0) / rs.reduce((a, r) => a + r.orders, 0) : 0) : rs.reduce((a, r) => a + r[metric], 0);
+    if (sp.by === "time") {
+      const keys = bucketKeys(from, to, sp.grain), mk = (rs, key) => keys.map(k => ({label: GRAINS[sp.grain].label(k), value: val(rs.filter(r => GRAINS[sp.grain].key(r.date) === k))}));
+      res.series = sp.split === "channel" ? CHORDER.map(c => ({label: CHN[c], color: CH[c], points: mk(rows.filter(r => r.channel === c))})) : [{label: m.label, color: "var(--accent)", points: mk(rows)}];
+      res.total = val(rows);
+    } else if (sp.by === "channel") res.items = CHORDER.map(c => ({label: CHN[c], value: val(rows.filter(r => r.channel === c))}));
+    else res.total = val(rows);
+  } else {
+    if (f.channel) notes.push("Item pipeline data is not split by marketplace, so the marketplace filter was ignored.");
+    const m0 = from.slice(0, 7), m1 = to.slice(0, 7), rows = ctx.pipe.filter(r => r.month >= m0 && r.month <= m1 && (!f.store || r.store === f.store) && (!f.category || r.category === f.category));
+    if (from.slice(8) !== "01" || to !== monthEnd(monthStart(to))) notes.push("Item data is monthly, so whole months are used.");
+    const val = rs => rs.reduce((a, r) => a + r[m.col], 0);
+    if (sp.by === "store") res.items = Object.entries(ctx.stores).filter(([id]) => !f.store || id === f.store).map(([id, n]) => ({label: n, value: val(rows.filter(r => r.store === id))})).filter(x => x.label !== "Unattributed" || x.value);
+    else if (sp.by === "category") res.items = ctx.categories.filter(c => !f.category || c === f.category).map(c => ({label: c, value: val(rows.filter(r => r.category === c))}));
+    else if (sp.by === "channel") return {error: "Item pipeline data is not split by marketplace. Group by store or category instead."};
+    else if (sp.by === "time") {
+      const g = sp.grain === "quarter" ? "quarter" : "month"; if (sp.grain === "day" || sp.grain === "week") notes.push("Item data is monthly, so months are shown.");
+      const keys = bucketKeys(monthStart(from), to, g);
+      res.series = [{label: m.label, color: "var(--accent)", points: keys.map(k => ({label: GRAINS[g].label(k), value: val(rows.filter(r => GRAINS[g].key(r.month + "-01") === k))}))}];
+    }
+    res.total = val(rows);
+  }
+  if (res.items) { res.items.sort((a, b) => sp.order === "asc" ? a.value - b.value || a.label.localeCompare(b.label) : b.value - a.value || a.label.localeCompare(b.label)); res.all = res.items; res.items = res.items.slice(0, sp.limit); }
+  return res;
+}
+
+const periodText = (a, b) => a === b ? longDay(a) : `${shortDay(a)}${a.slice(0, 4) !== b.slice(0, 4) ? ", " + a.slice(0, 4) : ""} to ${shortDay(b)}, ${b.slice(0, 4)}`;
+function treeHTML(q, sp, res, engine, ctx) {
+  const f = sp.filters, fl = [f.channel && "marketplace = " + CHN[f.channel], f.store && "store = " + ctx.stores[f.store], f.category && "category = " + f.category].filter(Boolean);
+  const m = res.m || AM[sp.metric];
+  const li = (k, v) => `<li><span class="muted">${k}</span> ${esc(v)}</li>`;
+  return `<div class="tree"><div class="tq">“${esc(q)}”</div><ul>${li("Measure", m.label)}${li("Grouped by", sp.by === "none" ? "nothing (one total)" : sp.by === "time" ? `time, by ${sp.grain}${sp.split ? ", split by marketplace" : ""}` : sp.by)}${li("Filters", fl.length ? fl.join(", ") : "none")}${li("Period", periodText(res.from || sp.period.from, res.to || sp.period.to))}${li("Chart", sp.chart + (sp.by !== "time" && sp.by !== "none" ? (sp.order === "asc" ? ", lowest first" : ", highest first") : ""))}</ul>
+  <div class="muted" style="font-size:12px">Parsed by ${engine === "claude" ? "Claude" : "built-in keyword rules"}. Numbers always come from the stored data, never from the model.</div></div>`;
+}
+function resultHTML(sp, res) {
+  const m = res.m, F = v => fmt(m.unit, v);
+  const head = `<h3 style="font:700 16px var(--display);margin:0 0 4px">${esc(m.label)}${sp.by !== "none" && sp.by !== "time" ? ` by ${esc(sp.by)}` : ""}</h3><p class="muted" style="margin:0 0 12px;font-size:13px">${esc(periodText(res.from, res.to))}</p>`;
+  const notes = res.notes.map(n => `<p class="muted" style="margin:8px 0 0;font-size:12.5px">${esc(n)}</p>`).join("");
+  if (res.series && sp.chart !== "table") return head + `<div class="chartwrap">${lineChart(res.series, m.unit === "usd" ? "usd" : "n")}</div>` + notes;
+  if (res.series) return head + `<div class="scroll"><table><thead><tr><th>Period</th>${res.series.map(s => `<th class="r">${esc(s.label)}</th>`).join("")}</tr></thead><tbody>${res.series[0].points.map((p, i) => `<tr><td>${esc(p.label)}</td>${res.series.map(s => `<td class="r num">${F(s.points[i].value)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` + notes;
+  if (res.items) {
+    const max = Math.max(...res.items.map(i => i.value), 1), zeros = res.all.filter(i => i.value === 0).length;
+    const sum = zeros ? `<p style="margin:0 0 10px">${pill("p-warn", `${zeros} of ${res.all.length} ${zeros === 1 ? "has" : "have"} none`)}</p>` : "";
+    if (sp.chart === "table") return head + sum + `<div class="scroll"><table><thead><tr><th>${esc(sp.by)}</th><th class="r">${esc(m.label)}</th></tr></thead><tbody>${res.items.map(i => `<tr><td>${esc(i.label)}</td><td class="r num">${F(i.value)}</td></tr>`).join("")}</tbody></table></div>` + notes;
+    return head + sum + `<div class="bars">${res.items.map(i => `<div class="brow"><span class="bl">${esc(i.label)}</span><div class="bartrack"><i style="width:${(i.value / max * 100).toFixed(1)}%"></i></div><span class="bv num ${i.value === 0 ? "down" : ""}">${F(i.value)}</span></div>`).join("")}</div>` + notes;
+  }
+  return head + `<div class="kpi" style="padding:0"><span class="v" style="font-size:40px">${F(res.total)}</span></div>` + notes;
+}
+
+const EXAMPLES = ["Which stores listed the fewest books last month?", "Weekly item sales by marketplace for the last 12 weeks", "Top 10 stores by sales last month", "How much shipping did we charge on the latest day?", "Refunds by marketplace this month"];
+async function viewAsk(root) {
+  const ctx = await askContext();
+  if (!state.q) state.q = EXAMPLES[0];
+  root.innerHTML = `
+  <section><h2>Ask</h2><p class="lead">Type a question about sales, orders, shipping, or what stores sent and listed. The question is turned into a plain spec (measure, grouping, filters, period, chart), and the chart is drawn from the stored data. Try the first example: it is the books question from the ops manager interview.</p>
+    <form id="askform" class="bar" style="align-items:stretch"><label class="f" style="flex:1 1 320px">Your question<input type="text" id="q" value="${esc(state.q)}" autocomplete="off" style="font:500 15px var(--body);padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"></label>
+      <button class="seg-btn" type="submit" id="askbtn" style="align-self:end;padding:11px 18px">Ask</button></form>
+    <div class="legend" style="margin-top:10px">${EXAMPLES.map((e, i) => `<button type="button" class="chip" data-ex="${i}">${esc(e)}</button>`).join("")}</div></section>
+  <section id="answer"></section>`;
+  const run = async () => {
+    const q = $("#q", root).value.trim(); if (!q) return; state.q = q;
+    const box = $("#answer", root); box.innerHTML = `<div class="empty">Reading your question…</div>`;
+    let sp, engine = "keywords", why = "";
+    try {
+      const sample = window.claude?.use ? await window.claude.use("sample") : null;
+      if (sample) {
+        const prompt = `Translate a question about Goodwill e-commerce data into one JSON spec. Reply with JSON only.
+Latest data day: ${ctx.last} (a ${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][dow(ctx.last)]}). Earliest: ${ctx.first}. Weeks start Monday.
+metric: ${Object.entries(AM).map(([k, v]) => `${k} (${v.label}${v.src === "pipe" ? ", only by store/category/time" : ""})`).join("; ")}.
+by: time | channel | store | category | none. grain (only when by=time): day | week | month | quarter. split: "channel" or null (only when by=time).
+filters: channel in ${Object.keys(CHN).join("|")}; category in ${ctx.categories.join("|")}; store is one of ${Object.entries(ctx.stores).filter(([id]) => id).map(([, n]) => n).join("; ")}. Use null for none.
+period: {"from":"YYYY-MM-DD","to":"YYYY-MM-DD"} inclusive. "last month" means the previous calendar month; item measures (store_revenue, units_sold, items_*) use whole months.
+order: "desc" or "asc" (asc for fewest/lowest/zero). limit: number of rows. chart: line | bar | stat | table.
+Shape: {"metric":"","by":"","grain":"day","split":null,"filters":{"channel":null,"store":null,"category":null},"period":{"from":"","to":""},"order":"desc","limit":10,"chart":"bar"}
+Question: ${q}`;
+        sp = cleanSpec(await sample.json(prompt, {modelTier: "quick"}), ctx); engine = "claude";
+      }
+    } catch (e) { why = e && e.message ? e.message : ""; sp = null; }
+    try {
+      let unmatched = false;
+      if (!sp) { const ks = keywordSpec(q, ctx); unmatched = !!ks._unmatched; sp = cleanSpec(ks, ctx); }
+      const res = execSpec(sp, ctx);
+      if (unmatched && !res.error) res.notes.unshift("I did not recognise a measure, grouping or period in that question, so this is item sales for the last 30 days. Try one of the examples above.");
+      if (res.error) { box.innerHTML = `<div class="banner">${esc(res.error)}</div>`; return; }
+      box.innerHTML = `<div class="grid g2" style="align-items:start"><div class="card pad" style="min-width:0">${resultHTML(sp, res)}</div><div class="card pad" style="min-width:0">${treeHTML(q, sp, res, engine, ctx)}</div></div>`;
+    } catch (e) { box.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; }
+  };
+  $("#askform", root).onsubmit = e => { e.preventDefault(); run(); };
+  root.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { $("#q", root).value = EXAMPLES[+b.dataset.ex]; run(); });
+  run();
+}
+registerTab("ask", "Ask", viewAsk, 30);
+
+/* ---------------- Month-End Close ---------------- */
+async function viewClose(root) {
+  const opt = await read("site/options");
+  const months = opt.close_months;
+  if (!state.closeMonth) state.closeMonth = opt.close_default;
+  const d = await read("close/" + state.closeMonth);
+  const money = v => usd(v, 2);
+  const st = s => { const [c, t] = STATUS[s] || ["p-info", s]; return pill(c, t); };
+  const diffCell = v => `<td class="r num ${Math.abs(v) < .005 ? "muted" : "down"}">${Math.abs(v) < .005 ? "0.00" : money(v)}</td>`;
+  const blocking = d.blocking_count;
+  root.innerHTML = `
+  <section><div class="bar"><div style="flex:1 1 280px"><h2>Month-End Close</h2><p class="lead" style="margin:0">The nine month-end inputs go through the allocation rules into a Business Central journal and AR invoices, with control totals at each step. Rules version ${esc(d.rules_version)}.</p></div>
+    <label class="f">Month<select id="cm-sel">${months.map(x => `<option value="${x.month}">${esc(x.label)}${x.complete ? "" : " (in progress)"}</option>`).join("")}</select></label></div></section>
+  <section>${blocking ? `<div class="banner bad">${blocking} error${blocking > 1 ? "s" : ""} block approval. Resolve them or approve with an override note in the working app.</div>` : `<div class="banner" style="background:var(--good-soft);color:var(--good)">No blocking errors. This close is ready to approve in the working app.</div>`}
+    <div class="steps" style="margin-top:12px">${d.stages.map((s, i) => `<div class="card step"><b>${esc(s.label)}</b>${st(s.status)}<small>${esc(s.detail || "")}</small></div>`).join("")}</div></section>
+  <section><h2>Sources</h2><p class="lead">What arrived, and what the rules did with it.</p><div class="card scroll"><table><thead><tr><th>Source</th><th>Status</th><th class="r">Rows</th><th class="r">File total</th><th class="r">Journal total</th><th>Detail</th></tr></thead><tbody>
+    ${d.sources.map(s => `<tr><td><b>${esc(s.label)}</b><br><span class="muted" style="font-size:12px">${esc(s.workflow)}</span></td><td>${st(s.status)}</td><td class="r num">${nf(s.rows)}</td><td class="r num">${s.file_total == null ? "n/a" : money(s.file_total)}</td><td class="r num">${s.journal_total == null ? "n/a" : money(s.journal_total)}</td><td class="muted">${esc(s.detail)}${s.exceptions ? ` · ${s.exceptions} exception${s.exceptions > 1 ? "s" : ""}` : ""}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><h2>Control totals</h2><p class="lead">Source file to loaded to rules output to journal. Differences must be zero or explained.</p><div class="card scroll"><table><thead><tr><th>Source</th><th>Measure</th><th class="r">File</th><th class="r">Loaded</th><th class="r">Rules</th><th class="r">Journal</th><th class="r">Diff</th><th>Status</th></tr></thead><tbody>
+    ${d.control_totals.map(c => `<tr><td class="mono">${esc(c.source)}</td><td>${esc(c.measure)}</td><td class="r num">${money(c.file_total)}</td><td class="r num">${money(c.loaded_total)}</td><td class="r num">${money(c.rules_total)}</td><td class="r num">${money(c.journal_total)}</td>${diffCell(c.diff_file_loaded + c.diff_loaded_rules + c.diff_rules_journal)}<td>${pill(c.status === "ok" ? "p-ok" : "p-bad", c.status === "ok" ? "OK" : "Break")}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><h2>Business Central journal</h2><p class="lead">General Journal batch GENERAL / ECOM. ${d.journal.balanced ? "Every document balances." : esc(d.journal.unbalanced_documents + " document(s) do not balance.")} Total debits ${money(d.journal.total_debit)}, credits ${money(d.journal.total_credit)}. Open a document to see its lines.</p>
+    <div class="card">${d.journal.documents.map(doc => `<details><summary><b class="mono">${esc(doc.document_no)}</b>${pill(doc.balanced ? "p-ok" : "p-bad", doc.balanced ? "Balanced" : "Unbalanced")}${doc.has_placeholder_accounts ? pill("p-warn", "Placeholder accounts") : ""}<span class="muted">${doc.line_count} lines · ${money(doc.total_debit)}</span></summary>
+      <div class="scroll"><table><thead><tr><th>Account</th><th>Description</th><th>Dept</th><th class="r">Debit</th><th class="r">Credit</th></tr></thead><tbody>${doc.lines.map(l => `<tr><td class="mono">${esc(l.account_no)}${l.placeholder_account ? " *" : ""}</td><td>${esc(l.description)}</td><td class="mono">${esc(l.department_code)}</td><td class="r num">${l.debit ? money(l.debit) : ""}</td><td class="r num">${l.credit ? money(l.credit) : ""}</td></tr>`).join("")}</tbody></table></div></details>`).join("")}</div>
+    <p class="muted" style="margin:8px 0 0;font-size:12.5px">* Placeholder account. Goodwill has not yet confirmed its chart of accounts for revenue, fees and receivables.</p></section>
+  <section><h2>Parallel run against the manual workbook</h2><p class="lead">${d.comparison.status === "no_workbook" || !d.comparison.workbook ? "No manual workbook was supplied for this month." : `${nf(d.comparison.matches)} lines match the workbook. ${d.comparison.differences.length} differ.`}</p>
+    ${d.comparison.differences.length ? `<div class="card scroll"><table><thead><tr><th>Document</th><th>Account</th><th>Description</th><th class="r">System</th><th class="r">Workbook</th><th class="r">Difference</th></tr></thead><tbody>${d.comparison.differences.map(x => `<tr><td class="mono">${esc(x.doc_no)}</td><td class="mono">${esc(x.account_no)}</td><td>${esc(x.description)}</td><td class="r num">${x.system_amount == null ? "—" : money(x.system_amount)}</td><td class="r num">${x.workbook_amount == null ? "—" : money(x.workbook_amount)}</td><td class="r num down">${x.difference == null ? "" : money(x.difference)}</td></tr>`).join("")}</tbody></table></div>` : ""}</section>
+  <section><h2>AR invoices</h2><div class="card scroll"><table><thead><tr><th>Customer</th><th>Document</th><th class="r">Lines</th><th class="r">Total</th><th>Ties out</th></tr></thead><tbody>
+    ${d.invoices.map(i => `<tr><td>${esc(i.customer_name)} ${i.placeholder ? pill("p-warn", "Placeholder customer") : ""}</td><td class="mono">${esc(i.external_document_number)}</td><td class="r num">${i.lines}</td><td class="r num">${money(i.total)}</td><td>${pill(i.ties_out ? "p-ok" : "p-bad", i.ties_out ? "Yes" : "No")}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><h2>Customer balances</h2><p class="lead">Invoice − fees − refunds − payouts = open balance, per marketplace.</p><div class="card scroll"><table><thead><tr><th>Marketplace</th><th class="r">Invoice</th><th class="r">Fees</th><th class="r">Refunds</th><th class="r">Payouts</th><th class="r">Open balance</th><th>Status</th></tr></thead><tbody>
+    ${d.customer_balances.map(b => `<tr><td>${esc(b.channel)}</td><td class="r num">${money(b.invoice_total)}</td><td class="r num">${money(b.fees)}</td><td class="r num">${money(b.refunds)}</td><td class="r num">${money(b.payouts)}</td><td class="r num">${money(b.open_balance)}</td><td>${pill(b.status === "ok" ? "p-ok" : "p-bad", b.status === "ok" ? "OK" : "Break")}</td></tr>`).join("")}</tbody></table></div></section>
+  <section><h2>Exceptions</h2><p class="lead">Every exception has an owner. Errors block approval.</p><div class="card scroll"><table><thead><tr><th>Severity</th><th>Source</th><th>What happened</th><th class="r">Amount</th><th>Owner</th></tr></thead><tbody>
+    ${d.exceptions.length ? [...d.exceptions].sort((a, b) => ({error: 0, warning: 1, info: 2}[a.severity] ?? 3) - ({error: 0, warning: 1, info: 2}[b.severity] ?? 3)).map(e => `<tr><td>${pill(e.severity === "error" ? "p-bad" : e.severity === "warning" ? "p-warn" : "p-info", e.severity)}</td><td class="mono">${esc(e.source)}</td><td>${esc(e.message)}</td><td class="r num">${e.amount == null ? "" : money(e.amount)}</td><td>${esc(e.owner)}</td></tr>`).join("") : `<tr><td colspan="5" class="empty">No exceptions.</td></tr>`}</tbody></table></div></section>`;
+  $("#cm-sel", root).value = state.closeMonth;
+  $("#cm-sel", root).onchange = e => { state.closeMonth = e.target.value; render(); };
+}
+registerTab("close", "Month-End Close", viewClose, 70);
+
+/* ---------------- Data Quality ---------------- */
+async function viewQuality(root) {
+  const q = await read("quality/latest");
+  const P = {error: ["p-bad", "Error"], warning: ["p-warn", "Warning"], info: ["p-info", "Info"]};
+  const ex = c => { const rows = c.examples || []; if (!rows.length) return ""; const cols = Object.keys(rows[0]);
+    return `<div class="scroll"><table><thead><tr>${cols.map(k => `<th>${esc(k)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(k => `<td class="mono">${esc(typeof r[k] === "object" ? JSON.stringify(r[k]) : r[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`; };
+  root.innerHTML = `
+  <section><h2>Data Quality</h2><p class="lead">${q.passed} of ${q.total} checks pass${q.blocking ? `, ${q.blocking} blocking` : ", none blocking"}. Each check is a SQL query that returns the failing rows; zero rows means it passes. Last run ${new Date(q.run_at).toLocaleString("en-US", {dateStyle: "medium", timeStyle: "short"})}.</p></section>
+  <section><div class="card">${q.checks.map(c => { const [cl, t] = c.status === "pass" ? ["p-ok", "Pass"] : P[c.severity] || ["p-info", c.severity];
+    return `<details><summary>${pill(cl, t)}<b class="mono">${esc(c.check_id)}</b><span class="muted">${c.status === "pass" ? "" : nf(c.failing_rows) + " failing rows"}</span></summary><div style="padding:0 12px 12px"><p class="muted" style="margin:0 0 8px">${esc(c.description)}</p>${ex(c)}</div></details>`; }).join("")}</div></section>
+  <section><p class="muted" style="max-width:75ch">The two warnings are expected on this data set. Two SKUs carry a planted typo, so their store credit is held as an exception instead of being guessed. Thirty-three channel-days have no orders, almost all on GoodwillFinds, which sells only a few items a day.</p></section>`;
+}
+registerTab("quality", "Data Quality", viewQuality, 80);
+
+/* ---------------- shell ---------------- */
+let seq = 0;
+async function render() {
+  const my = ++seq, main = $("#main");
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === state.tab));
+  if (!db) return;
+  const keep = window.scrollY;
+  try {
+    const box = document.createElement("div"); box.style.display = "contents";
+    await VIEWS[state.tab](box);
+    if (my !== seq) return;
+    main.replaceChildren(box); window.scrollTo(0, keep);
+  } catch (e) {
+    if (my === seq) main.innerHTML = `<div class="banner bad">${esc(e.message)}</div>`;
+  }
+}
+function setTab(t) {
+  state.tab = VIEWS[t] ? t : "pulse";
+  try { history.replaceState(null, "", "#" + state.tab); } catch (e) {}
+  render();
+}
+function buildNav() {
+  const nav = $("#tabs"); nav.innerHTML = TABS.map(t => `<button role="tab" data-tab="${esc(t.id)}">${esc(t.label)}</button>`).join("");
+  nav.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { setTab(b.dataset.tab); window.scrollTo(0, 0); }));
+  state.tab = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : "pulse";
+  nav.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === state.tab));
+}
+buildNav();
+$("#foot").textContent = "All figures are synthetic and modeled on the report layouts in Goodwill Michiana's kickoff deck. No real Goodwill data is used. Numbers are read from this page's database, which was built from the harmonized SQL warehouse (58,962 orders across five marketplaces, September 2025 to October 2026).";
+
+(async () => {
+  db = await (window.claude?.use ? window.claude.use("db") : null);
+  if (!db) { $("#main").innerHTML = `<div class="banner">Sign in to claude.ai to load the data. This page reads its figures from the artifact database.</div>`; return; }
+  render();
+})();
+
+</script>
