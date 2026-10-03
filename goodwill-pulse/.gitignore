@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+data/warehouse.duckdb*
+data/archive/
+data/inbox/
+data/out/
+.env

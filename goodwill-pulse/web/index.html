@@ -1,0 +1,311 @@
+<title>E-Commerce Daily Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: an operations console. Sticky top bar (date + status), tabbed views, the pulse table as the hero. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#18221f; --muted:#5b6762; --line:#d8dedb; --soft:#eaefec;
+  --accent:#0f6b62; --accent-soft:#dcefeb;
+  --ok:#23784a; --ok-soft:#e1f2e7; --warn:#9a5b00; --warn-soft:#fcefd9; --bad:#b0362c; --bad-soft:#fae3e0;
+  --display:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --body:"Public Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101614; --surface:#18201d; --ink:#e4ebe8; --muted:#97a49e; --line:#2b3632; --soft:#202a26;
+  --accent:#4fc1b2; --accent-soft:#183531;
+  --ok:#6cc893; --ok-soft:#173022; --warn:#e8a94a; --warn-soft:#33260f; --bad:#ef8c82; --bad-soft:#3a1d1a; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto}
+.brand b{font:800 17px var(--display);letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--muted)}
+.datenav{display:flex;align-items:center;gap:6px}
+.datenav button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;width:32px;height:32px}
+.datenav select{font:500 14px var(--body);border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink)}
+nav.tabs{display:flex;gap:4px;max-width:1120px;margin:0 auto;padding:0 20px;overflow-x:auto}
+nav.tabs button{border:0;background:none;color:var(--muted);padding:10px 12px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--bad-soft);color:var(--bad);font:600 11px/18px var(--mono);text-align:center}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--body);padding:5px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)} .p-info{background:var(--accent-soft);color:var(--accent)}
+
+section.view{padding-top:28px}
+.headline{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px;margin-bottom:16px}
+h1{font:800 clamp(1.5rem,3vw,2rem)/1.15 var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+h2{font:700 1.05rem var(--display);margin:0 0 10px}
+.sub{color:var(--muted);font-size:14px}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.card-pad{padding:18px}
+
+table{border-collapse:collapse;width:100%}
+.pulse th,.pulse td{padding:13px 16px;text-align:right;border-bottom:1px solid var(--line)}
+.pulse th{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.pulse th:first-child,.pulse td:first-child{text-align:left}
+.pulse td:first-child{font-weight:600}
+.pulse td.big{font:600 17px var(--mono);font-variant-numeric:tabular-nums}
+.pulse tfoot td{border-bottom:0;border-top:2px solid var(--ink);font-weight:800}
+.pulse tfoot td.big{font-size:19px}
+.delta{font:500 12px var(--mono);font-variant-numeric:tabular-nums}
+.up{color:var(--ok)} .down{color:var(--bad)} .flat{color:var(--muted)}
+.tscroll{overflow-x:auto}
+.pulse{min-width:560px}
+
+.sources{display:grid;gap:12px}
+.src{display:grid;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.src-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.src b{font-weight:700}
+.src small{color:var(--muted);font-size:13px}
+
+.notes{font-size:13px;color:var(--muted);margin-top:12px;display:grid;gap:4px}
+.drop{margin-top:20px;border:2px dashed var(--line);border-radius:8px;padding:18px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;background:var(--surface)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop p{margin:0;font-size:14px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;border-radius:6px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:disabled{opacity:.5;cursor:default}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+
+.list th,.list td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+.list th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.list{min-width:760px}
+.list td.r{text-align:right}
+.fname{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.fix{color:var(--muted);font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(92vw,560px)}
+.banner{margin-bottom:16px;padding:12px 16px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:14px}
+@media (prefers-reduced-motion:no-preference){.card,.src{transition:border-color .2s}}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>E-Commerce Daily Pulse</b><span>Goodwill Michiana · SprintHack prototype · synthetic data</span></div>
+    <div class="datenav" aria-label="Business date">
+      <button id="prev" aria-label="Previous day">‹</button>
+      <select id="date" aria-label="Choose business date"></select>
+      <button id="next" aria-label="Next day">›</button>
+    </div>
+    <span id="status" class="pill p-info">Loading</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-view="pulse" aria-selected="true">Daily Pulse</button>
+    <button role="tab" data-view="reports" aria-selected="false">Reports received</button>
+    <button role="tab" data-view="exceptions" aria-selected="false">Exceptions <span id="exc-count" class="count" hidden>0</span></button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="view" id="view-pulse">
+    <div class="headline">
+      <h1 id="pulse-title">Daily Pulse</h1>
+      <span class="sub" id="pulse-sub"></span>
+    </div>
+    <div id="pulse-banner" class="banner" hidden></div>
+    <div class="grid">
+      <div class="card">
+        <div class="tscroll">
+          <table class="pulse" aria-label="Revenue and customers by marketplace">
+            <thead><tr><th>Revenue source</th><th>Daily revenue</th><th>Daily customers</th><th id="cmp-head">vs same day last week</th><th>Month to date</th></tr></thead>
+            <tbody id="pulse-body"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+            <tfoot id="pulse-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h2>Reports behind these numbers</h2>
+        <div class="sources" id="sources"></div>
+        <div class="notes">
+          <span id="note-basis"></span>
+          <span>Customers = paid orders per marketplace (today's "rows minus the title row"). A buyer on two marketplaces counts on each.</span>
+          <span>Business day = midnight to midnight, Eastern, to match the 10 PM store report.</span>
+        </div>
+      </div>
+    </div>
+    <div class="drop" id="drop">
+      <p><b>Drop tonight's reports here</b> (Upright paid orders, Cash Monkey orders), or</p>
+      <div class="btns">
+        <label class="btn">Choose files<input id="file" type="file" multiple accept=".csv,.xlsx" hidden></label>
+        <button class="btn" id="demo-drop" data-set="demo">Load Saturday's reports</button>
+        <button class="btn" id="messy-drop" data-set="messy">Load a messy report</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-reports" hidden>
+    <div class="headline"><h1>Reports received</h1><span class="sub">Every file is archived unchanged and traceable to the numbers it produced.</span></div>
+    <div class="card tscroll">
+      <table class="list"><thead><tr><th>File</th><th>Report</th><th>Status</th><th class="r">Rows</th><th class="r">Orders loaded</th><th>Covers (ET)</th><th>Received</th></tr></thead>
+      <tbody id="files-body"></tbody></table>
+    </div>
+  </section>
+
+  <section class="view" id="view-exceptions" hidden>
+    <div class="headline"><h1>Exceptions</h1><span class="sub">Rows that didn't load cleanly. Good rows still load; nothing here is silently counted.</span></div>
+    <div class="card tscroll">
+      <table class="list"><thead><tr><th>Severity</th><th>File</th><th class="r">Row</th><th>What happened</th><th>What to do</th><th></th></tr></thead>
+      <tbody id="exc-body"></tbody></table>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+const API = location.protocol.startsWith("http") && !location.hostname.endsWith("claude.ai") ? "" : null;
+const $ = s => document.querySelector(s);
+const money = v => "$" + Number(v || 0).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const int = v => Number(v || 0).toLocaleString("en-US");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const etTime = iso => iso ? new Date(iso).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit", timeZone: "America/New_York"}) : "";
+const etDateTime = iso => iso ? new Date(iso).toLocaleString("en-US", {month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York"}) : "";
+const REPORT_LABEL = {upright_paid_orders: "Upright paid orders", cashmonkey_orders: "Cash Monkey orders"};
+let dates = [], current = null;
+
+async function api(path, opts) {
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r.json();
+}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 4200); }
+
+function delta(now, before) {
+  if (!before) return '<span class="delta flat">—</span>';
+  const p = (now - before) / before * 100;
+  const cls = Math.abs(p) < 0.5 ? "flat" : p > 0 ? "up" : "down";
+  return `<span class="delta ${cls}">${p > 0 ? "▲" : p < 0 ? "▼" : ""} ${Math.abs(p).toFixed(1)}%</span>`;
+}
+
+function sourceStatus(s) {
+  if (s.status === "complete") return ["p-ok", "Complete"];
+  if (s.status === "partial") return ["p-warn", s.covered_through ? `Through ${etTime(s.covered_through)}` : "Partial"];
+  if (s.status === "needs_mapping") return ["p-bad", "Needs a column check"];
+  return ["p-bad", "Not received"];
+}
+
+function renderPulse(p) {
+  const d = new Date(p.business_date + "T12:00:00");
+  $("#pulse-title").textContent = `${p.weekday}, ${d.toLocaleDateString("en-US", {month: "long", day: "numeric", year: "numeric"})}`;
+  $("#pulse-sub").textContent = `Generated ${etDateTime(p.generated_at)} ET`;
+  $("#pulse-body").innerHTML = p.rows.map(r => `<tr>
+      <td>${esc(r.label)}</td><td class="big">${money(r.revenue)}</td><td class="big">${int(r.customers)}</td>
+      <td>${delta(r.revenue, r.revenue_last_week)}</td><td class="num">${money(r.revenue_mtd)}</td></tr>`).join("");
+  const t = p.total;
+  $("#pulse-foot").innerHTML = `<tr><td>Total e-commerce</td><td class="big">${money(t.revenue)}</td><td class="big">${int(t.customers)}</td>
+      <td>${delta(t.revenue, t.revenue_last_week)}</td><td class="num">${money(t.revenue_mtd)}</td></tr>`;
+  $("#sources").innerHTML = p.sources.map(s => {
+    const [cls, label] = sourceStatus(s);
+    const detail = s.status === "missing" ? "No report has arrived for this day yet. Its marketplaces may be understated."
+      : s.status === "needs_mapping" ? "A report arrived but a column changed. See Exceptions."
+      : `Latest order ${etTime(s.latest_order_at)} · ${s.files.length} file${s.files.length === 1 ? "" : "s"}`;
+    return `<div class="src"><div class="src-top"><b>${esc(s.label)}</b><span class="pill ${cls}">${label}</span></div><small>${esc(detail)}</small></div>`;
+  }).join("");
+  $("#note-basis").textContent = p.revenue_basis === "subtotal"
+    ? "Revenue = item subtotal (excludes shipping, handling and tax)." : `Revenue basis: ${p.revenue_basis}.`;
+  const missing = p.sources.filter(s => s.status === "missing" || s.status === "needs_mapping");
+  const st = $("#status");
+  if (missing.length) { st.className = "pill p-bad"; st.textContent = `${missing.length} report${missing.length > 1 ? "s" : ""} missing`; }
+  else if (p.as_of) { st.className = "pill p-warn"; st.textContent = `Preliminary · through ${etTime(p.as_of)}`; }
+  else { st.className = "pill p-ok"; st.textContent = "All reports in"; }
+  $("#cmp-head").textContent = p.as_of ? `vs last week, same time` : "vs same day last week";
+  const banner = $("#pulse-banner");
+  const bad = p.sources.filter(s => s.status === "missing" || s.status === "needs_mapping");
+  banner.hidden = !bad.length && !p.open_exceptions;
+  banner.textContent = [
+    bad.length ? `${bad.map(s => s.label).join(" and ")} ${bad.length > 1 ? "are" : "is"} not in these totals yet.` : "",
+    p.open_exceptions ? `${p.open_exceptions} open exception${p.open_exceptions > 1 ? "s" : ""} on this day's reports.` : "",
+  ].join(" ");
+}
+
+async function loadDates(keep) {
+  dates = await api("/api/pulse/dates");
+  const sel = $("#date");
+  sel.innerHTML = dates.map(d => `<option value="${d}">${new Date(d + "T12:00:00").toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric"})}</option>`).join("");
+  current = keep && dates.includes(keep) ? keep : dates[0];
+  sel.value = current;
+}
+async function loadPulse() {
+  if (!current) return;
+  renderPulse(await api(`/api/pulse?d=${current}`));
+}
+async function loadFiles() {
+  const rows = await api("/api/files");
+  const pill = s => ({loaded: ["p-ok", "Loaded"], partial: ["p-warn", "Loaded with issues"], needs_mapping: ["p-bad", "Needs column check"], rejected: ["p-bad", "Rejected"]}[s] || ["p-info", s]);
+  $("#files-body").innerHTML = rows.length ? rows.map(f => { const [c, l] = pill(f.status); return `<tr>
+    <td class="fname">${esc(f.original_name)}</td><td>${esc(REPORT_LABEL[f.report_type] || "Unrecognized")}</td>
+    <td><span class="pill ${c}">${l}</span></td><td class="r num">${int(f.row_count)}</td><td class="r num">${int(f.loaded_rows)}</td>
+    <td>${f.coverage_start ? `${etDateTime(f.coverage_start)} → ${etDateTime(f.coverage_end)}` : "—"}</td><td>${etDateTime(f.received_at)}</td></tr>`; }).join("")
+    : `<tr><td colspan="7" class="empty">No reports yet.</td></tr>`;
+}
+async function loadExceptions() {
+  const rows = await api("/api/exceptions");
+  const c = $("#exc-count"); c.hidden = !rows.length; c.textContent = rows.length;
+  const sev = s => s === "error" ? ["p-bad", "Error"] : ["p-warn", "Warning"];
+  $("#exc-body").innerHTML = rows.length ? rows.map(e => { const [cl, l] = sev(e.severity);
+    const action = e.rule === "renamed_column"
+      ? `<button class="btn primary" data-confirm="${e.file_id}">Confirm and load</button>`
+      : `<button class="btn" data-resolve="${e.exception_id}">Mark reviewed</button>`;
+    return `<tr><td><span class="pill ${cl}">${l}</span></td><td class="fname">${esc(e.original_name)}</td>
+      <td class="r num">${e.source_row ?? "—"}</td><td>${esc(e.message)}</td><td class="fix">${esc(e.suggested_fix)}</td><td>${action}</td></tr>`; }).join("")
+    : `<tr><td colspan="6" class="empty">No open exceptions.</td></tr>`;
+}
+async function refreshAll(keepDate) {
+  await loadDates(keepDate);
+  await Promise.all([loadPulse(), loadFiles(), loadExceptions()]);
+}
+function summarize(results) {
+  const loaded = results.reduce((a, r) => a + r.loaded, 0);
+  const issues = results.filter(r => r.status !== "loaded");
+  toast(`${results.length} report${results.length === 1 ? "" : "s"} processed · ${loaded} new orders` + (issues.length ? ` · ${issues.length} need attention` : ""));
+}
+
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav.tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("section.view").forEach(v => v.hidden = v.id !== "view-" + b.dataset.view);
+}));
+$("#date").addEventListener("change", e => { current = e.target.value; loadPulse(); });
+$("#prev").addEventListener("click", () => { const i = dates.indexOf(current); if (i < dates.length - 1) { current = dates[i + 1]; $("#date").value = current; loadPulse(); } });
+$("#next").addEventListener("click", () => { const i = dates.indexOf(current); if (i > 0) { current = dates[i - 1]; $("#date").value = current; loadPulse(); } });
+document.querySelectorAll("[data-set]").forEach(b => b.addEventListener("click", async () => {
+  b.disabled = true;
+  try { summarize(await api(`/api/demo/drop/${b.dataset.set}`, {method: "POST"})); await refreshAll(); }
+  catch (e) { toast(e.message); } finally { b.disabled = false; }
+}));
+async function uploadFiles(files) {
+  if (!files.length) return;
+  const fd = new FormData(); [...files].forEach(f => fd.append("files", f));
+  try { summarize(await api("/api/upload", {method: "POST", body: fd})); await refreshAll(); } catch (e) { toast(e.message); }
+}
+$("#file").addEventListener("change", e => uploadFiles(e.target.files));
+const drop = $("#drop");
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); uploadFiles(e.dataTransfer.files); });
+$("#exc-body").addEventListener("click", async e => {
+  const c = e.target.closest("[data-confirm]"), r = e.target.closest("[data-resolve]");
+  try {
+    if (c) { const res = await api(`/api/files/${c.dataset.confirm}/confirm-mapping`, {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"}); toast(res.message); await refreshAll(current); }
+    if (r) { await api(`/api/exceptions/${r.dataset.resolve}/resolve`, {method: "POST"}); await refreshAll(current); }
+  } catch (err) { toast(err.message); }
+});
+
+refreshAll().catch(e => { $("#pulse-body").innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`; });
+</script>

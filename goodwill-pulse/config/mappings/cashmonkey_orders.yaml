@@ -1,0 +1,38 @@
+# Cash Monkey > Reports > Orders Reports > Orders (books and media).
+# From Goodwill's deck (slides 28–30): "Showing orders across all market places, with profit information
+# where available. One line per unit!" Dates are UTC and inclusive. Accounts 276 / 277. Channels Amazon-MF, eBay,
+# Goodwillbooks. Shipping and market fees are pro-rated to each unit.
+# The exact column names are not visible in the deck: every column below is `assumed`. Confirm with Goodwill.
+report_type: cashmonkey_orders
+label: Cash Monkey orders
+source_system: cashmonkey
+grain: unit                       # one row per unit -> must group by order to count customers
+filename_pattern: '^orders\d{4}-(\d{8}-\d{6})-\d+'
+filename_date_format: '%Y%m%d-%H%M%S'   # when the report was generated (assumed UTC), not the order range
+source_timezone: UTC
+has_totals_row: false
+
+columns:
+  'Order Date': {field: paid_at_local, type: datetime, required: true, assumed: true}
+  'Order ID': {field: channel_order_id, required: true, assumed: true}
+  'Account': {field: account, assumed: true}
+  'Channel': {field: channel_raw, required: true, assumed: true}
+  'SKU': {field: sku, assumed: true}
+  'ASIN': {field: ignore, assumed: true}
+  'Title': {field: title, assumed: true}
+  'Condition': {field: ignore, assumed: true}
+  'Source': {field: store_id, assumed: true}
+  'Quantity': {field: quantity, type: int, required: true, assumed: true}
+  'Item Price': {field: subtotal, type: money, required: true, assumed: true}
+  'Shipping Credit': {field: shipping_charged, type: money, assumed: true}
+  'Market Fees': {field: marketplace_fees, type: money, assumed: true}
+  'Shipping Cost': {field: shipping_cost, type: money, assumed: true}
+  'Net Revenue': {field: net_revenue, type: money, assumed: true}
+  'Buyer': {field: buyer, assumed: true}
+
+channel_values:
+  Amazon-MF: amazon
+  Amazon: amazon
+  eBay: ebay
+  Goodwillbooks: goodwillbooks
+line_of_business: books

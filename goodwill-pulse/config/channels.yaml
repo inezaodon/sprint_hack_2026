@@ -1,0 +1,20 @@
+# Rows of the Daily Pulse, in display order.
+# "Other marketplaces can be added as separate rows as the channel mix evolves" (Goodwill deck, slide 31):
+# adding a row here is all it takes. Each canonical channel must appear in exactly one row.
+business_timezone: America/New_York   # matches the 10 PM store sales report
+revenue_basis: subtotal                # subtotal = item revenue; confirm with Goodwill (alternative: total)
+
+pulse_rows:
+  - label: ShopGoodwill
+    channels: [shopgoodwill]
+  - label: Amazon
+    channels: [amazon]
+  - label: eBay
+    channels: [ebay]
+  - label: Other e-commerce channels
+    channels: [goodwillfinds, goodwillbooks, other]
+
+# Which reports we expect every day, so a missing one shows as "not received" instead of $0.
+expected_daily_sources:
+  - upright_paid_orders
+  - cashmonkey_orders

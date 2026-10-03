@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "goodwill-pulse",
+      "runtimeExecutable": "/Users/odon/Desktop/Hackathon/goodwill-pulse/.venv/bin/uvicorn",
+      "runtimeArgs": ["goodwill_pulse.api:app", "--app-dir", "/Users/odon/Desktop/Hackathon/goodwill-pulse", "--port", "8000", "--reload", "--reload-dir", "/Users/odon/Desktop/Hackathon/goodwill-pulse"],
+      "port": 8000
+    }
+  ]
+}
