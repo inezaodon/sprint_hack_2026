@@ -36,8 +36,12 @@ def build() -> Path:
     harmonized = ROOT / "data" / "harmonized.duckdb"
     if not harmonized.exists():
         raise SystemExit("data/harmonized.duckdb is missing: run .venv/bin/python -m goodwill_pulse.build first")
-    shutil.rmtree(OUT, ignore_errors=True)
-    OUT.mkdir(parents=True)
+    # keep the Vercel project link (.vercel/) across rebuilds, or the CLI creates a new project
+    if OUT.exists():
+        for p in OUT.iterdir():
+            if p.name != ".vercel":
+                shutil.rmtree(p) if p.is_dir() else p.unlink()
+    OUT.mkdir(parents=True, exist_ok=True)
 
     for d in ("goodwill_pulse", "config", "sql", "web"):
         shutil.copytree(ROOT / d, OUT / d, ignore=IGNORE)
@@ -60,7 +64,7 @@ def build() -> Path:
     print("warehouse orders, latest business date:", r.stdout.strip())
     shutil.rmtree(data / "archive", ignore_errors=True)   # raw-file archive from the load; not needed at runtime
 
-    for p in OUT.rglob("*"):                     # the function may run as another user: make everything readable
+    for p in (q for q in OUT.rglob("*") if ".vercel" not in q.parts):   # the function may run as another user: make everything readable
         p.chmod(0o755 if p.is_dir() else 0o644)
     size = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"bundle: {OUT} ({size / 1e6:.0f} MB before dependencies)")
