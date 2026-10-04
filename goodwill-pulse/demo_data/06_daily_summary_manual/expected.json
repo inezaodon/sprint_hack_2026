@@ -1,0 +1,68 @@
+{
+  "scenario": "Hand-entered daily summary, filled from the warehouse (layout approximated from a blurry photo)",
+  "days": {
+    "2026-09-27": {
+      "sgw_sales": 8181.67,
+      "ebay_sales": 1263.02,
+      "amazon_sales": 405.76,
+      "goodwillfinds_sales": 3766.93,
+      "books_sales": 68.22,
+      "orders": 160,
+      "shipping_charged": 1535.38
+    },
+    "2026-09-28": {
+      "sgw_sales": 10692.22,
+      "ebay_sales": 1381.0,
+      "amazon_sales": 710.31,
+      "goodwillfinds_sales": 55.68,
+      "books_sales": 135.33,
+      "orders": 191,
+      "shipping_charged": 1777.1
+    },
+    "2026-09-29": {
+      "sgw_sales": 10000.83,
+      "ebay_sales": 1348.28,
+      "amazon_sales": 728.86,
+      "goodwillfinds_sales": 364.52,
+      "books_sales": 87.86,
+      "orders": 191,
+      "shipping_charged": 1841.32
+    },
+    "2026-09-30": {
+      "sgw_sales": 10763.69,
+      "ebay_sales": 2469.54,
+      "amazon_sales": 598.42,
+      "goodwillfinds_sales": 313.61,
+      "books_sales": 84.38,
+      "orders": 198,
+      "shipping_charged": 1875.22
+    },
+    "2026-10-01": {
+      "sgw_sales": 7024.81,
+      "ebay_sales": 919.05,
+      "amazon_sales": 481.44,
+      "goodwillfinds_sales": 1037.91,
+      "books_sales": 128.99,
+      "orders": 149,
+      "shipping_charged": 1341.59
+    },
+    "2026-10-02": {
+      "sgw_sales": 10129.92,
+      "ebay_sales": 1630.33,
+      "amazon_sales": 336.72,
+      "goodwillfinds_sales": 551.66,
+      "books_sales": 47.07,
+      "orders": 131,
+      "shipping_charged": 1299.45
+    },
+    "2026-10-03": {
+      "sgw_sales": 7417.67,
+      "ebay_sales": 1356.54,
+      "amazon_sales": 437.83,
+      "goodwillfinds_sales": 840.53,
+      "books_sales": 103.35,
+      "orders": 138,
+      "shipping_charged": 1423.05
+    }
+  }
+}

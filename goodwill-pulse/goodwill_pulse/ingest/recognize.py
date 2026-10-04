@@ -54,6 +54,8 @@ def recognize(path: Path, aliases: dict[str, dict[str, str]] | None = None) -> R
                 col_map[h] = h
             elif h in confirmed:
                 col_map[h] = confirmed[h]
+            elif h in spec.get("aliases", {}):
+                col_map[h] = spec["aliases"][h]
         found = set(col_map.values())
         required = [c for c, v in spec["columns"].items() if v.get("required")]
         missing = [c for c in required if c not in found]

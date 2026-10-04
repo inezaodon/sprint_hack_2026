@@ -1,0 +1,2 @@
+Cash Monkey's download for 2026-10-02 is deliberately missing from this folder.
+The pulse should show Cash Monkey as 'not received' and the day as incomplete, not as zero sales.

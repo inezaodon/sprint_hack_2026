@@ -31,6 +31,17 @@ columns:
   'Payment Fee': {field: fee_payment, type: money}
   'Paid At': {field: paid_at_local, type: datetime, required: true, assumed: true}
 
+# Header names seen in the real export (photographed in Excel, Oct 2026) that differ from the slide-26 reconstruction above.
+# Either spelling is accepted. 'Handling Total', 'Donation Total', 'Final Value' and 'Payment Processing Fee' are readable in
+# the photo; 'Channel Buyer ID' and 'Shipping Label Cost' are cut off at 'Channel Bu' and 'Shipping La'. The real Total also
+# includes the Donation column (Total = Subtotal + Shipping + Handling + Tax + Donation). Revenue stays Subtotal.
+aliases:
+  'Channel Buyer ID': 'Channel Buyer'
+  'Handling Total': 'Handling'
+  'Donation Total': 'Donation'
+  'Final Value': 'Final Value Fee'
+  'Payment Processing Fee': 'Payment Fee'
+
 channel_values:            # Upright channel text -> canonical channel
   Shopgoodwill: shopgoodwill
   ShopGoodwill: shopgoodwill

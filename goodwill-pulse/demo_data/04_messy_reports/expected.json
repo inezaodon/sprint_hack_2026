@@ -1,0 +1,41 @@
+{
+  "scenario": "Messy Upright exports. Each file lists what the system should catch",
+  "clean_orders": 92,
+  "clean_item_sales": 12041.31,
+  "files": {
+    "paid_orders_10-02-2026_10-02-2026 (2).csv": {
+      "should_catch": [
+        "renamed column 'Sub Total' (suggest Subtotal)",
+        "2 duplicate order rows",
+        "1 test order (TEST_BUYER)",
+        "1 blank buyer"
+      ],
+      "orders_after_cleanup": 92,
+      "item_sales_after_cleanup": 12041.31
+    },
+    "paid_orders_title_rows_10-02-2026.xlsx": {
+      "should_catch": [
+        "3 title rows before the header",
+        "one text date, one invalid date",
+        "totals row"
+      ],
+      "orders_in_file": 40
+    },
+    "paid_orders_10-02-2026_10-02-2026 (3).csv": {
+      "should_catch": [
+        "file name says 2026-10-02 but the paid dates are 2026-10-01"
+      ],
+      "orders_in_file": 25
+    },
+    "paid_orders_10-02-2026_10-02-2026 (4).csv": {
+      "should_catch": [
+        "identical to file (3): already loaded"
+      ]
+    },
+    "NO_CASH_MONKEY_FILE.txt": {
+      "should_catch": [
+        "Cash Monkey source missing: day marked incomplete"
+      ]
+    }
+  }
+}

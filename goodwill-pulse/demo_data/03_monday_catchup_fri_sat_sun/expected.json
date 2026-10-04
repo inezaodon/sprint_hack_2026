@@ -1,0 +1,42 @@
+{
+  "scenario": "Monday morning: Friday, Saturday and Sunday pulled together",
+  "days": {
+    "2026-09-25": {
+      "orders": 93,
+      "item_sales": 10222.5
+    },
+    "2026-09-26": {
+      "orders": 79,
+      "item_sales": 10074.86
+    },
+    "2026-09-27": {
+      "orders": 112,
+      "item_sales": 12671.67
+    }
+  },
+  "range_file_total_item_sales": 32969.03,
+  "range_file_orders": 284,
+  "upright": {
+    "GoodwillFinds": {
+      "orders": 13,
+      "item_sales": 4384.68,
+      "shipping_total": 142.41,
+      "handling": 51.0,
+      "units": 17
+    },
+    "Shopgoodwill": {
+      "orders": 230,
+      "item_sales": 25506.18,
+      "shipping_total": 2700.03,
+      "handling": 954.0,
+      "units": 318
+    },
+    "eBay": {
+      "orders": 41,
+      "item_sales": 3078.17,
+      "shipping_total": 457.53,
+      "handling": 138.0,
+      "units": 46
+    }
+  }
+}

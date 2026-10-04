@@ -1,0 +1,55 @@
+{
+  "scenario": "Tonight's reports (demo day)",
+  "business_day_pacific": "2026-10-03",
+  "upright": {
+    "GoodwillFinds": {
+      "orders": 6,
+      "item_sales": 840.53,
+      "shipping_total": 71.65,
+      "handling": 27.0,
+      "units": 9
+    },
+    "Shopgoodwill": {
+      "orders": 70,
+      "item_sales": 7078.05,
+      "shipping_total": 852.98,
+      "handling": 288.0,
+      "units": 96
+    },
+    "eBay": {
+      "orders": 8,
+      "item_sales": 1204.34,
+      "shipping_total": 95.81,
+      "handling": 51.0,
+      "units": 17
+    }
+  },
+  "upright_total_item_sales": 9122.92,
+  "upright_orders": 84,
+  "cashmonkey_files": [
+    "orders2023-20261004-020000-45696.csv"
+  ],
+  "cashmonkey": {
+    "Amazon-MF": {
+      "orders": 36,
+      "units": 44,
+      "item_sales": 509.54,
+      "shipping_credit": 175.56,
+      "fees": 155.64
+    },
+    "Goodwillbooks": {
+      "orders": 9,
+      "units": 12,
+      "item_sales": 123.32,
+      "shipping_credit": 47.88,
+      "fees": 9.76
+    },
+    "eBay": {
+      "orders": 10,
+      "units": 14,
+      "item_sales": 152.2,
+      "shipping_credit": 55.86,
+      "fees": 30.57
+    }
+  }
+}
