@@ -1,4 +1,5 @@
 """Paths and YAML config loading."""
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -7,7 +8,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = ROOT / "config"
 MAPPINGS_DIR = CONFIG_DIR / "mappings"
-DATA_DIR = ROOT / "data"
+# GOODWILL_DATA_DIR relocates all data (e.g. to /tmp on Vercel, whose code directory is read-only)
+DATA_DIR = Path(os.environ.get("GOODWILL_DATA_DIR") or ROOT / "data")
 INBOX_DIR = DATA_DIR / "inbox"
 ARCHIVE_DIR = DATA_DIR / "archive"
 SAMPLES_DIR = DATA_DIR / "samples"
