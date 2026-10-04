@@ -15,6 +15,15 @@ def test_committed_app_page_is_up_to_date(tmp_path):
 def test_root_serves_the_full_app():
     r = TestClient(app).get("/")
     assert r.status_code == 200
-    for tab in ("pulse", "dashboard", "ask", "upload", "lineage", "close", "quality"):
+    for tab in ("home", "dashboard", "ask", "bc", "upload", "lineage", "close", "quality"):
         assert f'registerTab("{tab}"' in r.text
     assert "window.claude = {use" in r.text
+
+
+def test_page_docs_are_served():
+    """The page embeds only an index of its documents and fetches each from /static/docs/ (webapp.publish_docs)."""
+    c = TestClient(app)
+    for name in ("hub__meta.json", "hub__days.json", "thriftly__all.json", "daily__all.json"):
+        r = c.get("/static/docs/" + name)
+        assert r.status_code == 200, name
+        assert r.json()
