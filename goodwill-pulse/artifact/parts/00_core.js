@@ -68,8 +68,79 @@ async function read(path) {
   if (!snap.exists) throw new Error(`Nothing is stored at ${path} yet.`);
   return (cache[path] = snap.data());
 }
-const state = {tab: "pulse", date: null, month: null, kpi: "total_revenue", catBy: "revenue", closeMonth: null};
+const state = {tab: "home", top: "home", route: {tab: "home", path: [], source: null}, date: null, month: null, kpi: "total_revenue", catBy: "revenue", closeMonth: null};
 
-/* ---------------- tab registry: every view file registers itself ---------------- */
-const VIEWS = {}, TABS = [];
-function registerTab(id, label, view, order) { VIEWS[id] = view; TABS.push({id, label, order: order ?? 50}); TABS.sort((a, b) => a.order - b.order); }
+/* ---------------- tab registry: every view file registers itself ----------------
+   registerTab(id, label, view, order, opts)   opts = {group: "<top tab id>", sub: "<sub-tab label>"}
+   Top tabs are fixed by the shell (HUB_TOP). A view whose id is a top tab id, or that names a group, lands there.
+   Old ids keep working: "pulse" maps to "home" (the Daily Pulse view fills Reports until a "home" view registers). */
+const VIEWS = {}, TABS = [], TAB_META = {};
+const HUB_TOP = [
+  {id: "home", label: "Reports"}, {id: "dashboard", label: "Dashboard"}, {id: "ask", label: "Ask"},
+  {id: "bc", label: "Business Central", short: "BC"}, {id: "data", label: "Data"}];
+const HUB_GROUP_ALIAS = {upload: "data", data: "data", close: "bc"};          /* group names accepted in opts.group */
+const HUB_SUB_DEFAULT = {                                                      /* where each view lives until it says otherwise */
+  bc: {group: "bc", sub: "Nightly", order: 1}, close: {group: "bc", sub: "Month-end close", order: 2},
+  upload: {group: "data", sub: "Upload", order: 1}, quality: {group: "data", sub: "Quality", order: 2},
+  lineage: {group: "data", sub: "Lineage", order: 3}};
+const HUB_ID_ALIAS = {pulse: "home", report: "home", data: "upload", reports: "home", businesscentral: "bc", nightly: "bc"};
+function registerTab(id, label, view, order, opts) {
+  VIEWS[id] = view;
+  const i = TABS.findIndex(t => t.id === id); if (i >= 0) TABS.splice(i, 1);
+  TABS.push({id, label, order: order ?? 50}); TABS.sort((a, b) => a.order - b.order);
+  const d = HUB_SUB_DEFAULT[id] || {}, o = opts || {};
+  const group = HUB_GROUP_ALIAS[o.group] || o.group || d.group || null;
+  TAB_META[id] = {id, label, order: order ?? 50, group: group && group !== id ? group : (d.group || null), sub: o.sub || d.sub || label, subOrder: d.order ?? order ?? 50};
+  if (typeof hubNavRefresh === "function") hubNavRefresh();
+}
+
+/* ---------------- Hub helpers: theme, toast, charts ---------------- */
+function hubTheme(varName) { try { return getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); } catch (e) { return ""; } }
+function hubToast(text) {
+  const el = document.getElementById("toast"); if (!el) return;
+  el.textContent = String(text ?? ""); el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), 2800);
+}
+/* hubChart(canvas | "id", config): Chart.js with the reference defaults (Figtree, muted ticks, --line grid, legend at bottom).
+   Destroys any chart already on that canvas and re-renders on theme change. config.options merges over the defaults;
+   a function config (() => cfg) is re-evaluated on theme change so colors read via hubTheme() update too. */
+const HUB_CHARTS = new Set();
+const hubMoney = v => (v < 0 ? "−" : "") + "$" + (Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(Math.abs(v) % 1000 ? 1 : 0) + "k" : Math.abs(v));
+function hubMerge(a, b) {
+  if (!b || typeof b !== "object" || Array.isArray(b)) return b === undefined ? a : b;
+  const o = Array.isArray(a) || !a || typeof a !== "object" ? {} : {...a};
+  for (const k of Object.keys(b)) o[k] = hubMerge(o[k], b[k]);
+  return o;
+}
+function hubChartDefaults() {
+  const line = hubTheme("--line"), muted = hubTheme("--muted");
+  return {responsive: true, maintainAspectRatio: false, interaction: {mode: "index", intersect: false},
+    plugins: {legend: {position: "bottom", labels: {boxWidth: 10, boxHeight: 10, useBorderRadius: true, borderRadius: 3, color: muted}}},
+    scales: {x: {grid: {display: false}, ticks: {maxTicksLimit: 8, color: muted}, border: {color: line}},
+             y: {grid: {color: line}, ticks: {color: muted}, border: {display: false}}}};
+}
+function hubChart(canvas, config) {
+  const el = typeof canvas === "string" ? (document.getElementById(canvas) || document.querySelector(canvas)) : canvas;
+  if (!el || typeof Chart === "undefined") return null;
+  const old = Chart.getChart ? Chart.getChart(el) : null; if (old) { HUB_CHARTS.delete(old); old.destroy(); }
+  Chart.defaults.font.family = "Figtree, system-ui, sans-serif";
+  Chart.defaults.color = hubTheme("--muted");
+  const cfg = typeof config === "function" ? config() : config;
+  const type = cfg.type, def = hubChartDefaults();
+  if (type === "doughnut" || type === "pie" || type === "radar" || type === "polarArea") delete def.scales;
+  else if (cfg.options && cfg.options.indexAxis === "y") def.scales = {x: def.scales.y, y: {...def.scales.x, ticks: {color: def.scales.x.ticks.color}}};
+  const ch = new Chart(el, {...cfg, options: hubMerge(def, cfg.options || {})});
+  ch.$hub = {canvas: el, config};
+  HUB_CHARTS.add(ch);
+  return ch;
+}
+function hubChartsRefresh() {
+  for (const ch of [...HUB_CHARTS]) {
+    if (!ch.canvas || !ch.canvas.isConnected) { HUB_CHARTS.delete(ch); try { ch.destroy(); } catch (e) {} continue; }
+    try { hubChart(ch.$hub.canvas, ch.$hub.config); } catch (e) {}
+  }
+}
+try {
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", hubChartsRefresh);
+  new MutationObserver(hubChartsRefresh).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+} catch (e) {}

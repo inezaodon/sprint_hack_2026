@@ -1,18 +1,26 @@
-<title>Goodwill E-Com Pulse</title>
+<title>Goodwill Michiana Revenue Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /*__CSS__*/
 </style>
 
-<div class="wrap">
-<header class="top"><div class="top-in">
-  <div class="brand"><h1>Goodwill E-Com Pulse</h1><span class="sub">Daily pulse, monthly dashboard and month-end close for e-commerce</span><span class="tag">Synthetic data</span></div>
-  <nav role="tablist" aria-label="Sections" id="tabs"></nav>
-</div></header>
-<main id="main"><div class="empty">Loading from the database…</div></main>
-<footer id="foot"></footer>
+<header class="hubbar" id="hubbar"><div class="bar-in">
+  <button class="brand" id="homebtn" type="button" aria-label="Revenue Hub home">
+    <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0053A0" stroke-width="2.6" stroke-linecap="round"><path d="M5 19V11M12 19V5M19 19v-6"/></svg></span>
+    <span>Revenue Hub<small>Goodwill Michiana</small></span>
+  </button>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  <div class="who"><span>Amanda B.</span><div class="avatar" aria-hidden="true">AB</div></div>
 </div>
+<div class="subbar" id="subbar" hidden><nav class="subtabs bar-in" id="subtabs" aria-label="Pages in this section"></nav></div>
+</header>
+<main id="main"><div class="empty">Loading from the database…</div></main>
+<footer class="hubfoot" id="foot"><p class="foot">Sample data shaped like the Upright, Cash Monkey, Supro and Thriftly exports.</p></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /*__JS__*/

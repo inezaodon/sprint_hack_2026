@@ -5,7 +5,7 @@ const out = {checks: []}, M = () => document.querySelector('#main');
 const ck = (m, ok, extra) => out.checks.push({ok: !!ok, m, ...(extra === undefined ? {} : {v: extra})});
 const waitFor = async (fn, ms = 25000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { const v = fn(); if (v) return v; } catch (e) {} await sleep(150); } return null; };
 const pick = async name => { const f = await loadFile(name), dt = new DataTransfer(); dt.items.add(f); const i = document.querySelector('#upl-file'); i.files = dt.files; i.dispatchEvent(new Event('change', {bubbles: true})); return waitFor(() => document.querySelector('#upl-add, #upl-notice.bad')); };
-const goTab = async t => { click('[data-tab=' + t + ']'); await sleep(900); };
+const goTab = async t => { setTab(t); await sleep(900); };
 const upIds = () => Object.keys(DOCS).filter(k => k.startsWith('uploads/'));
 const nightly = async (from, to) => { state.rng = {preset: 'custom', from, to}; await goTab('pulse'); const m = M(); const rows = [...m.querySelectorAll('section')[0].querySelectorAll('tbody tr')].map(tr => [...tr.children].map(td => td.innerText.trim()).slice(0, 5)); return rows; };
 const cell = (rows, d, c) => rows.find(r => r.date === d && r.channel === c);
@@ -15,7 +15,7 @@ if (location.hash === '#upload') {
   done({staged: !!document.querySelector('#upl-add')});
 } else {
 await goTab('upload');
-ck('upload tab exists', document.querySelector('[data-tab=upload]'));
+ck('upload tab exists', document.querySelector('[data-tab=upload]') || (typeof VIEWS !== 'undefined' && VIEWS.upload));
 ck('controls present', document.querySelector('#upl-file') && document.querySelector('#upl-drop'));
 const base = await dailyRowsBase();
 const bc = (d, c) => base.find(r => r.date === d && r.channel === c);

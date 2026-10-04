@@ -18,6 +18,13 @@ const RK_METRIC = {
   fees: [["net_margin", "gross_margin", "refund_rate"], "marketplace fees and margin"],
   refunds: [["refund_rate", "net_margin", "gross_margin"], "refunds and margin"],
   shipping: [["net_margin", "gross_margin"], "shipping and margin"],
+  total_sales: [["total_revenue", "ecom_share_of_retail", "revenue_growth_yoy", "budget_attainment"], "total sales"],
+  customers: [["buyers", "new_buyers", "repeat_buyer_rate", "avg_selling_price"], "customers"],
+  units: [["total_revenue", "avg_selling_price", "sell_through", "listings_created"], "units sold"],
+  pieces: [["items_identified", "listings_created", "revenue_per_labor_hour", "unlisted_backlog"], "production"],
+  labor_hours: [["revenue_per_labor_hour", "profit_per_labor_hour", "listings_per_employee"], "labor"],
+  pieces_per_hour: [["revenue_per_labor_hour", "listings_per_employee", "items_identified", "profit_per_labor_hour"], "production pace"],
+  sell_through: [["sell_through", "unsold_pct", "days_to_sell", "unlisted_backlog"], "sell-through"],
 };
 function relatedKpis(spec, claudeHint) {
   const sp = spec || {}, hint = claudeHint || {}, q = String(hint.q || "").toLowerCase();

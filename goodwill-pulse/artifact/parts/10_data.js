@@ -39,15 +39,18 @@ function totalsFor(rows, from, to, channel) {
   for (const r of rows) if (r.date >= from && r.date <= to && (!channel || r.channel === channel)) for (const m of MEAS) out[r.channel][m] += r[m];
   return out;
 }
-function presets(last) {
+function presets(last, first) {   // report periods ending on the latest business day; "catchup" = the last Fri-Sun
+  const clamp = s => first && s < first ? first : s;
   const sun = dow(last) === 6 ? last : addDays(last, -(dow(last) + 1));
   const prevMonthEnd = addDays(monthStart(last), -1);
   return {
-    latest: {label: "Latest day", from: last, to: last},
-    catchup: {label: "Monday catch-up (Fri–Sun)", from: addDays(sun, -2), to: sun},
-    last7: {label: "Last 7 days", from: addDays(last, -6), to: last},
-    mtd: {label: "Month to date", from: monthStart(last), to: last},
-    lastmonth: {label: "Last month", from: monthStart(prevMonthEnd), to: prevMonthEnd},
+    latest: {label: "Last night", from: last, to: last},
+    last7: {label: "7 days", from: clamp(addDays(last, -6)), to: last},
+    last30: {label: "30 days", from: clamp(addDays(last, -29)), to: last},
+    mtd: {label: "This month", from: clamp(monthStart(last)), to: last},
+    ytd: {label: "Year to date", from: clamp(last.slice(0, 4) + "-01-01"), to: last},
+    catchup: {label: "Monday catch-up (Fri–Sun)", from: clamp(addDays(sun, -2)), to: sun},
+    lastmonth: {label: "Last month", from: clamp(monthStart(prevMonthEnd)), to: prevMonthEnd},
   };
 }
 function reportText(cur, prior, from, to, trust) {
@@ -55,7 +58,7 @@ function reportText(cur, prior, from, to, trust) {
   const t = sum(cur), p = sum(prior), pc = (a, b) => b ? `${a >= b ? "+" : "−"}${nf(Math.abs(a - b) / b * 100, 1)}%` : "n/a";
   const pad = (s, n, left) => left ? String(s).padEnd(n) : String(s).padStart(n);
   const title = from === to ? `E-commerce report for ${longDay(from)}` : `E-commerce report for ${shortDay(from)} through ${shortDay(to)}, ${to.slice(0, 4)}`;
-  const lines = [title, "", `Item sales ${usd(t.item_sales, 2)} (${pc(t.item_sales, p.item_sales)} vs ${from === to ? "same weekday last week" : "the same days a week earlier"}), ${nf(t.orders)} orders, shipping charged ${usd(t.shipping, 2)}`, "",
+  const lines = [title, "", `Item sales ${usd(t.item_sales, 2)} (${pc(t.item_sales, p.item_sales)} vs ${from === to ? "same weekday last week" : "the " + ((D(to) - D(from)) / MS + 1) + " days before"}), ${nf(t.orders)} orders, shipping charged ${usd(t.shipping, 2)}`, "",
     pad("Marketplace", 15, true) + pad("Orders", 8) + pad("Item sales", 14) + pad("Shipping", 12) + pad("Fees", 12) + pad("Refunds", 12)];
   for (const c of CHORDER) lines.push(pad(CHN[c], 15, true) + pad(nf(cur[c].orders), 8) + pad(usd(cur[c].item_sales, 2), 14) + pad(usd(cur[c].shipping, 2), 12) + pad(usd(cur[c].fees, 2), 12) + pad(usd(cur[c].refunds, 2), 12));
   lines.push(pad("Total", 15, true) + pad(nf(t.orders), 8) + pad(usd(t.item_sales, 2), 14) + pad(usd(t.shipping, 2), 12) + pad(usd(t.fees, 2), 12) + pad(usd(t.refunds, 2), 12), "", trust, "Business days are Eastern time. Item sales exclude shipping and tax.");

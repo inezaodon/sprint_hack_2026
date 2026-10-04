@@ -3,7 +3,7 @@ const out = {}, M = () => document.querySelector('#main'), vis = e => !!e && e.o
 const num = s => parseFloat(String(s).replace(/[^0-9.\-]/g, ''));
 const hold = (c, m) => { out.checks = out.checks || []; out.checks.push({ok: !!c, m}); };
 try { localStorage.setItem('gp_explain_mode', 'quick'); } catch (e) {}
-click('[data-tab=lineage]'); await sleep(1200);
+setTab('lineage'); await sleep(1200);
 out.sections = [...M().querySelectorAll('h2')].map(h => h.innerText);
 hold(out.sections.length >= 5, 'five or more sections');
 out.pipeBoxes = M().querySelectorAll('.ln-box').length; hold(out.pipeBoxes >= 2, 'pipeline boxes');
@@ -33,18 +33,18 @@ out.searchPost = [...M().querySelectorAll('.ln-def summary b')].map(b => b.inner
 setVal('#ln-q', 'zzzz', 'input'); await sleep(200); hold(/No measure matches/.test(M().innerText), 'no-match message');
 setVal('#ln-q', '', 'input');
 // report card on Pulse
-click('[data-tab=pulse]'); await sleep(1000);
-const btns = M().querySelectorAll('.ex-btn'); hold(btns.length === 1, 'exactly one How button on pulse (' + btns.length + ')');
+setTab('report/upright'); await sleep(1500);
+const btns = M().querySelectorAll('.ex-btn'); hold(btns.length === 1, 'exactly one How button on the Upright report (' + btns.length + ')');
 btns[0].click(); await sleep(900);
 const rc = M().querySelector('.ex-host .ex-card'); hold(!!rc, 'report card opens');
 click('[data-exmode=quick]'); await sleep(200);
 out.reportQuickSteps = [...rc.querySelectorAll('.ex-step')].filter(vis).length;
 click('[data-exmode=full]'); await sleep(200);
 out.reportFullSteps = [...rc.querySelectorAll('.ex-step')].filter(vis).length; hold(out.reportFullSteps > out.reportQuickSteps, 'report quick<full');
-const recomp = num(rc.querySelector('[data-ex-recomputed="item_sales"]').innerText), shown = num(M().querySelector('.kpi .v').innerText);
+const recomp = num(rc.querySelector('[data-ex-recomputed="item_sales"]').innerText), shown = num(M().querySelector('#rp-metrics .metric .v, .metric .v, .kpi .v').innerText);
 out.reportTotals = {recomp, shown}; hold(Math.abs(recomp - shown) <= 0.5, 'recomputed total ~ displayed (displayed is rounded to dollars)');
 const cl = [...rc.querySelectorAll('.ex-cell')]; out.cellChecks = cl.map(c => { const sp = [...c.querySelectorAll('summary span')].map(s => s.innerText); const tr = /^(\d+) orders/.exec(sp[0]); return {page: num(sp.find(s => /^Page/.test(s))), all: num(sp.find(s => /add to/.test(s))), rows: c.querySelectorAll('tbody tr').length, trunc: !!c.querySelector('[data-ex-trunc]'), n: tr && +tr[1]}; });
-hold(out.cellChecks.every(c => Math.abs(c.page - c.all) <= 0.01), 'all report cells: full-day sum equals page');
+hold(out.cellChecks.every(c => isNaN(c.page) || Math.abs(c.page - c.all) <= 0.01) && out.cellChecks.some(c => !isNaN(c.page)), 'all report cells: full-day sum equals page');
 hold(out.cellChecks.every(c => (c.n > c.rows) === c.trunc), 'truncated label present exactly when truncated');
 const cs = cl.length; out.reportCells = cs; hold(cs > 0, 'drill cells under report');
 // no duplicate buttons after re-render

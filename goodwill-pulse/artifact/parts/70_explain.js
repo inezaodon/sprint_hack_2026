@@ -63,36 +63,40 @@ function exOverall(lin, pred) {
 }
 
 /* Daily rows: per-marketplace derivation, plus order rows from lineage/drill where covered. */
-async function exDailyBlock(lin, a) {   // a: {from, to, channel, measure, label}
-  const [rows, base] = await Promise.all([dailyRows(), dailyRowsBase()]);
+async function exDailyBlock(lin, a) {   // a: {from, to, channel, source, measure, label}
+  const [all, base] = await Promise.all([dailyRows(), dailyRowsBase()]);
+  const S = a.source && typeof HUB_SOURCES !== "undefined" ? HUB_SOURCES[a.source] : null;
+  const src = S && typeof hubDays === "function" ? a.source : null;
+  const rows = src ? (await hubDays()).filter(r => r.source === src) : all;
   const col = a.measure === "avg_order" ? "item_sales" : a.measure;
   const inR = r => r.date >= a.from && r.date <= a.to && (!a.channel || r.channel === a.channel);
   const sel = rows.filter(inR), unit = exUnit(lin, col);
-  const chans = CHORDER.filter(c => !a.channel || c === a.channel);
-  const per = chans.map(c => { const rs = sel.filter(r => r.channel === c); return {c, days: rs.length, v: Object.fromEntries(MEAS.map(m => [m, rs.reduce((x, r) => x + r[m], 0)]))}; });
+  const chans = CHORDER.filter(c => (!a.channel || c === a.channel) && (!src || S.channels.includes(c)));
+  const chName = c => src && typeof hubChLabel === "function" ? hubChLabel(src, c) : CHN[c];
+  const per = chans.map(c => { const rs = sel.filter(r => r.channel === c); return {c, days: rs.length, v: Object.fromEntries(MEAS.map(m => [m, rs.reduce((x, r) => x + (r[m] || 0), 0)]))}; });
   const tot = Object.fromEntries(MEAS.map(m => [m, per.reduce((x, p) => x + p.v[m], 0)]));
   const heads = ["Marketplace", "Days", "Orders", "Item sales", "Shipping", "Fees", "Refunds"];
-  let html = `<p class="ex-note muted">Each marketplace figure is the sum of its daily rows (one row per business day) between ${esc(shortDay(a.from))} and ${esc(shortDay(a.to))}. Total below is added up in your browser from those rows.</p>` +
-    exTable(heads, [...per.map(p => ({cells: [esc(CHN[p.c]), nf(p.days), nf(p.v.orders), usd(p.v.item_sales, 2), usd(p.v.shipping, 2), usd(p.v.fees, 2), usd(p.v.refunds, 2)]})),
+  let html = `<p class="ex-note muted">Each ${src ? esc(S.label) + " channel" : "marketplace"} figure is the sum of its daily rows (one per business day) from ${esc(shortDay(a.from))} to ${esc(shortDay(a.to))}, added up in your browser.${src && S.channels.includes("ebay") ? " eBay is split between Upright (general merchandise) and Cash Monkey (books) by the warehouse source mix." : ""}</p>` +
+    exTable(heads, [...per.map(p => ({cells: [esc(chName(p.c)), nf(p.days), nf(p.v.orders), usd(p.v.item_sales, 2), usd(p.v.shipping, 2), usd(p.v.fees, 2), usd(p.v.refunds, 2)]})),
       {cls: "total", cells: ["Total, recomputed here", nf(per.reduce((x, p) => x + p.days, 0)), nf(tot.orders), `<span data-ex-recomputed="item_sales">${usd(tot.item_sales, 2)}</span>`, usd(tot.shipping, 2), usd(tot.fees, 2), usd(tot.refunds, 2)]}], 1);
   const dr = lin.drill;
   const days = [...new Set(sel.map(r => r.date))].sort();
   if (!dr) return html + `<p class="muted">Order rows are not loaded yet (lineage/drill).</p>`;
   const keys = Object.keys(dr), covered = [...new Set(keys.map(k => k.split("|")[0]))].sort();
   const cells = [];
-  for (const d of days) for (const c of chans) { const k = d + "|" + c, cur = sel.find(r => r.date === d && r.channel === c); if (dr[k] && cur) cells.push({k, d, c, cur, bw: base.find(r => r.date === d && r.channel === c), dd: dr[k]}); }
+  for (const d of days) for (const c of chans) { const k = d + "|" + c, cur = sel.find(r => r.date === d && r.channel === c); if (dr[k] && cur) cells.push({k, d, c, cur, ch: all.find(r => r.date === d && r.channel === c) || cur, bw: base.find(r => r.date === d && r.channel === c), dd: dr[k]}); }
   if (!cells.length) return html + `<p class="ex-note muted">Order rows are kept for ${covered.length ? `${esc(longDay(covered[0]))} through ${esc(longDay(covered[covered.length - 1]))}` : "no days"} only. This period is outside them, so it cannot be walked down to individual orders here.</p>`;
   const shown = cells.slice(-12), colKey = {item_sales: "item_sales", shipping: "shipping", fees: "fees", refunds: "refund"}[col];
   const sumOf = x => (x.rows || []).reduce((s, r) => s + (r[colKey] || 0), 0);
   html += `<h5 class="ex-h5">Order rows behind the ${esc(a.label || col)} cells</h5><p class="ex-note muted">Order rows are kept for the last ${covered.length} business days (${esc(shortDay(covered[0]))} to ${esc(shortDay(covered[covered.length - 1]))}), up to 60 per marketplace-day, largest first. The match uses the full-day total for all orders.${cells.length > shown.length ? ` Showing the latest ${shown.length} of ${cells.length} covered cells.` : ""}</p>`;
   html += shown.map(x => {
     const trunc = x.dd.rows.length < x.dd.total_rows, shownSum = sumOf(x.dd), upl = x.cur.src && x.cur.src !== "warehouse";
-    const fullSum = x.dd["sum_" + col] != null ? x.dd["sum_" + col] : shownSum, shownV = x.cur[col];
+    const shared = !!src && x.c === "ebay", fullSum = x.dd["sum_" + col] != null ? x.dd["sum_" + col] : shownSum, shownV = shared ? x.ch[col] : x.cur[col];
     const ref = upl ? x.bw[col] : shownV, ok = Math.abs(fullSum - ref) < 0.005, rest = x.dd.total_rows - x.dd.rows.length;
     const part = x.dd.shown_item_sales != null && col === "item_sales" ? x.dd.shown_item_sales : shownSum;
-    return `<details class="ex-cell"><summary><b>${esc(shortDay(x.d))} · ${esc(CHN[x.c])}</b><span class="muted">${nf(x.dd.total_rows)} orders</span>
-      <span>Page ${esc(exFmt(unit, shownV))}</span><span data-ex-drill="${esc(x.k)}">All orders add to ${esc(exFmt(unit, fullSum))}</span>${exStatusPill(ok ? "match" : "diff", ok ? "Match" : "Differs")}${upl ? pill("p-warn", "replaced by upload") : ""}</summary>
-      <div class="ex-cellb">${trunc ? `<p class="ex-note muted" data-ex-trunc>Largest ${nf(x.dd.rows.length)} of ${nf(x.dd.total_rows)} orders add to ${esc(exFmt(unit, part))}; the remaining ${nf(rest)} orders add to ${esc(exFmt(unit, fullSum - part))}. Only the largest ${nf(x.dd.rows.length)} are listed below.</p>` : ""}${upl ? `<p class="ex-note">This cell was replaced by an uploaded file (${esc(x.cur.src)}). The orders below are the warehouse's, which add to ${esc(exFmt(unit, x.bw[col]))}.</p>` : ""}
+    return `<details class="ex-cell"><summary><b>${esc(shortDay(x.d))} · ${esc(chName(x.c))}</b><span class="muted">${nf(x.dd.total_rows)} orders</span>
+      <span>${shared ? "eBay, both sources" : "Page"} ${esc(exFmt(unit, shownV))}</span><span data-ex-drill="${esc(x.k)}">All orders add to ${esc(exFmt(unit, fullSum))}</span>${exStatusPill(ok ? "match" : "diff", ok ? "Match" : "Differs")}${upl ? pill("p-warn", "replaced by upload") : ""}</summary>
+      <div class="ex-cellb">${shared ? `<p class="ex-note">eBay order rows hold both lines of business. ${esc(S.label)}'s share on this report is ${esc(exFmt(unit, x.cur[col]))}.</p>` : ""}${trunc ? `<p class="ex-note muted" data-ex-trunc>Largest ${nf(x.dd.rows.length)} of ${nf(x.dd.total_rows)} orders add to ${esc(exFmt(unit, part))}; the remaining ${nf(rest)} orders add to ${esc(exFmt(unit, fullSum - part))}. Only the largest ${nf(x.dd.rows.length)} are listed below.</p>` : ""}${upl ? `<p class="ex-note">This cell was replaced by an uploaded file (${esc(x.cur.src)}). The orders below are the warehouse's, which add to ${esc(exFmt(unit, x.bw[col]))}.</p>` : ""}
       ${exTable(["Order", "Paid (ET)", "Item sales", "Shipping", "Fees", "Refund", "From"], x.dd.rows.map(r => ({cells: [`<span class="mono">${esc(r.order_key)}</span>`, esc(String(r.paid_at_et || "").replace("T", " ").slice(0, 16)), usd(r.item_sales, 2), usd(r.shipping, 2), usd(r.fees, 2), usd(r.refund, 2), `<span class="muted">${esc(r.source_db)}</span>`]})), 2)}</div></details>`;
   }).join("");
   return html;
@@ -156,16 +160,16 @@ async function exAsk(p, lin) {
 }
 
 async function exReport(p, lin) {
-  const {from, to} = p, ids = ["item_sales", "orders", "shipping", "fees", "refunds"];
-  const pred = c => ids.includes(c.measure) && ((c.scope.date && c.scope.date >= from && c.scope.date <= to) || (c.scope.month && c.scope.month >= from.slice(0, 7) && c.scope.month <= to.slice(0, 7)));
-  const block = await exDailyBlock(lin, {from, to, measure: "item_sales", label: "item sales"});
-  const up = await exUploadStep(from, to, null);
+  const {from, to} = p, source = p.source && typeof HUB_SOURCES !== "undefined" && HUB_SOURCES[p.source] ? p.source : null, channel = p.channel && CHN[p.channel] ? p.channel : null, ids = ["item_sales", "orders", "shipping", "fees", "refunds"];
+  const pred = c => ids.includes(c.measure) && (!channel || !c.scope.channel || c.scope.channel === channel) && (!source || !c.scope.channel || HUB_SOURCES[source].channels.includes(c.scope.channel)) && ((c.scope.date && c.scope.date >= from && c.scope.date <= to) || (c.scope.month && c.scope.month >= from.slice(0, 7) && c.scope.month <= to.slice(0, 7)));
+  const block = await exDailyBlock(lin, {from, to, channel, source, measure: "item_sales", label: "item sales"});
+  const up = await exUploadStep(from, to, channel);
   const defs = ids.map(i => exDefinition(lin, i)).join("");
-  const sqls = ids.map((i, k) => { const m = exMeasure(lin, i); return m ? `<details class="ex-sqld" ${k === 0 ? "open" : ""}><summary><b>${esc(m.label)}</b></summary>${exSqlBlock(exBind(m.sql, {from, to}))}</details>` : ""; }).join("");
+  const sqls = ids.map((i, k) => { const m = exMeasure(lin, i); return m ? `<details class="ex-sqld" ${k === 0 ? "open" : ""}><summary><b>${esc(m.label)}</b></summary>${exSqlBlock(exBind(m.sql, {from, to, channel}))}</details>` : ""; }).join("");
   const tbl = [...new Set(ids.flatMap(i => (exMeasure(lin, i) || {}).source_tables || []))];
-  return {title: `Nightly report, ${exPeriod(from, to)}`, status: exOverall(lin, pred).html, steps: [
-    {t: "Which number", b: `<p>The nightly report totals for <b>${esc(exPeriod(from, to))}</b>: item sales, orders, shipping, fees and refunds for each marketplace, and the total across marketplaces.</p><p>No model is involved. The page adds up stored daily rows.</p>`},
-    {t: "The spec", b: `<ul class="ex-spec">${exRule("Measures", "item sales, orders, shipping charged, fees, refunds")}${exRule("Grouped by", "marketplace")}${exRule("Filters", "none (paid, non-test, non-canceled orders only)")}${exRule("Period", esc(exPeriod(from, to)) + ", Eastern business days")}</ul>`},
+  return {title: `${source ? HUB_SOURCES[source].label + " report" : channel ? CHN[channel] + " report" : "Nightly report"}, ${exPeriod(from, to)}`, status: exOverall(lin, pred).html, steps: [
+    {t: "Which number", b: `<p>Report totals for <b>${esc(exPeriod(from, to))}</b>${source ? ` from <b>${esc(HUB_SOURCES[source].label)}</b>` : ""}${channel ? ` on <b>${esc(CHN[channel])}</b>` : ""}: item sales, orders, shipping, fees and refunds${channel ? "" : " for each marketplace and in total"}.</p><p>No model is involved. The page adds up stored daily rows.</p>`},
+    {t: "The spec", b: `<ul class="ex-spec">${exRule("Measures", "item sales, orders, shipping charged, fees, refunds")}${exRule("Grouped by", "marketplace")}${exRule("Filters", channel ? "marketplace = " + esc(CHN[channel]) + " (paid, non-test, non-canceled orders only)" : "none (paid, non-test, non-canceled orders only)")}${exRule("Period", esc(exPeriod(from, to)) + ", Eastern business days")}</ul>`},
     {t: "The definition", b: defs},
     {t: "The query", full: 1, b: sqls || `<p class="muted">No SQL is stored yet.</p>`},
     {t: "The sources", full: 1, b: exSources(lin, "item_sales")},
@@ -245,23 +249,63 @@ async function explainHTML(kind, payload) {
   } catch (e) { return `<div class="banner bad">${esc(e.message)}</div>`; }
 }
 
-/* contract 2: a button next to every [data-explain] element; the card fills in place on click */
+/* contract 2: a button next to every [data-explain] element; the card fills in place on click.
+   Robust to any markup: validates the spec, skips what it cannot explain, never decorates twice, never throws.
+   Placement: after the element (default); a table row gets a full-width row below it; table cells, list items and
+   elements with data-explain-place="inside" get the button appended inside. Optional data-explain-label sets the text. */
+const EX_KINDS = {
+  report: a => /^\d{4}-\d{2}-\d{2}$/.test(a[0] || "") && /^\d{4}-\d{2}-\d{2}$/.test(a[1] || "") && a[0] <= a[1] && (!a[2] || !!CHN[a[2]] || (typeof HUB_SOURCES !== "undefined" && !!HUB_SOURCES[a[2]] && HUB_SOURCES[a[2]].kind === "ecom")) && (!a[3] || !!CHN[a[3]]),
+  kpi: a => /^[\w-]+$/.test(a[0] || "") && /^\d{4}-\d{2}$/.test(a[1] || ""),
+  upload: a => /^[\w-]+$/.test(a[0] || ""),
+  check: a => !!a[0],
+};
+function exParse(spec) {
+  const parts = String(spec || "").trim().split(":"), kind = parts.shift();
+  const args = kind === "check" ? [parts.join(":")] : parts;
+  return EX_KINDS[kind] && EX_KINDS[kind](args) ? {kind, args} : null;
+}
 function decorateExplain(root) {
-  (root || document).querySelectorAll("[data-explain]").forEach(el => {
-    const nx = el.nextElementSibling;
-    if (nx && nx.classList.contains("ex-host") && nx.dataset.for === el.dataset.explain) return;
-    const host = document.createElement("div"); host.className = "ex-host"; host.dataset.for = el.dataset.explain;
-    host.innerHTML = `<button type="button" class="ex-btn" aria-expanded="false" data-exopen="${esc(el.dataset.explain)}">How is this calculated?</button><div class="ex-slot"></div>`;
-    el.insertAdjacentElement("afterend", host);
-  });
+  let els = [];
+  try { els = [...(root || document).querySelectorAll("[data-explain]")]; } catch (e) { return; }
+  for (const el of els) {
+    try {
+      const spec = el.dataset.explain;
+      if (!exParse(spec) || el.closest(".ex-card,.ex-host") || el.closest("svg") || /^(OPTION|SELECT|INPUT|TEXTAREA|BUTTON|TABLE|TBODY|THEAD|TFOOT|COLGROUP|COL|CANVAS|IMG)$/.test(el.tagName)) continue;
+      let open = spec;   /* a report inside a source view ([data-src]) is explained for that source */
+      const sv = /^report:[^:]+:[^:]+$/.test(spec) && el.closest("[data-src]"), sk = sv && sv.dataset.src;
+      if (sk && typeof HUB_SOURCES !== "undefined" && HUB_SOURCES[sk] && HUB_SOURCES[sk].kind === "ecom") open = spec + ":" + sk;
+      const label = el.dataset.explainLabel || "How we got this";
+      const mk = tag => { const h = document.createElement(tag); h.className = "ex-host"; h.dataset.for = spec;
+        h.innerHTML = `<button type="button" class="ex-btn" aria-expanded="false" data-exopen="${esc(open)}">${esc(label)}</button><div class="ex-slot"></div>`; return h; };
+      if (el.tagName === "TR") {
+        const nx = el.nextElementSibling;
+        if (nx && nx.classList.contains("ex-row") && nx.dataset.for === spec) continue;
+        const tr = document.createElement("tr"); tr.className = "ex-row"; tr.dataset.for = spec;
+        const td = document.createElement("td"); td.colSpan = Math.max(1, [...el.children].reduce((n, c) => n + (c.colSpan || 1), 0)); td.appendChild(mk("div")); tr.appendChild(td);
+        el.insertAdjacentElement("afterend", tr);
+      } else if (el.dataset.explainPlace === "inside" || /^(TD|TH|LI|DD|DT|SUMMARY)$/.test(el.tagName)) {
+        if ([...el.children].some(c => c.classList.contains("ex-host") && c.dataset.for === spec)) continue;
+        el.appendChild(mk("div"));
+      } else {
+        const nx = el.nextElementSibling;
+        if (nx && nx.classList.contains("ex-host") && nx.dataset.for === spec) continue;
+        const inline = el.parentElement && /^(P|SPAN|LABEL|A|B|STRONG|SMALL|H1|H2|H3|H4|H5|H6)$/.test(el.parentElement.tagName);
+        el.insertAdjacentElement("afterend", mk(inline ? "span" : "div"));
+      }
+    } catch (e) { /* skip anything it cannot explain */ }
+  }
 }
 async function exOpen(btn) {
-  const host = btn.closest(".ex-host"), slot = host.querySelector(".ex-slot");
+  const host = btn.closest(".ex-host"), slot = host && host.querySelector(".ex-slot");
+  if (!slot) return;
   if (btn.getAttribute("aria-expanded") === "true") { slot.innerHTML = ""; btn.setAttribute("aria-expanded", "false"); return; }
+  const p = exParse(btn.dataset.exopen);
+  if (!p) { slot.innerHTML = `<div class="banner">No explanation is available for this number.</div>`; return; }
   btn.setAttribute("aria-expanded", "true"); slot.innerHTML = `<div class="muted">Loading…</div>`;
-  const [kind, a, b] = btn.dataset.exopen.split(":");
-  const pay = kind === "report" ? {from: a, to: b} : kind === "kpi" ? {id: a, month: b} : {id: a};
-  slot.innerHTML = await explainHTML(kind, pay);
+  const [a, b, c] = p.args;
+  const [, , , d4] = p.args, isCh = x => !!x && !!CHN[x];
+  const pay = p.kind === "report" ? {from: a, to: b, source: c && !isCh(c) ? c : null, channel: isCh(c) ? c : isCh(d4) ? d4 : null} : p.kind === "kpi" ? {id: a, month: b} : {id: a};
+  slot.innerHTML = await explainHTML(p.kind, pay);
 }
 if (!window.__exWired) {
   window.__exWired = true;

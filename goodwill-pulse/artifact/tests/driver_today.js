@@ -3,7 +3,7 @@
 const out = {checks: [], steps: []}, DAY = '2026-10-04', STEM = 'paid_orders_10-03-2026_10-04-2026';
 const ck = (m, ok, v) => out.checks.push({ok: !!ok, m, ...(v === undefined ? {} : {v})});
 const waitFor = async (fn, ms = 25000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { const v = fn(); if (v) return v; } catch (e) {} await sleep(150); } return null; };
-const goTab = async t => { click('[data-tab=' + t + ']'); await sleep(900); };
+const goTab = async t => { setTab(t); await sleep(900); };
 const pick = async name => { const f = await loadFile(name), dt = new DataTransfer(); dt.items.add(f); const i = document.querySelector('#upl-file'); i.files = dt.files; i.dispatchEvent(new Event('change', {bubbles: true})); await waitFor(() => document.querySelector('#upl-add')); await sleep(300); };
 const today = async () => Object.fromEntries((await dailyRows()).filter(r => r.date === DAY).map(r => [r.channel, {orders: r.orders, item_sales: Math.round(r.item_sales * 100) / 100, src: r.src}]));
 const add = async name => {
