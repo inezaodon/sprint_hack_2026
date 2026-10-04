@@ -1,0 +1,35 @@
+# 1st Source operating account 0101 activity (slide 38: "OSM / PB / EasyPost · 1st Source acct 0101 · GL 10009";
+# FedEx refunds arrive here as BNKDEPOSIT lines). Real export format unknown: CSV, Excel and OFX/QFX (Quicken / Money
+# download, converted by ingest/convert) all land here. Column names are ASSUMED; add aliases for the real ones.
+# Loads into finance.duckdb bank_0101 (close rules shipping_postage, fedex_net, payouts).
+layout: bank_0101
+label: 1st Source bank activity (account 0101)
+table: bank_0101
+
+columns:
+  'Post Date':   {field: post_date, type: date, required: true}
+  'Description': {field: description, required: true}
+  'Amount':      {field: amount, type: money, required: true}
+  'Type':        {field: type, type: upper}
+  'Reference':   {field: reference}
+  'Account':     {field: account_no, type: last4}    # OFX gives the full account number; the close keys on '0101'
+aliases:
+  'Posting Date': Post Date
+  'Posted Date': Post Date
+  'Transaction Date': Post Date
+  'Date': Post Date
+  'Payee': Description
+  'Transaction Type': Type
+  'Ref': Reference
+  'Reference Number': Reference
+  'Account Number': Account
+split_amount:      # many bank exports have Debit / Credit columns instead of one signed Amount
+  field: amount
+  credit: ['Credit', 'Credits', 'Deposits', 'Deposit']
+  debit: ['Debit', 'Debits', 'Withdrawals', 'Withdrawal']
+defaults: {account_no: '0101', type: OTHER}
+values:            # OFX TRNTYPE and common bank wording -> the types the close rules filter on
+  type: {DIRECTDEBIT: ACH_DEBIT, DEBIT: ACH_DEBIT, DIRECTDEP: ACH_CREDIT, CREDIT: ACH_CREDIT, DEP: BNKDEPOSIT,
+         DEPOSIT: BNKDEPOSIT, SRVCHG: SERVICE_CHARGE, FEE: SERVICE_CHARGE}
+generate: {line_id: 'UP-B'}             # 'UP-B-<file hash>-00001': uploaded lines never collide with other loads
+replace: {range: post_date, within: account_no}   # a statement replaces that account's lines for the dates it covers

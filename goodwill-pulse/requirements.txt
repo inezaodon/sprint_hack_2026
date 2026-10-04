@@ -5,6 +5,7 @@ duckdb==1.5.6
 pandas==3.0.6
 numpy==2.5.3
 openpyxl==3.1.5
+pdfplumber==0.11.10   # upload ingest: tables and totals from statement PDFs (ingest/convert/pdf.py)
 PyYAML==6.0.3
 anthropic==1.11.0
 httpx==0.28.1

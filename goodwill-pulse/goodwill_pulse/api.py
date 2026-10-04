@@ -18,7 +18,8 @@ from . import db
 from .config import INBOX_DIR, SAMPLES_DIR, WEB_DIR
 from .ingest.pipeline import FileResult, confirm_aliases, process_dir, process_file
 from .pulse import build_pulse, business_dates
-from .routes import ai as ai_routes, close as close_routes, dashboard as dashboard_routes, runtime as runtime_routes
+from .routes import ai as ai_routes, close as close_routes, dashboard as dashboard_routes, intake as intake_routes, \
+    runtime as runtime_routes
 
 app = FastAPI(title="Goodwill Pulse")
 _lock = threading.Lock()
@@ -31,7 +32,7 @@ def _db():
         _con = db.connect()
     return _con
 
-for _r in (dashboard_routes, close_routes, ai_routes, runtime_routes):
+for _r in (dashboard_routes, close_routes, ai_routes, runtime_routes, intake_routes):
     app.include_router(_r.router)
 
 
@@ -69,13 +70,36 @@ def pulse(d: date | None = None) -> dict:
         return build_pulse(_db(), d)
 
 
+SPREADSHEET = (".csv", ".xlsx", ".xls")
+
+
+def _intake_results(r: dict) -> list[dict]:
+    """An intake result in /api/upload's shape: one entry per spreadsheet made from the upload."""
+    if not r.get("outputs"):
+        return [{"file_id": r["intake_id"], "name": r["name"], "report_type": None, "status": r["status"],
+                 "rows": 0, "loaded": 0, "message": r["message"], "exceptions": [], "notes": r.get("notes", [])}]
+    return [{"file_id": o.get("file_id") or o["output_id"], "name": f"{r['name']} > {o['name']}",
+             "report_type": o["layout"], "status": o["status"], "rows": o["row_count"], "loaded": o["loaded_rows"],
+             "message": o["message"], "exceptions": o["exceptions"], "intake_id": r["intake_id"],
+             "output_id": o["output_id"], "method": o["method"], "origin": o["origin"], "excel_url": o["excel_url"]}
+            for o in r["outputs"]]
+
+
 @app.post("/api/upload")
 async def upload(files: list[UploadFile] = File(...)) -> list[dict]:
+    """Spreadsheets load exactly as before. Any other format (email, PDF, OFX, ...) is converted first by upload
+    ingest (routes/intake.py) and reported here in the same shape, one entry per spreadsheet made from it."""
     INBOX_DIR.mkdir(parents=True, exist_ok=True)
     out = []
     for f in files:
-        dest = INBOX_DIR / Path(f.filename or "upload.csv").name
-        dest.write_bytes(await f.read())
+        name = Path(f.filename or "upload.csv").name
+        data = await f.read()
+        if Path(name).suffix.lower() not in SPREADSHEET:
+            for r in intake_routes.ingest_upload([f], [data]):
+                out += _intake_results(r)
+            continue
+        dest = INBOX_DIR / name
+        dest.write_bytes(data)
         with _lock:
             out.append(_result(process_file(_db(), dest)))
         dest.unlink(missing_ok=True)

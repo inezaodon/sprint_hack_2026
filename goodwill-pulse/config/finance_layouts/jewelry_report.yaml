@@ -1,0 +1,27 @@
+# Upright Jewelry Report (slide 38: "Jewelry Report · Request report; Co-Pivot populates Supplier"). Requested from
+# Upright and usually emailed back. Column names are ASSUMED. Blank Supplier is fine: the close fills it by SKU.
+# Loads into finance.duckdb jewelry_report (close rule jewelry_reclass).
+layout: jewelry_report
+label: Upright Jewelry Report
+table: jewelry_report
+
+columns:
+  'Channel':    {field: channel, type: lower}
+  'Order':      {field: order_ref}
+  'Sale Date':  {field: sale_date, type: date, required: true}
+  'SKU':        {field: sku, required: true}
+  'Title':      {field: title}
+  'Sale Price': {field: sale_price, type: money, required: true}
+  'Supplier':   {field: supplier}
+aliases:
+  'Order ID': Order
+  'Channel Order ID': Order
+  'Date Sold': Sale Date
+  'Sold Date': Sale Date
+  'Price': Sale Price
+  'Store': Supplier
+values:
+  channel: {shop goodwill: shopgoodwill, goodwill finds: goodwillfinds}
+generate: {line_no: sequence}
+period: {field: report_month, from: sale_date}
+replace: {by: report_month}

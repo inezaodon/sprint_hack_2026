@@ -1,0 +1,28 @@
+# FedEx billing (slide 38: "Shipping charges + refunds · BC GL 40356 · Dept 180 · V00122 · net BNKDEPOSIT refunds").
+# Column names follow FedEx Billing Online's download where known; the rest are ASSUMED.
+# Loads into finance.duckdb fedex_invoices (close rule fedex_net).
+layout: fedex_invoices
+label: FedEx invoices
+table: fedex_invoices
+
+columns:
+  'Invoice Number':   {field: invoice_no, required: true}
+  'Invoice Date':     {field: invoice_date, type: date, required: true}
+  'Line Type':        {field: line_type, type: upper}
+  'Tracking ID':      {field: tracking}
+  'Ship Date':        {field: ship_date, type: date}
+  'Net Charge':       {field: amount, type: money, required: true}
+  'Original Invoice': {field: orig_invoice_no}
+  'Refund Reference': {field: refund_ref}
+aliases:
+  'Invoice No': Invoice Number
+  'Invoice #': Invoice Number
+  'Express or Ground Tracking ID': Tracking ID
+  'Tracking Number': Tracking ID
+  'Shipment Date': Ship Date
+  'Net Charge Amount': Net Charge
+  'Amount': Net Charge
+sign_default: {field: line_type, positive: CHARGE, negative: REFUND}   # when there is no Line Type column
+generate: {line_id: 'UP-FX'}
+replace: {by: [invoice_no, invoice_date]}   # re-loading an invoice replaces it (a credit memo number can carry
+                                            # credits on several dates, in different months: key on both)

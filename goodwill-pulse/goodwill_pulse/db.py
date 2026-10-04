@@ -66,6 +66,41 @@ CREATE TABLE IF NOT EXISTS order_lines (
     source_row  INTEGER
 );
 
+-- Uploads that needed converting first (ingest/intake.py: emails, PDFs, OFX, HTML, zips ... and month-end
+-- spreadsheets). One row per original upload, one row per spreadsheet made from it.
+CREATE TABLE IF NOT EXISTS intake_files (
+    intake_id      VARCHAR PRIMARY KEY,      -- sha256 of the original bytes
+    original_name  VARCHAR,
+    format         VARCHAR,                  -- eml | pdf | ofx | html | zip | text | json | xml | png | csv | xlsx ...
+    archived_path  VARCHAR,
+    received_at    TIMESTAMPTZ,
+    email_from     VARCHAR,
+    email_subject  VARCHAR,
+    email_date     VARCHAR,
+    message_id     VARCHAR,                  -- the same email forwarded twice is a duplicate
+    status         VARCHAR,                  -- loaded | partial | needs_review | needs_mapping | rejected
+    notes          VARCHAR                   -- JSON list: parts that couldn't be read, and why
+);
+
+CREATE TABLE IF NOT EXISTS intake_outputs (
+    output_id      VARCHAR PRIMARY KEY,      -- '<intake_id[:12]>-<n>'
+    intake_id      VARCHAR,
+    name           VARCHAR,                  -- spreadsheet file name
+    path           VARCHAR,                  -- the spreadsheet on disk (download it to review)
+    origin         VARCHAR,                  -- where in the upload it came from ('x.eml > attachment > s.pdf, pages 1-3')
+    method         VARCHAR,                  -- passthrough | parsed | ai
+    target         VARCHAR,                  -- warehouse | finance | none
+    layout         VARCHAR,                  -- report_type / finance layout id
+    row_count      INTEGER,
+    loaded_rows    INTEGER,
+    status         VARCHAR,                  -- loaded | partial | needs_review | needs_mapping | rejected | duplicate_file
+    message        VARCHAR,
+    file_id        VARCHAR,                  -- report_files.file_id when it went through the sales pipeline
+    stated         VARCHAR,                  -- JSON: totals printed in the source, outside the table
+    confirmed_by   VARCHAR,
+    confirmed_at   TIMESTAMPTZ
+);
+
 CREATE SEQUENCE IF NOT EXISTS exception_seq;
 CREATE TABLE IF NOT EXISTS exceptions (
     exception_id  INTEGER DEFAULT nextval('exception_seq') PRIMARY KEY,

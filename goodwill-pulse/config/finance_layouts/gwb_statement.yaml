@@ -1,0 +1,43 @@
+# Goodwill Books > monthly payment statement (slide 38: "Prior-month payment statement · Monthly email attachment").
+# Arrives as a PDF attached to an email. Nobody on the team has seen a real one yet, so every column name and label
+# below is ASSUMED. When Goodwill shares a statement, rename columns or add aliases here; no code change needed.
+# Loads into finance.duckdb gwb_statement + gwb_statement_header, the tables close/rules.py rule_gwb_statement reads.
+layout: gwb_statement
+label: Goodwill Books payment statement
+table: gwb_statement
+
+columns:
+  'Line':        {field: line_no, type: int}
+  'Date':        {field: line_date, type: date}
+  'Type':        {field: line_type, type: upper, required: true}
+  'Order No':    {field: order_no}
+  'SKU':         {field: sku}
+  'Description': {field: description}
+  'Amount':      {field: amount, type: money, required: true}
+aliases:
+  'Line #': Line
+  'Order': Order No
+  'Order #': Order No
+  'Order Number': Order No
+  'Transaction Type': Type
+  'Item SKU': SKU
+
+values:            # printed value -> what the close rule expects (unlisted values pass through and get a close warning)
+  line_type: {SHIPPING & HANDLING: SHIPPING, S&H: SHIPPING, COMMISSION: FEE, PLATFORM FEE: FEE, RETURN: REFUND}
+generate: {line_no: sequence}
+period:            # which statement month the rows belong to: the printed period if found, else the month of most lines
+  field: statement_month
+  from: line_date
+  stated: ['Statement period', 'Statement month', 'Period']
+replace: {by: statement_month}          # loading a statement replaces that month's statement
+
+header:            # the statement's printed totals -> gwb_statement_header (the close's control total)
+  table: gwb_statement_header
+  fields:
+    gross:          {type: money, labels: ['Gross sales', 'Gross']}
+    fees:           {type: money, labels: ['Total fees', 'Fees'], abs: true}
+    refunds:        {type: money, labels: ['Total refunds', 'Refunds'], abs: true}
+    net:            {type: money, labels: ['Net payment', 'Net amount', 'Net']}
+    statement_date: {type: date, labels: ['Statement date']}
+    paid_on:        {type: date, labels: ['Paid on', 'Payment date']}
+control: {sum: amount, equals: net}     # lines must add up to the printed net, or nothing loads until someone confirms

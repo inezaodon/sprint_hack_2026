@@ -10,3 +10,6 @@ goodwill-pulse/.venv/
 
 # Build scratch (was in goodwill-pulse/.gitignore before 133aad4)
 goodwill-pulse/data/_tmp/
+
+# Spreadsheets made from uploaded emails / PDFs / OFX (upload ingest); regenerable from data/archive
+goodwill-pulse/data/converted/
