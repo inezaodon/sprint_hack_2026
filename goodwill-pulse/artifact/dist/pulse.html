@@ -670,7 +670,7 @@ function uplBuild(U) {
         (!has("channel") || get("channel") == null) && r.some(v => typeof v === "number" || (typeof v === "string" && uplMoney(v).val != null)));
     if (isTot) { excl(line, "Totals row (not an order)", "totals"); continue; }
     const oid = uplId(get("order_id")), buyer = buyerCol >= 0 ? String(r[buyerCol] ?? "").trim() : "";
-    if (/^test$/i.test(buyer) || /^test@/i.test(buyer) || /\btest\b/i.test(oid)) { excl(line, "Test order, not revenue", "test"); continue; }
+    if (/(^|[^a-z0-9])test([^a-z0-9]|$)/i.test(buyer) || /(^|[^a-z0-9])test([^a-z0-9]|$)/i.test(oid)) { excl(line, "Test order, not revenue", "test"); continue; }
     const dv = get("paid_date");
     if (dv == null || String(dv).trim() === "") { prob(line, "Blank paid date. Row excluded."); excl(line, "Blank paid date", "date"); continue; }
     const dp = uplDateParts(dv, dmy);
