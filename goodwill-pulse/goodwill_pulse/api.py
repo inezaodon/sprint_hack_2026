@@ -18,7 +18,7 @@ from . import db
 from .config import INBOX_DIR, SAMPLES_DIR, WEB_DIR
 from .ingest.pipeline import FileResult, confirm_aliases, process_dir, process_file
 from .pulse import build_pulse, business_dates
-from .routes import ai as ai_routes, close as close_routes, dashboard as dashboard_routes
+from .routes import ai as ai_routes, close as close_routes, dashboard as dashboard_routes, runtime as runtime_routes
 
 app = FastAPI(title="Goodwill Pulse")
 _lock = threading.Lock()
@@ -31,7 +31,7 @@ def _db():
         _con = db.connect()
     return _con
 
-for _r in (dashboard_routes, close_routes, ai_routes):
+for _r in (dashboard_routes, close_routes, ai_routes, runtime_routes):
     app.include_router(_r.router)
 
 
@@ -150,6 +150,16 @@ SHELL = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
+    # Always the full app (all tabs). web/app.html is committed; rebuild it with `python -m goodwill_pulse.webapp`
+    # after changing artifact/ (tests/test_app_page.py fails while it is stale).
+    app_page = WEB_DIR / "app.html"
+    if not app_page.exists():
+        raise HTTPException(500, "web/app.html is missing: run .venv/bin/python -m goodwill_pulse.webapp")
+    return app_page.read_text()
+
+
+@app.get("/pulse", response_class=HTMLResponse)
+def pulse_page() -> str:
     # web/index.html is written as an artifact page (no <html>/<head>); add the document shell here
     return SHELL.format((WEB_DIR / "index.html").read_text())
 

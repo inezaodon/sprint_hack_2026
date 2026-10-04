@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "goodwill-pulse/{goodwill_pulse/**,config/**,sql/**,web/**,data/harmonized.duckdb,data/warehouse.duckdb,data/warehouse.duckdb.wal,data/sources/finance.duckdb,data/close_inputs/**,data/samples/**}",
+      "excludeFiles": "{**/__pycache__/**,**/tests/**}"
+    }
+  }
+}

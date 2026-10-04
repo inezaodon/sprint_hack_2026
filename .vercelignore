@@ -1,0 +1,4 @@
+# Keeps local-only folders out of CLI uploads (Git deploys never see them). Not a .gitignore: git is unaffected.
+goodwill-pulse/.venv
+**/__pycache__
+**/.pytest_cache
