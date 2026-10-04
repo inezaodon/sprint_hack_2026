@@ -53,7 +53,7 @@ function rpWireCommon(root, range, src) {
   root.querySelectorAll("[data-goto]").forEach(b => b.onclick = e => { e.preventDefault(); hubGo(b.dataset.goto); });
   // Engineer 5's document-level handler reads data-from/data-to/data-source; only wire our own when it is missing.
   state.hubRange = range ? {...range} : null;
-  root.querySelectorAll("[data-bc],[data-send]").forEach(b => { if (range) { b.dataset.from = range.from; b.dataset.to = range.to; } if (src) b.dataset.source = src; });
+  root.querySelectorAll("[data-bc],[data-send],[data-raw]").forEach(b => { if (range) { b.dataset.from = range.from; b.dataset.to = range.to; } if (src) b.dataset.source = src; });
   if (typeof hubSend !== "function") root.querySelectorAll("[data-send]").forEach(b => b.onclick = () => rpSend(b.dataset.send, range, src));
   if (typeof hubDownloadBC !== "function") root.querySelectorAll("[data-bc]").forEach(b => b.onclick = () => rpBC(range));
 }
@@ -137,7 +137,7 @@ async function rpHome(root) {
       <div><h1>${h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"}, Amanda</h1>
         <p class="sub">Reports for ${esc(rpDay(last))} are ready. Open a source to check the math.</p>
         <p class="status rp-status">${rpChecksBadge(meta.checks)}</p></div>
-      <div class="homeactions"><button class="pill" type="button" data-bc>Download Business Central file</button><button class="pill primary" type="button" data-send="all">Send to leadership</button></div>
+      <div class="homeactions"><button class="pill" type="button" data-bc>Download Business Central file</button><button class="pill" type="button" data-up>Upload file</button><button class="pill" type="button" data-raw>Download raw data</button><button class="pill primary" type="button" data-send="all">Send to leadership</button></div>
     </div>
     <div class="sources" id="rp-sources">${ecomCard("upright")}${ecomCard("cashmonkey")}${supCard}${thrCard}</div>
     <div class="homeask"><form class="askbar" id="rp-askform"><input id="rp-askq" placeholder="Ask a question, e.g. which store sold the most on eBay this week?" aria-label="Ask a question about the reports" autocomplete="off"><button type="submit">Ask</button></form></div>
@@ -335,6 +335,8 @@ async function rpReport(root, route) {
       <button class="pill" type="button" id="rp-ask">Ask about this report</button>
       ${emailHtml ? `<button class="pill" type="button" id="rp-copy">Copy summary</button>` : ""}
       <button class="pill" type="button" data-bc>Download Business Central file</button>
+      <button class="pill" type="button" data-up>Upload file</button>
+      <button class="pill" type="button" data-raw>Download raw data</button>
       <button class="pill primary" type="button" data-send="one">Send to leadership</button>
     </div></div>`;
   state.rngMsg = "";

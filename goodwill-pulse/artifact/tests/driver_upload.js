@@ -4,10 +4,11 @@
 const out = {checks: []}, M = () => document.querySelector('#main');
 const ck = (m, ok, extra) => out.checks.push({ok: !!ok, m, ...(extra === undefined ? {} : {v: extra})});
 const waitFor = async (fn, ms = 25000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { const v = fn(); if (v) return v; } catch (e) {} await sleep(150); } return null; };
-const pick = async name => { const f = await loadFile(name), dt = new DataTransfer(); dt.items.add(f); const i = document.querySelector('#upl-file'); i.files = dt.files; i.dispatchEvent(new Event('change', {bubbles: true})); return waitFor(() => document.querySelector('#upl-add, #upl-notice.bad')); };
+const pick = async name => { const f = await loadFile(name), dt = new DataTransfer(); dt.items.add(f); const i = document.querySelector('#upl-file'); i.files = dt.files; i.dispatchEvent(new Event('change', {bubbles: true})); await sleep(400); return waitFor(() => document.querySelector('#upl-add, #upl-notice.bad')); };
 const goTab = async t => { setTab(t); await sleep(900); };
 const upIds = () => Object.keys(DOCS).filter(k => k.startsWith('uploads/'));
-const nightly = async (from, to) => { state.rng = {preset: 'custom', from, to}; await goTab('pulse'); const m = M(); const rows = [...m.querySelectorAll('section')[0].querySelectorAll('tbody tr')].map(tr => [...tr.children].map(td => td.innerText.trim()).slice(0, 5)); return rows; };
+// Upright report, all channels: rows reshaped to the old nightly table [channel, orders, item sales, shipping, fees].
+const nightly = async (from, to) => { state.rng = {preset: 'custom', from, to}; await goTab('report/upright'); const m = M(); const rows = [...m.querySelectorAll('#rp-tbl tbody tr')].map(tr => [...tr.children].map(td => td.innerText.trim())).map(c => [c[0], c[6], c[1], c[2], c[3]]); return rows; };
 const cell = (rows, d, c) => rows.find(r => r.date === d && r.channel === c);
 
 if (location.hash === '#upload') {
@@ -52,7 +53,7 @@ ck('provenance shape', prov.length === 6 && prov[0].upload_id === it.id && prov[
 ck('all 6 cells match', prov.every(p => p.status === 'match'));
 let after = await nightly('2026-09-08', '2026-09-10');
 out.nightlyAfter = after;
-ck('nightly report renders after upload', after.length >= 5);
+ck('nightly report renders after upload', after.length >= 4);   // Upright report: 3 channels + total
 await goTab('upload');
 ck('reconcile table shows matches', /6 of 6 cells match/.test(document.querySelector('#upl-recon').innerText) && document.querySelectorAll('#upl-recon-table tbody tr').length === 6);
 ck('same file refused', true);
