@@ -21,3 +21,8 @@ goodwill-pulse/artifact
 goodwill-pulse/tests
 goodwill-pulse/docs
 tools
+
+# Secrets: never upload API keys in a deploy
+.secrets
+.env
+.env.*
