@@ -1,0 +1,2519 @@
+{
+  "_about": "Business Central API v2.0 salesInvoices for 2026-09. POST each item to /api/v2.0/companies({companyId})/salesInvoices (lines deep-insert). Synthetic data.",
+  "_placeholders": {
+    "CUST-AMZ": "Amazon: Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+    "CUST-EBAY": "eBay: Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+    "CUST-GWB": "Goodwillbooks: Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+    "CUST-GWF": "GoodwillFinds: Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+    "CUST-SGW": "ShopGoodwill: Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central."
+  },
+  "salesInvoices": [
+    {
+      "customerNumber": "CUST-AMZ",
+      "invoiceDate": "2026-09-30",
+      "postingDate": "2026-09-30",
+      "externalDocumentNumber": "AR-2026-09-AMAZON",
+      "salesInvoiceLines": [
+        {
+          "sequence": 10000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store01",
+          "quantity": 1.0,
+          "unitPrice": 387.57,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 20000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store02",
+          "quantity": 1.0,
+          "unitPrice": 1098.27,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 30000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store03",
+          "quantity": 1.0,
+          "unitPrice": 1246.78,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 40000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store04",
+          "quantity": 1.0,
+          "unitPrice": 422.76,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 50000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store05",
+          "quantity": 1.0,
+          "unitPrice": 704.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 60000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store06",
+          "quantity": 1.0,
+          "unitPrice": 709.18,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 70000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store07",
+          "quantity": 1.0,
+          "unitPrice": 355.99,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 80000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store08",
+          "quantity": 1.0,
+          "unitPrice": 404.19,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 90000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store09",
+          "quantity": 1.0,
+          "unitPrice": 1505.89,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 100000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store10",
+          "quantity": 1.0,
+          "unitPrice": 695.71,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 110000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store11",
+          "quantity": 1.0,
+          "unitPrice": 1296.78,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 120000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store12",
+          "quantity": 1.0,
+          "unitPrice": 469.56,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 130000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store13",
+          "quantity": 1.0,
+          "unitPrice": 1044.57,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 140000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store14",
+          "quantity": 1.0,
+          "unitPrice": 377.09,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 150000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store15",
+          "quantity": 1.0,
+          "unitPrice": 726.6,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 160000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store16",
+          "quantity": 1.0,
+          "unitPrice": 588.89,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 170000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store17",
+          "quantity": 1.0,
+          "unitPrice": 584.59,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 180000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store18",
+          "quantity": 1.0,
+          "unitPrice": 286.04,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 190000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store19",
+          "quantity": 1.0,
+          "unitPrice": 790.43,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 200000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store20",
+          "quantity": 1.0,
+          "unitPrice": 837.57,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 210000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store21",
+          "quantity": 1.0,
+          "unitPrice": 263.29,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 220000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store22",
+          "quantity": 1.0,
+          "unitPrice": 1124.87,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 230000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store23",
+          "quantity": 1.0,
+          "unitPrice": 623.66,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 240000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-AMZ",
+          "description": "Amazon 2026-09 sales - Store24",
+          "quantity": 1.0,
+          "unitPrice": 448.12,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 250000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SHIPINC",
+          "description": "Amazon 2026-09 shipping & handling income",
+          "quantity": 1.0,
+          "unitPrice": 6024.9,
+          "dimensionSetLines": []
+        }
+      ]
+    },
+    {
+      "customerNumber": "CUST-EBAY",
+      "invoiceDate": "2026-09-30",
+      "postingDate": "2026-09-30",
+      "externalDocumentNumber": "AR-2026-09-EBAY",
+      "salesInvoiceLines": [
+        {
+          "sequence": 10000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store01",
+          "quantity": 1.0,
+          "unitPrice": 385.22,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 20000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store02",
+          "quantity": 1.0,
+          "unitPrice": 1290.13,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 30000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store03",
+          "quantity": 1.0,
+          "unitPrice": 1321.92,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 40000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store04",
+          "quantity": 1.0,
+          "unitPrice": 315.63,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 50000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store05",
+          "quantity": 1.0,
+          "unitPrice": 1680.33,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 60000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store06",
+          "quantity": 1.0,
+          "unitPrice": 1071.74,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 70000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store07",
+          "quantity": 1.0,
+          "unitPrice": 982.59,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 80000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store08",
+          "quantity": 1.0,
+          "unitPrice": 628.47,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 90000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store09",
+          "quantity": 1.0,
+          "unitPrice": 2320.27,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 100000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store10",
+          "quantity": 1.0,
+          "unitPrice": 818.34,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 110000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store11",
+          "quantity": 1.0,
+          "unitPrice": 2845.69,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 120000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store12",
+          "quantity": 1.0,
+          "unitPrice": 545.25,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 130000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store13",
+          "quantity": 1.0,
+          "unitPrice": 2156.77,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 140000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store14",
+          "quantity": 1.0,
+          "unitPrice": 536.58,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 150000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store15",
+          "quantity": 1.0,
+          "unitPrice": 900.79,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 160000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store16",
+          "quantity": 1.0,
+          "unitPrice": 1317.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 170000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store17",
+          "quantity": 1.0,
+          "unitPrice": 1035.19,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 180000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store18",
+          "quantity": 1.0,
+          "unitPrice": 568.61,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 190000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store19",
+          "quantity": 1.0,
+          "unitPrice": 1637.4,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 200000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store20",
+          "quantity": 1.0,
+          "unitPrice": 1807.39,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 210000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store21",
+          "quantity": 1.0,
+          "unitPrice": 402.91,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 220000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store22",
+          "quantity": 1.0,
+          "unitPrice": 1812.18,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 230000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store23",
+          "quantity": 1.0,
+          "unitPrice": 1311.01,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 240000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-EBAY",
+          "description": "eBay 2026-09 sales - Store24",
+          "quantity": 1.0,
+          "unitPrice": 1374.03,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 250000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store03",
+          "quantity": 1.0,
+          "unitPrice": 232.86,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 260000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store04",
+          "quantity": 1.0,
+          "unitPrice": 109.65,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 270000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store06",
+          "quantity": 1.0,
+          "unitPrice": 510.65,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 280000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store07",
+          "quantity": 1.0,
+          "unitPrice": 296.13,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 290000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store08",
+          "quantity": 1.0,
+          "unitPrice": 223.31,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 300000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store09",
+          "quantity": 1.0,
+          "unitPrice": 98.66,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 310000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store10",
+          "quantity": 1.0,
+          "unitPrice": 52.57,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 320000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store11",
+          "quantity": 1.0,
+          "unitPrice": 1132.96,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 330000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store12",
+          "quantity": 1.0,
+          "unitPrice": 340.08,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 340000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store13",
+          "quantity": 1.0,
+          "unitPrice": 2068.22,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 350000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store14",
+          "quantity": 1.0,
+          "unitPrice": 692.41,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 360000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store15",
+          "quantity": 1.0,
+          "unitPrice": 129.47,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 370000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store16",
+          "quantity": 1.0,
+          "unitPrice": 986.34,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 380000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store17",
+          "quantity": 1.0,
+          "unitPrice": 296.08,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 390000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store22",
+          "quantity": 1.0,
+          "unitPrice": 280.44,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 400000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "eBay 2026-09 jewelry program revenue - Store23",
+          "quantity": 1.0,
+          "unitPrice": 28.8,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 410000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SHIPINC",
+          "description": "eBay 2026-09 shipping & handling income",
+          "quantity": 1.0,
+          "unitPrice": 6423.77,
+          "dimensionSetLines": []
+        }
+      ]
+    },
+    {
+      "customerNumber": "CUST-GWB",
+      "invoiceDate": "2026-09-30",
+      "postingDate": "2026-09-30",
+      "externalDocumentNumber": "AR-2026-09-GWB",
+      "salesInvoiceLines": [
+        {
+          "sequence": 10000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store01",
+          "quantity": 1.0,
+          "unitPrice": 30.09,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 20000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store02",
+          "quantity": 1.0,
+          "unitPrice": 147.02,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 30000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store03",
+          "quantity": 1.0,
+          "unitPrice": 170.31,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 40000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store04",
+          "quantity": 1.0,
+          "unitPrice": 94.78,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 50000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store05",
+          "quantity": 1.0,
+          "unitPrice": 108.19,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 60000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store06",
+          "quantity": 1.0,
+          "unitPrice": 119.8,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 70000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store07",
+          "quantity": 1.0,
+          "unitPrice": 133.66,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 80000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store08",
+          "quantity": 1.0,
+          "unitPrice": 55.85,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 90000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store09",
+          "quantity": 1.0,
+          "unitPrice": 94.12,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 100000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store10",
+          "quantity": 1.0,
+          "unitPrice": 72.19,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 110000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store11",
+          "quantity": 1.0,
+          "unitPrice": 344.72,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 120000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store12",
+          "quantity": 1.0,
+          "unitPrice": 78.18,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 130000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store13",
+          "quantity": 1.0,
+          "unitPrice": 211.55,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 140000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store14",
+          "quantity": 1.0,
+          "unitPrice": 77.11,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 150000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store15",
+          "quantity": 1.0,
+          "unitPrice": 122.11,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 160000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store16",
+          "quantity": 1.0,
+          "unitPrice": 47.15,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 170000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store17",
+          "quantity": 1.0,
+          "unitPrice": 23.6,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 180000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store18",
+          "quantity": 1.0,
+          "unitPrice": 55.42,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 190000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store19",
+          "quantity": 1.0,
+          "unitPrice": 232.31,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 200000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store20",
+          "quantity": 1.0,
+          "unitPrice": 52.07,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 210000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store21",
+          "quantity": 1.0,
+          "unitPrice": 25.95,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 220000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store22",
+          "quantity": 1.0,
+          "unitPrice": 326.62,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 230000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store23",
+          "quantity": 1.0,
+          "unitPrice": 119.19,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 240000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWB",
+          "description": "Goodwillbooks 2026-09 sales - Store24",
+          "quantity": 1.0,
+          "unitPrice": 126.28,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 250000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SHIPINC",
+          "description": "Goodwillbooks 2026-09 shipping & handling income",
+          "quantity": 1.0,
+          "unitPrice": 965.58,
+          "dimensionSetLines": []
+        }
+      ]
+    },
+    {
+      "customerNumber": "CUST-GWF",
+      "invoiceDate": "2026-09-30",
+      "postingDate": "2026-09-30",
+      "externalDocumentNumber": "AR-2026-09-GWF",
+      "salesInvoiceLines": [
+        {
+          "sequence": 10000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store01",
+          "quantity": 1.0,
+          "unitPrice": 84.44,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 20000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store02",
+          "quantity": 1.0,
+          "unitPrice": 488.37,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 30000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store03",
+          "quantity": 1.0,
+          "unitPrice": 1042.24,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 40000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store04",
+          "quantity": 1.0,
+          "unitPrice": 68.68,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 50000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store05",
+          "quantity": 1.0,
+          "unitPrice": 638.91,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 60000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store06",
+          "quantity": 1.0,
+          "unitPrice": 372.47,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 70000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store07",
+          "quantity": 1.0,
+          "unitPrice": 283.85,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 80000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store08",
+          "quantity": 1.0,
+          "unitPrice": 52.04,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 90000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store09",
+          "quantity": 1.0,
+          "unitPrice": 1729.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 100000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store10",
+          "quantity": 1.0,
+          "unitPrice": 276.22,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 110000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store11",
+          "quantity": 1.0,
+          "unitPrice": 1061.61,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 120000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store12",
+          "quantity": 1.0,
+          "unitPrice": 661.28,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 130000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store13",
+          "quantity": 1.0,
+          "unitPrice": 1058.13,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 140000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store14",
+          "quantity": 1.0,
+          "unitPrice": 478.91,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 150000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store15",
+          "quantity": 1.0,
+          "unitPrice": 622.37,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 160000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store16",
+          "quantity": 1.0,
+          "unitPrice": 365.25,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 170000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store17",
+          "quantity": 1.0,
+          "unitPrice": 315.88,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 180000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store18",
+          "quantity": 1.0,
+          "unitPrice": 209.2,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 190000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store19",
+          "quantity": 1.0,
+          "unitPrice": 938.54,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 200000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store20",
+          "quantity": 1.0,
+          "unitPrice": 307.4,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 210000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store21",
+          "quantity": 1.0,
+          "unitPrice": 185.54,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 220000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store22",
+          "quantity": 1.0,
+          "unitPrice": 1150.58,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 230000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store23",
+          "quantity": 1.0,
+          "unitPrice": 369.36,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 240000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-GWF",
+          "description": "GoodwillFinds 2026-09 sales - Store24",
+          "quantity": 1.0,
+          "unitPrice": 450.37,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 250000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store01",
+          "quantity": 1.0,
+          "unitPrice": 457.75,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 260000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store02",
+          "quantity": 1.0,
+          "unitPrice": 3545.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 270000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store03",
+          "quantity": 1.0,
+          "unitPrice": 53.58,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 280000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store05",
+          "quantity": 1.0,
+          "unitPrice": 27.69,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 290000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store06",
+          "quantity": 1.0,
+          "unitPrice": 12.65,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 300000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store08",
+          "quantity": 1.0,
+          "unitPrice": 147.74,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 310000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store09",
+          "quantity": 1.0,
+          "unitPrice": 757.25,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 320000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store10",
+          "quantity": 1.0,
+          "unitPrice": 326.9,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 330000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store11",
+          "quantity": 1.0,
+          "unitPrice": 126.6,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 340000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store13",
+          "quantity": 1.0,
+          "unitPrice": 478.45,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 350000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store15",
+          "quantity": 1.0,
+          "unitPrice": 432.43,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 360000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store21",
+          "quantity": 1.0,
+          "unitPrice": 525.69,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 370000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "GoodwillFinds 2026-09 jewelry program revenue - Store22",
+          "quantity": 1.0,
+          "unitPrice": 301.01,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 380000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SHIPINC",
+          "description": "GoodwillFinds 2026-09 shipping & handling income",
+          "quantity": 1.0,
+          "unitPrice": 2357.66,
+          "dimensionSetLines": []
+        }
+      ]
+    },
+    {
+      "customerNumber": "CUST-SGW",
+      "invoiceDate": "2026-09-30",
+      "postingDate": "2026-09-30",
+      "externalDocumentNumber": "AR-2026-09-SGW",
+      "salesInvoiceLines": [
+        {
+          "sequence": 10000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store01",
+          "quantity": 1.0,
+          "unitPrice": 682.76,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 20000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store02",
+          "quantity": 1.0,
+          "unitPrice": 3202.15,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 30000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store03",
+          "quantity": 1.0,
+          "unitPrice": 1953.91,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 40000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store04",
+          "quantity": 1.0,
+          "unitPrice": 2289.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 50000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store05",
+          "quantity": 1.0,
+          "unitPrice": 2005.89,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 60000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store06",
+          "quantity": 1.0,
+          "unitPrice": 4936.63,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 70000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store07",
+          "quantity": 1.0,
+          "unitPrice": 622.1,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 80000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store08",
+          "quantity": 1.0,
+          "unitPrice": 1506.01,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 90000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store09",
+          "quantity": 1.0,
+          "unitPrice": 4060.52,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 100000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store10",
+          "quantity": 1.0,
+          "unitPrice": 3906.51,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 110000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store11",
+          "quantity": 1.0,
+          "unitPrice": 6140.75,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 120000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store12",
+          "quantity": 1.0,
+          "unitPrice": 2033.61,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 130000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store13",
+          "quantity": 1.0,
+          "unitPrice": 2207.1,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 140000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store14",
+          "quantity": 1.0,
+          "unitPrice": 1503.85,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 150000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store15",
+          "quantity": 1.0,
+          "unitPrice": 3343.51,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 160000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store16",
+          "quantity": 1.0,
+          "unitPrice": 1283.86,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 170000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store17",
+          "quantity": 1.0,
+          "unitPrice": 1072.15,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 180000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store18",
+          "quantity": 1.0,
+          "unitPrice": 1571.62,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 190000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store19",
+          "quantity": 1.0,
+          "unitPrice": 6671.35,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 200000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store20",
+          "quantity": 1.0,
+          "unitPrice": 3613.89,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 210000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store21",
+          "quantity": 1.0,
+          "unitPrice": 359.01,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 220000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store22",
+          "quantity": 1.0,
+          "unitPrice": 3554.12,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 230000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store23",
+          "quantity": 1.0,
+          "unitPrice": 2280.36,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 240000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-JEWELRY",
+          "description": "ShopGoodwill 2026-09 jewelry program revenue - Store24",
+          "quantity": 1.0,
+          "unitPrice": 2684.52,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 250000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store01",
+          "quantity": 1.0,
+          "unitPrice": 5713.12,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store01"
+            }
+          ]
+        },
+        {
+          "sequence": 260000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store02",
+          "quantity": 1.0,
+          "unitPrice": 14904.39,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store02"
+            }
+          ]
+        },
+        {
+          "sequence": 270000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store03",
+          "quantity": 1.0,
+          "unitPrice": 14457.55,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store03"
+            }
+          ]
+        },
+        {
+          "sequence": 280000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store04",
+          "quantity": 1.0,
+          "unitPrice": 4486.88,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store04"
+            }
+          ]
+        },
+        {
+          "sequence": 290000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store05",
+          "quantity": 1.0,
+          "unitPrice": 10907.25,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store05"
+            }
+          ]
+        },
+        {
+          "sequence": 300000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store06",
+          "quantity": 1.0,
+          "unitPrice": 8287.7,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store06"
+            }
+          ]
+        },
+        {
+          "sequence": 310000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store07",
+          "quantity": 1.0,
+          "unitPrice": 3186.47,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store07"
+            }
+          ]
+        },
+        {
+          "sequence": 320000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store08",
+          "quantity": 1.0,
+          "unitPrice": 4473.51,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store08"
+            }
+          ]
+        },
+        {
+          "sequence": 330000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store09",
+          "quantity": 1.0,
+          "unitPrice": 20273.34,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store09"
+            }
+          ]
+        },
+        {
+          "sequence": 340000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store10",
+          "quantity": 1.0,
+          "unitPrice": 6726.44,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store10"
+            }
+          ]
+        },
+        {
+          "sequence": 350000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store11",
+          "quantity": 1.0,
+          "unitPrice": 21584.02,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store11"
+            }
+          ]
+        },
+        {
+          "sequence": 360000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store12",
+          "quantity": 1.0,
+          "unitPrice": 6255.48,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store12"
+            }
+          ]
+        },
+        {
+          "sequence": 370000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store13",
+          "quantity": 1.0,
+          "unitPrice": 13780.8,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store13"
+            }
+          ]
+        },
+        {
+          "sequence": 380000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store14",
+          "quantity": 1.0,
+          "unitPrice": 3673.01,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store14"
+            }
+          ]
+        },
+        {
+          "sequence": 390000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store15",
+          "quantity": 1.0,
+          "unitPrice": 9257.3,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store15"
+            }
+          ]
+        },
+        {
+          "sequence": 400000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store16",
+          "quantity": 1.0,
+          "unitPrice": 4913.32,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store16"
+            }
+          ]
+        },
+        {
+          "sequence": 410000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store17",
+          "quantity": 1.0,
+          "unitPrice": 7423.09,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store17"
+            }
+          ]
+        },
+        {
+          "sequence": 420000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store18",
+          "quantity": 1.0,
+          "unitPrice": 4607.41,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store18"
+            }
+          ]
+        },
+        {
+          "sequence": 430000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store19",
+          "quantity": 1.0,
+          "unitPrice": 10816.37,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store19"
+            }
+          ]
+        },
+        {
+          "sequence": 440000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store20",
+          "quantity": 1.0,
+          "unitPrice": 10641.23,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store20"
+            }
+          ]
+        },
+        {
+          "sequence": 450000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store21",
+          "quantity": 1.0,
+          "unitPrice": 2834.29,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store21"
+            }
+          ]
+        },
+        {
+          "sequence": 460000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store22",
+          "quantity": 1.0,
+          "unitPrice": 12763.44,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store22"
+            }
+          ]
+        },
+        {
+          "sequence": 470000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store23",
+          "quantity": 1.0,
+          "unitPrice": 11519.42,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store23"
+            }
+          ]
+        },
+        {
+          "sequence": 480000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SGW",
+          "description": "ShopGoodwill 2026-09 sales - Store24",
+          "quantity": 1.0,
+          "unitPrice": 8110.63,
+          "dimensionSetLines": [
+            {
+              "code": "STORE",
+              "valueCode": "Store24"
+            }
+          ]
+        },
+        {
+          "sequence": 490000,
+          "lineType": "Account",
+          "lineObjectNumber": "4xxxx-SHIPINC",
+          "description": "ShopGoodwill 2026-09 shipping & handling income",
+          "quantity": 1.0,
+          "unitPrice": 38963.26,
+          "dimensionSetLines": []
+        }
+      ]
+    }
+  ]
+}

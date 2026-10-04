@@ -1,0 +1,14 @@
+E-commerce report for Friday, October 2, 2026
+
+Item sales $12,695.70 (+9.2% vs same weekday last week), 131 orders, shipping charged $1,299.45
+
+Marketplace      Orders    Item sales    Shipping        Fees     Refunds
+ShopGoodwill         86    $10,129.92     $963.62   $1,286.74       $0.00
+Amazon               27       $336.72     $127.68     $108.08       $0.00
+eBay                  9     $1,630.33     $114.76     $229.55       $0.00
+GoodwillFinds         5       $551.66      $77.43     $103.62       $0.00
+Goodwillbooks         4        $47.07      $15.96       $3.54       $0.00
+Total               131    $12,695.70   $1,299.45   $1,731.53       $0.00
+
+All 17 data checks passed their blocking rules, 2 warning(s) to review.
+Business days are Eastern time. Item sales exclude shipping and tax.

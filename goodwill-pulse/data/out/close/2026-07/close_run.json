@@ -1,0 +1,322 @@
+{
+  "month": "2026-07",
+  "generated_at": "2026-10-03T23:29:44+00:00",
+  "rules_version": "2026.10.03-2+a2d0fd2d",
+  "journal": {
+    "documents": 7,
+    "lines": 183,
+    "total_debit": 423581.19,
+    "total_credit": 423581.19,
+    "balanced": true,
+    "unbalanced_documents": []
+  },
+  "invoices": [
+    {
+      "channel": "amazon",
+      "customer_number": "CUST-AMZ",
+      "customer_name": "Amazon",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-07-31",
+      "external_document_number": "AR-2026-07-AMAZON",
+      "lines": 25,
+      "total": 22753.33,
+      "expected_total": 22753.33,
+      "ties_out": true
+    },
+    {
+      "channel": "ebay",
+      "customer_number": "CUST-EBAY",
+      "customer_name": "eBay",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-07-31",
+      "external_document_number": "AR-2026-07-EBAY",
+      "lines": 46,
+      "total": 39724.86,
+      "expected_total": 39724.86,
+      "ties_out": true
+    },
+    {
+      "channel": "goodwillbooks",
+      "customer_number": "CUST-GWB",
+      "customer_name": "Goodwillbooks",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-07-31",
+      "external_document_number": "AR-2026-07-GWB",
+      "lines": 25,
+      "total": 3174.93,
+      "expected_total": 3174.93,
+      "ties_out": true
+    },
+    {
+      "channel": "goodwillfinds",
+      "customer_number": "CUST-GWF",
+      "customer_name": "GoodwillFinds",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-07-31",
+      "external_document_number": "AR-2026-07-GWF",
+      "lines": 38,
+      "total": 16026.88,
+      "expected_total": 16026.88,
+      "ties_out": true
+    },
+    {
+      "channel": "shopgoodwill",
+      "customer_number": "CUST-SGW",
+      "customer_name": "ShopGoodwill",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-07-31",
+      "external_document_number": "AR-2026-07-SGW",
+      "lines": 49,
+      "total": 318485.39,
+      "expected_total": 318485.39,
+      "ties_out": true
+    }
+  ],
+  "reconciliation": [
+    {
+      "source": "bank_0101",
+      "doc_no": "ECOM-2026-07-SHIPPING",
+      "measure": "postage paid from bank 0101",
+      "rows": 13,
+      "file_total": 24516.98,
+      "loaded_total": 24516.98,
+      "rules_total": 24516.98,
+      "journal_total": 24516.98,
+      "journal_lines": 16,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "fedex_invoices",
+      "doc_no": "ECOM-2026-07-FEDEX",
+      "measure": "FedEx charges net of refunds",
+      "rows": 867,
+      "file_total": 9929.16,
+      "loaded_total": 9929.16,
+      "rules_total": 9929.16,
+      "journal_total": 9929.16,
+      "journal_lines": 19,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_payouts+fct_orders",
+      "doc_no": "ECOM-2026-07-SGW",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 2504,
+      "file_total": 318485.39,
+      "loaded_total": 318485.39,
+      "rules_total": 318485.39,
+      "journal_total": 318485.39,
+      "journal_lines": 55,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:ebay",
+      "doc_no": "ECOM-2026-07-EBAY",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 636,
+      "file_total": 39724.86,
+      "loaded_total": 39724.86,
+      "rules_total": 39724.86,
+      "journal_total": 39724.86,
+      "journal_lines": 47,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:amazon",
+      "doc_no": "ECOM-2026-07-AMAZON",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 1185,
+      "file_total": 22753.33,
+      "loaded_total": 22753.33,
+      "rules_total": 22753.33,
+      "journal_total": 22753.33,
+      "journal_lines": 25,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:goodwillfinds",
+      "doc_no": "ECOM-2026-07-GWF",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 156,
+      "file_total": 16026.88,
+      "loaded_total": 16026.88,
+      "rules_total": 16026.88,
+      "journal_total": 16026.88,
+      "journal_lines": 13,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "gwb_statement",
+      "doc_no": "ECOM-2026-07-GWB",
+      "measure": "AR invoice: statement gross (SALE + SHIPPING)",
+      "rows": 520,
+      "file_total": 3174.93,
+      "loaded_total": 3174.93,
+      "rules_total": 3174.93,
+      "journal_total": 3174.93,
+      "journal_lines": 8,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "jewelry_report",
+      "doc_no": "",
+      "measure": "jewelry sales moved to jewelry revenue on the AR invoices",
+      "rows": 334,
+      "file_total": 71196.54,
+      "loaded_total": 71196.54,
+      "rules_total": 71196.54,
+      "journal_total": 71196.54,
+      "journal_lines": 0,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    }
+  ],
+  "customer_balances": [
+    {
+      "channel": "amazon",
+      "customer_no": "CUST-AMZ",
+      "documents": [
+        "ECOM-2026-07-AMAZON"
+      ],
+      "invoice_total": 22753.33,
+      "fees": 5172.02,
+      "refunds": 304.32,
+      "payouts": 14973.77,
+      "other": 0.0,
+      "customer_credits": -20450.11,
+      "open_balance": 2303.22,
+      "difference": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "channel": "ebay",
+      "customer_no": "CUST-EBAY",
+      "documents": [
+        "ECOM-2026-07-EBAY"
+      ],
+      "invoice_total": 39724.86,
+      "fees": 5290.22,
+      "refunds": 484.83,
+      "payouts": 31469.51,
+      "other": 0.0,
+      "customer_credits": -37244.56,
+      "open_balance": 2480.3,
+      "difference": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "channel": "goodwillbooks",
+      "customer_no": "CUST-GWB",
+      "documents": [
+        "ECOM-2026-07-GWB"
+      ],
+      "invoice_total": 3174.93,
+      "fees": 179.22,
+      "refunds": 36.24,
+      "payouts": 3060.63,
+      "other": 0.0,
+      "customer_credits": -3276.09,
+      "open_balance": -101.16,
+      "difference": 0.0,
+      "status": "ok",
+      "note": "Customer is overpaid by 101.16 (payouts exceed this month's net revenue; usually prior-month sales paid this month)."
+    },
+    {
+      "channel": "goodwillfinds",
+      "customer_no": "CUST-GWF",
+      "documents": [
+        "ECOM-2026-07-GWF"
+      ],
+      "invoice_total": 16026.88,
+      "fees": 2593.97,
+      "refunds": 680.15,
+      "payouts": 15639.95,
+      "other": 0.0,
+      "customer_credits": -18914.07,
+      "open_balance": -2887.19,
+      "difference": 0.0,
+      "status": "ok",
+      "note": "Customer is overpaid by 2,887.19 (payouts exceed this month's net revenue; usually prior-month sales paid this month)."
+    },
+    {
+      "channel": "shopgoodwill",
+      "customer_no": "CUST-SGW",
+      "documents": [
+        "ECOM-2026-07-SGW"
+      ],
+      "invoice_total": 318485.39,
+      "fees": 35737.56,
+      "refunds": 7918.58,
+      "payouts": 265440.69,
+      "other": 0.0,
+      "customer_credits": -309096.83,
+      "open_balance": 9388.56,
+      "difference": 0.0,
+      "status": "ok",
+      "note": ""
+    }
+  ],
+  "workbook_comparison": {
+    "status": "no_workbook",
+    "matches": 0,
+    "workbook": null,
+    "differences": 0
+  },
+  "exceptions": [
+    {
+      "source": "close_rules.yaml",
+      "rule_id": "placeholder_accounts",
+      "severity": "info",
+      "message": "289 journal / AR invoice lines post to PLACEHOLDER accounts (4xxxx/6xxxx/CUST-*); replace with Goodwill's chart of accounts before posting",
+      "amount": null,
+      "owner": "Controller (close owner)",
+      "status": "open",
+      "id": "5793f72a36"
+    }
+  ],
+  "approval": null,
+  "outputs": {
+    "journal": "BC General Journal ECOM 2026-07.xlsx",
+    "invoice": "BC AR Invoices 2026-07.xlsx",
+    "invoice_json": "BC AR Invoices 2026-07.json",
+    "reconciliation": "Reconciliation 2026-07.xlsx"
+  }
+}

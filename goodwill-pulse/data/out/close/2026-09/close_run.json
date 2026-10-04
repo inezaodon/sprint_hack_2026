@@ -1,0 +1,352 @@
+{
+  "month": "2026-09",
+  "generated_at": "2026-10-03T23:29:43+00:00",
+  "rules_version": "2026.10.03-2+a2d0fd2d",
+  "journal": {
+    "documents": 7,
+    "lines": 174,
+    "total_debit": 484314.94,
+    "total_credit": 484314.94,
+    "balanced": true,
+    "unbalanced_documents": []
+  },
+  "invoices": [
+    {
+      "channel": "amazon",
+      "customer_number": "CUST-AMZ",
+      "customer_name": "Amazon",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-09-30",
+      "external_document_number": "AR-2026-09-AMAZON",
+      "lines": 25,
+      "total": 23017.62,
+      "expected_total": 23017.62,
+      "ties_out": true
+    },
+    {
+      "channel": "ebay",
+      "customer_number": "CUST-EBAY",
+      "customer_name": "eBay",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-09-30",
+      "external_document_number": "AR-2026-09-EBAY",
+      "lines": 41,
+      "total": 42968.16,
+      "expected_total": 42968.16,
+      "ties_out": true
+    },
+    {
+      "channel": "goodwillbooks",
+      "customer_number": "CUST-GWB",
+      "customer_name": "Goodwillbooks",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-09-30",
+      "external_document_number": "AR-2026-09-GWB",
+      "lines": 25,
+      "total": 3833.85,
+      "expected_total": 3833.85,
+      "ties_out": true
+    },
+    {
+      "channel": "goodwillfinds",
+      "customer_number": "CUST-GWF",
+      "customer_name": "GoodwillFinds",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-09-30",
+      "external_document_number": "AR-2026-09-GWF",
+      "lines": 38,
+      "total": 22761.68,
+      "expected_total": 22761.68,
+      "ties_out": true
+    },
+    {
+      "channel": "shopgoodwill",
+      "customer_number": "CUST-SGW",
+      "customer_name": "ShopGoodwill",
+      "placeholder": true,
+      "note": "Placeholder customer: Goodwill has not yet confirmed who the AR invoice is issued to or the customer number in Business Central.",
+      "invoice_date": "2026-09-30",
+      "external_document_number": "AR-2026-09-SGW",
+      "lines": 49,
+      "total": 324045.22,
+      "expected_total": 324045.22,
+      "ties_out": true
+    }
+  ],
+  "reconciliation": [
+    {
+      "source": "bank_0101",
+      "doc_no": "ECOM-2026-09-SHIPPING",
+      "measure": "postage paid from bank 0101",
+      "rows": 14,
+      "file_total": 27938.15,
+      "loaded_total": 27938.15,
+      "rules_total": 27938.15,
+      "journal_total": 27938.15,
+      "journal_lines": 17,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "fedex_invoices",
+      "doc_no": "ECOM-2026-09-FEDEX",
+      "measure": "FedEx charges net of refunds",
+      "rows": 913,
+      "file_total": 10619.52,
+      "loaded_total": 10619.52,
+      "rules_total": 10627.82,
+      "journal_total": 10627.82,
+      "journal_lines": 15,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": -8.3,
+      "diff_rules_journal": 0.0,
+      "status": "explained",
+      "note": "Cross-month FedEx refund: FXR-100175 $8.30 for 2026-09 invoice 7-693-44886 (credit dated 2026-09-29) was deposited 2026-10-01, after month end: not netted in 2026-09 (nets by bank date next month). Accrue or leave?"
+    },
+    {
+      "source": "harmonized.fct_payouts+fct_orders",
+      "doc_no": "ECOM-2026-09-SGW",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 2561,
+      "file_total": 324045.22,
+      "loaded_total": 324045.22,
+      "rules_total": 324045.22,
+      "journal_total": 324045.22,
+      "journal_lines": 55,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:ebay",
+      "doc_no": "ECOM-2026-09-EBAY",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 654,
+      "file_total": 42968.16,
+      "loaded_total": 42968.16,
+      "rules_total": 42968.16,
+      "journal_total": 42968.16,
+      "journal_lines": 44,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:amazon",
+      "doc_no": "ECOM-2026-09-AMAZON",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 1214,
+      "file_total": 23017.62,
+      "loaded_total": 23017.62,
+      "rules_total": 23017.62,
+      "journal_total": 23017.62,
+      "journal_lines": 23,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "harmonized.fct_orders:goodwillfinds",
+      "doc_no": "ECOM-2026-09-GWF",
+      "measure": "AR invoice: gross sales incl. S&H",
+      "rows": 150,
+      "file_total": 22761.68,
+      "loaded_total": 22761.68,
+      "rules_total": 22761.68,
+      "journal_total": 22761.68,
+      "journal_lines": 13,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "gwb_statement",
+      "doc_no": "ECOM-2026-09-GWB",
+      "measure": "AR invoice: statement gross (SALE + SHIPPING)",
+      "rows": 642,
+      "file_total": 3833.85,
+      "loaded_total": 3833.85,
+      "rules_total": 3833.85,
+      "journal_total": 3833.85,
+      "journal_lines": 7,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 0.0,
+      "diff_rules_journal": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "source": "jewelry_report",
+      "doc_no": "",
+      "measure": "jewelry sales moved to jewelry revenue on the AR invoices",
+      "rows": 362,
+      "file_total": 78233.46,
+      "loaded_total": 78233.46,
+      "rules_total": 78157.19,
+      "journal_total": 78157.19,
+      "journal_lines": 0,
+      "diff_file_loaded": 0.0,
+      "diff_loaded_rules": 76.27,
+      "diff_rules_journal": 0.0,
+      "status": "explained",
+      "note": "Jewelry Report line 207: SKU 'UP-05-00525' (order 66154195) not found, Supplier cannot be filled; 76.27 left in channel revenue, not jewelry"
+    }
+  ],
+  "customer_balances": [
+    {
+      "channel": "amazon",
+      "customer_no": "CUST-AMZ",
+      "documents": [
+        "ECOM-2026-09-AMAZON"
+      ],
+      "invoice_total": 23017.62,
+      "fees": 5266.96,
+      "refunds": 261.1,
+      "payouts": 23238.77,
+      "other": 0.0,
+      "customer_credits": -28766.83,
+      "open_balance": -5749.21,
+      "difference": 0.0,
+      "status": "ok",
+      "note": "Customer is overpaid by 5,749.21 (payouts exceed this month's net revenue; usually prior-month sales paid this month)."
+    },
+    {
+      "channel": "ebay",
+      "customer_no": "CUST-EBAY",
+      "documents": [
+        "ECOM-2026-09-EBAY"
+      ],
+      "invoice_total": 42968.16,
+      "fees": 5721.42,
+      "refunds": 571.79,
+      "payouts": 32840.31,
+      "other": 0.0,
+      "customer_credits": -39133.52,
+      "open_balance": 3834.64,
+      "difference": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "channel": "goodwillbooks",
+      "customer_no": "CUST-GWB",
+      "documents": [
+        "ECOM-2026-09-GWB"
+      ],
+      "invoice_total": 3833.85,
+      "fees": 215.98,
+      "refunds": 14.8,
+      "payouts": 2828.45,
+      "other": 0.0,
+      "customer_credits": -3059.23,
+      "open_balance": 774.62,
+      "difference": 0.0,
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "channel": "goodwillfinds",
+      "customer_no": "CUST-GWF",
+      "documents": [
+        "ECOM-2026-09-GWF"
+      ],
+      "invoice_total": 22761.68,
+      "fees": 3799.83,
+      "refunds": 283.83,
+      "payouts": 21905.57,
+      "other": 0.0,
+      "customer_credits": -25989.23,
+      "open_balance": -3227.55,
+      "difference": 0.0,
+      "status": "ok",
+      "note": "Customer is overpaid by 3,227.55 (payouts exceed this month's net revenue; usually prior-month sales paid this month)."
+    },
+    {
+      "channel": "shopgoodwill",
+      "customer_no": "CUST-SGW",
+      "documents": [
+        "ECOM-2026-09-SGW"
+      ],
+      "invoice_total": 324045.22,
+      "fees": 36295.87,
+      "refunds": 7273.7,
+      "payouts": 305117.98,
+      "other": 0.0,
+      "customer_credits": -348687.55,
+      "open_balance": -24642.33,
+      "difference": 0.0,
+      "status": "ok",
+      "note": "Customer is overpaid by 24,642.33 (payouts exceed this month's net revenue; usually prior-month sales paid this month)."
+    }
+  ],
+  "workbook_comparison": {
+    "status": "differences",
+    "matches": 172,
+    "workbook": "E-Commerce Allocation 2026-09.xlsx",
+    "differences": 1
+  },
+  "exceptions": [
+    {
+      "source": "fedex_invoices",
+      "rule_id": "fedex_net_refunds",
+      "severity": "warning",
+      "message": "Cross-month FedEx refund: FXR-100175 $8.30 for 2026-09 invoice 7-693-44886 (credit dated 2026-09-29) was deposited 2026-10-01, after month end: not netted in 2026-09 (nets by bank date next month). Accrue or leave?",
+      "amount": 8.3,
+      "owner": "Accounting - AP (FedEx)",
+      "status": "open",
+      "id": "128f08426f"
+    },
+    {
+      "source": "jewelry_report",
+      "rule_id": "jewelry_reclass",
+      "severity": "error",
+      "message": "Jewelry Report line 207: SKU 'UP-05-00525' (order 66154195) not found, Supplier cannot be filled; 76.27 left in channel revenue, not jewelry",
+      "amount": 76.27,
+      "owner": "E-Commerce Ops - Jewelry",
+      "status": "open",
+      "id": "25e8275365"
+    },
+    {
+      "source": "close_rules.yaml",
+      "rule_id": "placeholder_accounts",
+      "severity": "info",
+      "message": "278 journal / AR invoice lines post to PLACEHOLDER accounts (4xxxx/6xxxx/CUST-*); replace with Goodwill's chart of accounts before posting",
+      "amount": null,
+      "owner": "Controller (close owner)",
+      "status": "open",
+      "id": "6782653a11"
+    },
+    {
+      "source": "workbook",
+      "rule_id": "workbook_compare",
+      "severity": "warning",
+      "message": "ECOM-2026-09-FEDEX 40356: Transposed digits: 2785.47 keyed instead of 2758.47 (difference 27.00, divisible by 9, the signature of a transposition). The workbook's balancing line (Vendor V00122, row 33) follows the wrong input: -10,654.82 instead of -10,627.82, so the document still balances and the error is invisible in the workbook.",
+      "amount": 27.0,
+      "owner": "Accounting",
+      "status": "open",
+      "id": "9621b090ce"
+    }
+  ],
+  "approval": null,
+  "outputs": {
+    "journal": "BC General Journal ECOM 2026-09.xlsx",
+    "invoice": "BC AR Invoices 2026-09.xlsx",
+    "invoice_json": "BC AR Invoices 2026-09.json",
+    "reconciliation": "Reconciliation 2026-09.xlsx"
+  }
+}
