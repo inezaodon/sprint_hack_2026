@@ -163,6 +163,25 @@ def day_rows(day: date) -> list[dict]:
     raise FileNotFoundError(f"{name} not in data/samples (run python -m goodwill_pulse.gen.generate first)")
 
 
+
+def eastern_day_rows(day: date) -> list[dict]:
+    """Rows whose paid time falls on Eastern business date `day`, with Paid At rewritten in Eastern time. Upright exports by
+    Pacific day, so an Eastern day spans two of those files (Oct 1 from 9 PM PT and Oct 2 until 9 PM PT)."""
+    from datetime import datetime as _dt
+    from zoneinfo import ZoneInfo
+    pt, et = ZoneInfo("America/Los_Angeles"), ZoneInfo("America/New_York")
+    out = []
+    for d in (day - timedelta(days=1), day, day + timedelta(days=1)):
+        try:
+            rows = day_rows(d)
+        except FileNotFoundError:
+            continue
+        for r in rows:
+            t = _dt.strptime(r["Paid At"], "%m/%d/%Y %H:%M:%S").replace(tzinfo=pt).astimezone(et)
+            if t.date() == day:
+                out.append({**r, "Paid At": t.strftime("%m/%d/%Y %H:%M:%S")})
+    return sorted(out, key=lambda r: r["Paid At"])
+
 def cashmonkey_files_for(day: date) -> list[Path]:
     """The Cash Monkey download generated the morning after `day` (UTC day), or tonight's pull for the demo day."""
     out = []
@@ -209,6 +228,17 @@ def scenario_single_day(folder: Path, day: date, note: str) -> dict:
     exp = {"scenario": note, "business_day_pacific": str(day), "upright": upright_expected(rows),
            "upright_total_item_sales": round(sum(float(r["Subtotal"]) for r in rows), 2),
            "upright_orders": len(rows), "cashmonkey_files": [p.name for p in cm], "cashmonkey": cm_expected(cm)}
+    if day == date(2026, 10, 2):
+        et = folder / "eastern_time_export"
+        et.mkdir(exist_ok=True)
+        erows = eastern_day_rows(day)
+        write_real_csv(et / f"{base}.csv", erows)
+        (et / "README.txt").write_text(
+            "Same Friday, exported with Upright's time zone set to Eastern: Paid At is Eastern time and the rows are exactly\n"
+            "Eastern business day 10/02. In the Upload tab choose 'Eastern' for the dates, and this file fully covers the day, so it\n"
+            "replaces the warehouse totals and reconciles. The local FastAPI importer assumes Los Angeles time; do not drop this one there.\n")
+        exp["eastern_time_export"] = {"orders": len(erows), "item_sales": round(sum(float(r["Subtotal"]) for r in erows), 2),
+                                      "by_channel": upright_expected(erows)}
     _write_expected(folder, exp)
     return exp
 
@@ -479,7 +509,7 @@ Regenerate with `.venv/bin/python -m goodwill_pulse.gen.demo_pack`.
 | Folder | Use it to show | Where to drop it |
 |---|---|---|
 | `01_tonight_saturday_2026-10-03` | Tonight's two reports become the Daily Pulse | Local app: `POST /api/demo/reset`, then drop both files on the page. Published app: Upload tab |
-| `02_friday_2026-10-02` | The file in the photo (`paid_orders_10-02-2026_10-02-2026`) | Upload tab: it reconciles against the warehouse for 10/2 |
+| `02_friday_2026-10-02` | The file in the photo (`paid_orders_10-02-2026_10-02-2026`). It is a Pacific-day export, so it only partly covers Eastern business days. `eastern_time_export/` holds the same Friday exported in Eastern time | Upload tab. Use the Eastern file to see a full replace and an exact reconcile; use the Pacific file to see the partial-day warning |
 | `03_monday_catchup_fri_sat_sun` | Friday, Saturday and Sunday pulled together on Monday | Three daily files, or the single range file in `one_range_file/` |
 | `04_messy_reports` | Duplicates, a renamed header, a test order, bad dates, title rows, a wrong-period file, a missing Cash Monkey file | Each file lists what must be caught in `expected.json` |
 | `05_store_weekly_sales_supro` | In-store Daily Sales Sheet, 24 stores, with last-year comparison | Reference input for the store side; not part of the e-commerce pulse |

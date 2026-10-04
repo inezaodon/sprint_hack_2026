@@ -16,7 +16,7 @@ up = up[up._et.isin(DAYS)].sort_values("_t")
 cm = pd.concat([pd.read_csv(f) for f in sorted(glob.glob(str(ROOT / "data/samples/history/orders2023*.csv")))]).drop_duplicates()
 cm["_t"] = pd.to_datetime(cm["Order Date"])
 cm["_et"] = cm._t.dt.tz_localize("UTC").dt.tz_convert("America/New_York").dt.strftime("%Y-%m-%d")
-cm = cm[cm._et.isin(DAYS)].sort_values("_t")
+cm = cm[cm._et.isin(DAYS + ["2026-09-07", "2026-09-11"])]   # padding days make 9/8-9/10 interior, so they are fully covered.sort_values("_t")
 UCOLS = list(pd.read_csv(sorted(glob.glob(str(ROOT / "data/samples/history/paid_orders_*.csv")))[0], nrows=0).columns)
 CCOLS = list(cm.columns[:-2])
 
@@ -45,9 +45,9 @@ def cm_book(df, path):
     wb.save(path)
 
 # (a) matches the warehouse
-upright_book(up, OUT / "upright_paid_orders_match.xlsx")
+upright_book(up, OUT / "paid_orders_09-07-2026_09-10-2026_match.xlsx")
 cm_book(cm, OUT / "cashmonkey_orders_match.xlsx")
-up.drop(columns=["_t", "_et"]).to_csv(OUT / "upright_paid_orders_match.csv", index=False)
+up.drop(columns=["_t", "_et"]).to_csv(OUT / "paid_orders_09-07-2026_09-10-2026_match.csv", index=False)
 
 # (b) a few amounts differ and one order is duplicated
 b = up.copy().reset_index(drop=True)
@@ -57,7 +57,7 @@ b.loc[sg[10], "Subtotal"] = round(b.loc[sg[10], "Subtotal"] - 7.50, 2)
 gf = b[b.Channel == "GoodwillFinds"].index
 b.loc[gf[1], "Final Value Fee"] = round(b.loc[gf[1], "Final Value Fee"] + 4.00, 2)
 b = pd.concat([b, b.loc[[sg[5]]]]).reset_index(drop=True)                      # exact duplicate of one order
-upright_book(b, OUT / "upright_paid_orders_differs.xlsx")
+upright_book(b, OUT / "paid_orders_09-07-2026_09-10-2026_differs.xlsx")
 
 # (c) messy: renamed headers, title rows above, text dates, a blank row, a totals row, a test order, a bad amount, a bad date
 rows = up[up.Channel.isin(["Shopgoodwill", "GoodwillFinds"]) & (up._et == DAYS[2])].head(14)

@@ -8,7 +8,7 @@ Regenerate with `.venv/bin/python -m goodwill_pulse.gen.demo_pack`.
 | Folder | Use it to show | Where to drop it |
 |---|---|---|
 | `01_tonight_saturday_2026-10-03` | Tonight's two reports become the Daily Pulse | Local app: `POST /api/demo/reset`, then drop both files on the page. Published app: Upload tab |
-| `02_friday_2026-10-02` | The file in the photo (`paid_orders_10-02-2026_10-02-2026`) | Upload tab: it reconciles against the warehouse for 10/2 |
+| `02_friday_2026-10-02` | The file in the photo (`paid_orders_10-02-2026_10-02-2026`). It is a Pacific-day export, so it only partly covers Eastern business days. `eastern_time_export/` holds the same Friday exported in Eastern time | Upload tab. Use the Eastern file to see a full replace and an exact reconcile; use the Pacific file to see the partial-day warning |
 | `03_monday_catchup_fri_sat_sun` | Friday, Saturday and Sunday pulled together on Monday | Three daily files, or the single range file in `one_range_file/` |
 | `04_messy_reports` | Duplicates, a renamed header, a test order, bad dates, title rows, a wrong-period file, a missing Cash Monkey file | Each file lists what must be caught in `expected.json` |
 | `05_store_weekly_sales_supro` | In-store Daily Sales Sheet, 24 stores, with last-year comparison | Reference input for the store side; not part of the e-commerce pulse |

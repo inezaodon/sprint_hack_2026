@@ -25,7 +25,7 @@ const UPL_ALIAS = {
   item_sales: ["subtotal", "itemprice", "itemsubtotal", "itemsales", "itemtotal", "productsales", "merchandisetotal", "sales", "price"],
   shipping: ["shippingtotal", "shippingcredit", "shippingcharged", "shippingrevenue", "shippingpaid", "shipping"],
   shipping_2: ["handling", "handlingfee", "handlingtotal"],
-  fees: ["finalvaluefee", "marketfees", "marketplacefees", "marketplacefee", "sellingfees", "fees", "fee", "commission"],
+  fees: ["finalvalue", "finalvaluefee", "marketfees", "marketplacefees", "marketplacefee", "sellingfees", "fees", "fee", "commission"],
   fees_2: ["paymentfee", "processingfee", "paymentprocessingfee"],
   refund: ["refund", "refunds", "refundamount", "refunded", "refundtotal", "returns"],
 };
@@ -105,7 +105,7 @@ function uplAutoMap(headers) {
 }
 function uplKind(headers) {
   const h = new Set(headers.map(uplNorm));
-  if (h.has("uprightorderid") || h.has("channelbuyer")) return "upright";
+  if (h.has("uprightorderid") || h.has("channelbuyer") || h.has("channelbuyerid")) return "upright";
   if (h.has("itemprice") && (h.has("shippingcredit") || h.has("marketfees"))) return "cashmonkey";
   return "generic";
 }
@@ -119,12 +119,15 @@ function uplParts(t, tz) {
   return o;
 }
 function uplZoneOffset(t, tz) { const p = uplParts(t, tz); return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(t / 1000) * 1000; }
+function uplInstant(c, tz) {
+  const guess = Date.UTC(c.y, c.m - 1, c.d, c.h || 0, c.mi || 0, c.s || 0);
+  let inst = guess - uplZoneOffset(guess, tz); inst = guess - uplZoneOffset(inst, tz);
+  return inst;
+}
 function uplToBusinessDate(c, tz) {
   const pad = n => String(n).padStart(2, "0");
   if (!c.hasTime || tz === "America/New_York") return `${c.y}-${pad(c.m)}-${pad(c.d)}`;
-  const guess = Date.UTC(c.y, c.m - 1, c.d, c.h, c.mi, c.s);
-  let inst = guess - uplZoneOffset(guess, tz); inst = guess - uplZoneOffset(inst, tz);
-  const p = uplParts(inst, "America/New_York");
+  const p = uplParts(uplInstant(c, tz), "America/New_York");
   return `${p.year}-${pad(p.month)}-${pad(p.day)}`;
 }
 function uplDateParts(v, dmy) {
@@ -183,6 +186,7 @@ function uplBuild(U) {
   const dmy = uplDetectDmy(m, map.paid_date, h0 + 1);
   out.dmy = dmy;
   const seen = new Map(), ids = new Map();
+  let minI = Infinity, maxI = -Infinity, anyTime = false, minD = null, maxD = null;
   const excl = (line, reason, kind) => out.excluded.push({line, reason, kind});
   const prob = (line, text) => out.problems.push({line, text});
   for (let i = h0 + 1; i < m.length; i++) {
@@ -201,6 +205,8 @@ function uplBuild(U) {
     const dp = uplDateParts(dv, dmy);
     if (!dp) { prob(line, `Date not understood: "${uplCell(dv).slice(0, 30)}". Row excluded.`); excl(line, `Invalid date "${uplCell(dv).slice(0, 30)}"`, "date"); continue; }
     const date = uplToBusinessDate(dp, U.tz);
+    if (dp.hasTime) { anyTime = true; const ii = uplInstant(dp, U.tz); if (ii < minI) minI = ii; if (ii > maxI) maxI = ii; }
+    else { if (!minD || date < minD) minD = date; if (!maxD || date > maxD) maxD = date; }
     let ch;
     if (has("channel")) { ch = uplChannel(get("channel")); if (!ch) { prob(line, `Marketplace not recognised: "${uplCell(get("channel")).slice(0, 30)}". Row excluded.`); excl(line, `Unrecognised marketplace "${uplCell(get("channel")).slice(0, 30)}"`, "channel"); continue; } }
     else ch = U.fixed;
@@ -228,8 +234,39 @@ function uplBuild(U) {
     const sum2 = (a, b) => (has(a) || has(b)) ? uplR2((amt[a] || 0) + (amt[b] || 0)) : null;
     out.kept.push([date, ch, has("order_id") ? oid : "r" + line, has("item_sales") ? uplR2(amt.item_sales || 0) : null, sum2("shipping", "shipping_2"), sum2("fees", "fees_2"), has("refund") ? uplR2(amt.refund || 0) : null]);
   }
+  out.cover = uplCoverage(U, anyTime, minI, maxI, minD, maxD);
+  out.full = out.cover.full; out.fullSet = new Set(out.full);
   if (out.noIds) prob(0, "No order id column: every row counts as one order.");
   return out;
+}
+
+/* A (business date, marketplace) cell may replace the warehouse only when the file's coverage window holds the whole Eastern day. */
+const UPL_NY = "America/New_York";
+const uplEtMid = d => uplInstant({y: +d.slice(0, 4), m: +d.slice(5, 7), d: +d.slice(8, 10)}, UPL_NY);
+function uplCoverage(U, anyTime, minI, maxI, minD, maxD) {
+  const full = []; let from = null, to = null, src = "dates";
+  if (anyTime) {
+    const fm = String(U.name || "").match(/paid_orders_(\d{2})-(\d{2})-(\d{4})_(\d{2})-(\d{2})-(\d{4})/);
+    src = "rows"; from = minI; to = maxI;
+    if (fm) {
+      const next = new Date(Date.UTC(+fm[6], +fm[4] - 1, +fm[5] + 1));
+      const a = uplInstant({y: +fm[3], m: +fm[1], d: +fm[2]}, U.tz), b = uplInstant({y: next.getUTCFullYear(), m: next.getUTCMonth() + 1, d: next.getUTCDate()}, U.tz);
+      if (minI >= a && maxI < b) { from = a; to = b; src = "filename"; }
+    }
+    if (isFinite(from)) {
+      const p = uplParts(from, UPL_NY), pad = n => String(n).padStart(2, "0");
+      for (let d = `${p.year}-${pad(p.month)}-${pad(p.day)}`; uplEtMid(d) <= to; d = addDays(d, 1)) if (uplEtMid(d) >= from && uplEtMid(addDays(d, 1)) <= to) full.push(d);
+    } else { from = to = null; }
+  } else if (minD) for (let d = minD; d <= maxD; d = addDays(d, 1)) full.push(d);
+  return {from, to, src, full, full_from: full[0] || null, full_to: full[full.length - 1] || null};
+}
+const uplIsFull = (c, date) => c.full_from === undefined ? true : !!c.full_from && date >= c.full_from && date <= c.full_to;
+function uplCoverText(c, date) {
+  if (c.cover_from == null || c.cover_to == null) return "only part of this day";
+  const s = Math.max(c.cover_from, uplEtMid(date)), e = Math.min(c.cover_to, uplEtMid(addDays(date, 1)));
+  if (e <= s) return "none of this day";
+  const f = t => { if (t === uplEtMid(addDays(date, 1))) return "24:00"; const p = uplParts(t, UPL_NY); return String(p.hour).padStart(2, "0") + ":" + String(p.minute).padStart(2, "0"); };
+  return `${f(s)} to ${f(e)} ET`;
 }
 
 /* ---- aggregation shared by preview, overlay and reconcile ---- */
@@ -257,17 +294,18 @@ async function uplLoad(item) {
 }
 async function uplEffective() {   // Map "date|channel" -> {item, agg} using the latest upload that covers each cell
   const items = (await uplIndex()).filter(i => i.status !== "removed").sort((a, b) => String(b.uploaded_at).localeCompare(String(a.uploaded_at)) || String(b.id).localeCompare(String(a.id)));
-  const sig = items.map(i => i.id + i.uploaded_at + i.rows).join(","), hit = UPL.memo.get("eff");
+  const sig = items.map(i => i.id + i.uploaded_at + i.rows + i.full_from + i.full_to).join(","), hit = UPL.memo.get("eff");
   if (hit && hit.sig === sig) return hit.map;
-  const map = new Map();
+  const map = new Map(), partial = [];
   for (const it of items) {
     let aggs = UPL.memo.get("agg:" + it.id + it.uploaded_at);
     if (!aggs) {
       try { const u = await uplLoad(it); aggs = uplAggregate(u.rows, u.meta.supplies || {}); UPL.memo.set("agg:" + it.id + it.uploaded_at, aggs); }
       catch (e) { console.warn("upload " + it.id + " could not be read", e); continue; }
     }
-    for (const [k, agg] of aggs) if (!map.has(k)) map.set(k, {item: it, agg});
+    for (const [k, agg] of aggs) { if (uplIsFull(it, agg.date)) { if (!map.has(k)) map.set(k, {item: it, agg}); } else partial.push({k, item: it, agg}); }
   }
+  const seenP = new Set(); map.partial = partial.filter(x => !map.has(x.k) && !seenP.has(x.k) && seenP.add(x.k));
   UPL.memo.set("eff", {sig, map});
   return map;
 }
@@ -294,12 +332,17 @@ function uplDiff(w, u) {
   return {diff, same};
 }
 async function uploadProvenance() {
-  const eff = await uplEffective(); if (!eff.size) return [];
+  const eff = await uplEffective(); if (!eff.size && !(eff.partial || []).length) return [];
   const base = await dailyRowsBase(), wk = new Map(base.map(r => [r.date + "|" + r.channel, r])), out = [];
   for (const [k, {item, agg}] of eff) {
     const w0 = wk.get(k), warehouse = w0 ? {orders: w0.orders, item_sales: w0.item_sales, shipping: w0.shipping, fees: w0.fees, refunds: w0.refunds} : {orders: 0, item_sales: 0, shipping: 0, fees: 0, refunds: 0};
     const upload = {orders: agg.orders, item_sales: agg.item_sales, shipping: agg.shipping, fees: agg.fees, refunds: agg.refunds}, d = uplDiff(warehouse, upload);
     out.push({date: agg.date, channel: agg.channel, upload_id: item.id, name: item.name, warehouse, upload, diff: d.diff, status: d.same ? "match" : "diff", in_warehouse: !!w0});
+  }
+  for (const {item, agg} of eff.partial || []) {
+    const w0 = wk.get(agg.date + "|" + agg.channel), warehouse = w0 ? {orders: w0.orders, item_sales: w0.item_sales, shipping: w0.shipping, fees: w0.fees, refunds: w0.refunds} : {orders: 0, item_sales: 0, shipping: 0, fees: 0, refunds: 0};
+    out.push({date: agg.date, channel: agg.channel, upload_id: item.id, name: item.name, warehouse, upload: {orders: agg.orders, item_sales: agg.item_sales, shipping: agg.shipping, fees: agg.fees, refunds: agg.refunds},
+      diff: {orders: null, item_sales: null, shipping: null, fees: null, refunds: null}, status: "partial", covered: uplCoverText(item, agg.date), in_warehouse: !!w0});
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || CHORDER.indexOf(a.channel) - CHORDER.indexOf(b.channel));
 }
@@ -378,12 +421,12 @@ async function uplAdd() {
     const meta = {id, name: f.name, uploaded_at: new Date().toISOString(), hash: f.hash, kind: f.kind, sheet: f.sheet, tz: f.tz, unit_grain: !!f.unit, supplies: res.supplies,
       rows_read: res.read, rows_kept: res.kept.length, rows_excluded: res.excluded.filter(x => x.kind !== "blank").length, from: dates[0], to: dates[dates.length - 1], channels: chans,
       mapping: Object.fromEntries(Object.entries(f.map).filter(([, i]) => i >= 0).map(([k, i]) => [k, f.headers[i]])), fixed_channel: f.fixed || null,
-      excluded: res.excluded.filter(x => x.kind !== "blank").slice(0, 150).map(x => [x.line, x.reason]), set_aside: [...f.aside]};
+      excluded: res.excluded.filter(x => x.kind !== "blank").slice(0, 150).map(x => [x.line, x.reason]), set_aside: [...f.aside], cover_from: res.cover.from, cover_to: res.cover.to, cover_src: res.cover.src, full_from: res.cover.full_from, full_to: res.cover.full_to};
     const chunks = []; let cur = [], len = 0, limit = Math.max(40000, UPL_MAXDOC - JSON.stringify(meta).length);
     for (const r of res.kept) { const l = JSON.stringify(r).length + 1; if (len + l > limit && cur.length) { chunks.push(cur); cur = []; len = 0; limit = UPL_MAXDOC; } cur.push(r); len += l; }
     chunks.push(cur); meta.parts = chunks.length;
     for (let p = 0; p < chunks.length; p++) { const did = p === 0 ? id : `${id}_${p + 1}`; await coll.doc(did).set(p === 0 ? {meta, rows: chunks[p]} : {rows: chunks[p]}); written.push(did); }
-    const item = {id, name: f.name, uploaded_at: meta.uploaded_at, rows: res.kept.length, from: meta.from, to: meta.to, channels: chans, status: "active", hash: f.hash, parts: chunks.length, kind: f.kind};
+    const item = {id, name: f.name, uploaded_at: meta.uploaded_at, rows: res.kept.length, from: meta.from, to: meta.to, channels: chans, status: "active", hash: f.hash, parts: chunks.length, kind: f.kind, full_from: res.cover.full_from, full_to: res.cover.full_to, cover_from: res.cover.from, cover_to: res.cover.to};
     await coll.doc("index").set({items: [...items, item]});
     UPL.memo.clear(); invalidate("uploads");
     U.notice = {cls: "ok", text: `Added "${f.name}": ${nf(res.kept.length)} rows, ${shortDay(meta.from)} to ${shortDay(meta.to)}. Numbers built from daily rows now use it.`};
@@ -427,18 +470,32 @@ function uplPreviewHTML(f) {
   if (chBox) html += `<div class="card pad"><div class="rowlab">Marketplaces to add</div><div class="upl-chks">${chBox}</div>${f.aside.has("ebay") ? `<p class="muted upl-note">${esc(UPL_SETASIDE_WHY)}</p>` : ""}</div>`;
   html += `<div class="grid g2"><div class="card pad"><div class="rowlab">Problems found (${res.problems.length})</div>${res.problems.length ? `<ul class="upl-list">${res.problems.slice(0, 40).map(p => `<li>${p.line ? `<span class="mono">Line ${p.line}</span> ` : ""}${esc(p.text)}</li>`).join("")}${res.problems.length > 40 ? `<li class="muted">and ${res.problems.length - 40} more</li>` : ""}</ul>` : `<p class="muted">None. Every kept row has a date, a marketplace and numeric amounts.</p>`}</div>
     <div class="card pad"><div class="rowlab">Excluded rows (${ex.length + blanks}). Nothing is dropped without being listed here.</div>${ex.length + blanks ? `<table><thead><tr><th>Why</th><th class="r">Rows</th><th>Lines</th></tr></thead><tbody>${Object.entries(reasons).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r num">${v.n}</td><td class="mono">${esc(v.lines.join(", "))}${v.n > v.lines.length ? ", ..." : ""}</td></tr>`).join("")}${blanks ? `<tr><td>Blank rows</td><td class="r num">${blanks}</td><td class="mono">${esc(res.excluded.filter(x => x.kind === "blank").slice(0, 8).map(x => x.line).join(", "))}</td></tr>` : ""}</tbody></table>` : `<p class="muted">No rows were excluded.</p>`}</div></div>`;
-  html += `<div class="card"><div class="rowlab" style="padding:14px 16px 0">Per-day totals as they will be stored (${aggs.length} day and marketplace cells)</div><div class="scroll upl-days"><table><thead><tr><th>Day</th><th>Marketplace</th><th class="r">Orders</th><th class="r">Item sales</th><th class="r">Shipping</th><th class="r">Fees</th><th class="r">Refunds</th></tr></thead><tbody>${aggs.slice(0, 200).map(a => `<tr><td>${esc(a.date)}</td><td>${esc(CHN[a.channel])}</td><td class="r num">${nf(a.orders)}</td><td class="r num">${a.item_sales == null ? "n/a" : usd(a.item_sales, 2)}</td><td class="r num">${a.shipping == null ? "n/a" : usd(a.shipping, 2)}</td><td class="r num">${a.fees == null ? "n/a" : usd(a.fees, 2)}</td><td class="r num">${a.refunds == null ? "n/a" : usd(a.refunds, 2)}</td></tr>`).join("")}${aggs.length > 200 ? `<tr><td colspan="7" class="muted">${aggs.length - 200} more cells are stored but not shown.</td></tr>` : ""}</tbody>${aggs.length ? `<tfoot><tr class="total"><td colspan="2">Total</td><td class="r num">${nf(orders)}</td><td class="r num">${usd(tot("item_sales"), 2)}</td><td class="r num">${res.supplies.shipping ? usd(tot("shipping"), 2) : "n/a"}</td><td class="r num">${res.supplies.fees ? usd(tot("fees"), 2) : "n/a"}</td><td class="r num">${res.supplies.refunds ? usd(tot("refunds"), 2) : "n/a"}</td></tr></tfoot>` : ""}</table></div></div>`;
+  html += `<div class="card"><div class="rowlab" style="padding:14px 16px 0">Per-day totals as they will be stored (${aggs.length} day and marketplace cells)</div><div class="scroll upl-days"><table><thead><tr><th>Day</th><th>Marketplace</th><th class="r">Orders</th><th class="r">Item sales</th><th class="r">Shipping</th><th class="r">Fees</th><th class="r">Refunds</th></tr></thead><tbody>${aggs.slice(0, 200).map(a => `<tr><td>${esc(a.date)}${res.fullSet.has(a.date) ? "" : ` <span class="pill p-info">Partial day</span>`}</td><td>${esc(CHN[a.channel])}</td><td class="r num">${nf(a.orders)}</td><td class="r num">${a.item_sales == null ? "n/a" : usd(a.item_sales, 2)}</td><td class="r num">${a.shipping == null ? "n/a" : usd(a.shipping, 2)}</td><td class="r num">${a.fees == null ? "n/a" : usd(a.fees, 2)}</td><td class="r num">${a.refunds == null ? "n/a" : usd(a.refunds, 2)}</td></tr>`).join("")}${aggs.length > 200 ? `<tr><td colspan="7" class="muted">${aggs.length - 200} more cells are stored but not shown.</td></tr>` : ""}</tbody>${aggs.length ? `<tfoot><tr class="total"><td colspan="2">Total</td><td class="r num">${nf(orders)}</td><td class="r num">${usd(tot("item_sales"), 2)}</td><td class="r num">${res.supplies.shipping ? usd(tot("shipping"), 2) : "n/a"}</td><td class="r num">${res.supplies.fees ? usd(tot("fees"), 2) : "n/a"}</td><td class="r num">${res.supplies.refunds ? usd(tot("refunds"), 2) : "n/a"}</td></tr></tfoot>` : ""}</table></div></div>`;
   const notSupplied = ["shipping", "fees", "refunds"].filter(m => !res.supplies[m]);
   if (notSupplied.length) html += `<p class="muted upl-note">This file has no ${notSupplied.join(", ")} column, so the warehouse ${notSupplied.join(", ")} stay in place for those days.</p>`;
+  const fullD = res.full.filter(d => dates.includes(d)), partD = [...new Set(dates)].filter(d => !res.fullSet.has(d));
+  const cv = res.cover, srcTxt = cv.src === "filename" ? "the date range in the file name" : cv.src === "rows" ? "the first and last row times" : "the dates in the file";
+  html += `<div class="card pad" id="upl-coverage"><div class="rowlab">Coverage of Eastern business days (from ${esc(srcTxt)})</div>${kept.length ? (fullD.length
+    ? `<p style="margin:0"><b>Fully covers ${fullD.length} business day${fullD.length === 1 ? "" : "s"}</b> (${esc(fullD.map(shortDay).join(", "))})${partD.length ? `; partial: ${esc(partD.map(shortDay).join(", "))}` : ""}.</p>${partD.length ? `<p class="muted upl-note">Only fully covered days replace warehouse numbers. Partial days keep their warehouse values and show as "Partial day" in the reconcile table.</p>` : ""}`
+    : `<p class="upl-bad" style="margin:0"><b>This file does not fully cover any Eastern business day, so it will not change any number.</b>${f.tz !== UPL_NY ? " Choose Eastern time in the dates setting if the date column is already Eastern." : ""}</p>`) : `<p class="muted" style="margin:0">No valid rows.</p>`}</div>`;
   html += `<div class="bar"><button class="seg-btn" id="upl-add" ${kept.length && wide && !f.busy ? "" : "disabled"}>${f.busy ? "Adding..." : "Add to database"}</button><button class="upl-ghost" id="upl-cancel">Cancel</button><span class="muted">Replaces the warehouse totals for ${aggs.length} day and marketplace cell${aggs.length === 1 ? "" : "s"}. Other days stay as they are.</span></div>`;
   return html;
+}
+function uplNotOrders(f) {
+  const hn = new Set(f.headers.map(uplNorm)), sh = (f.sheets || []).map(x => String(x).toLowerCase());
+  if ((hn.has("storecode") || hn.has("netsales") || (sh.includes("data sheet") && sh.includes("report"))) && !(f.map.order_id >= 0 && f.map.item_sales >= 0))
+    return {instore: true, msg: "This looks like an in-store daily sales sheet (stores by weekday), not an e-commerce orders export, so there is nothing to add here."};
+  if (f.map.order_id < 0 && f.map.item_sales < 0) return {instore: false, msg: "No order columns found (order id, paid date, item sales), so there is nothing to add yet. Check the header row, or map the columns below."};
+  return null;
 }
 function uplWorkHTML() {
   const f = UPL.f; if (!f) return "";
   if (f.loading) return `<div class="card pad" id="upl-loading">Reading ${esc(f.name)}...</div>`;
+  const no = uplNotOrders(f);
+  if (no && no.instore) return `<section id="upl-step"><div class="banner" id="upl-notorders">${esc(no.msg)}</div><div class="bar upl-bar"><span class="muted">${esc(f.name)}</span><button class="upl-ghost" id="upl-cancel">Choose another file</button></div></section>`;
   const preview = f.matrix.slice(f.hdr, f.hdr + 4), ok = uplRecognised(f), canAsk = !ok && UPL.sampleOK !== false && window.claude?.use;
   const kindPill = pill(f.kind === "generic" ? "p-warn" : "p-ok", UPL_KIND_LABEL[f.kind] + (f.kind === "generic" ? ": check the mapping" : " layout recognised"));
-  return `<section id="upl-step"><h2>2. Check the columns</h2>
+  return `<section id="upl-step"><h2>2. Check the columns</h2>${no ? `<div class="banner" id="upl-notorders">${esc(no.msg)}</div>` : ""}
   <div class="card pad upl-file"><div class="upl-meta"><b>${esc(f.name)}</b> <span class="muted">${nf(f.size / 1024, 1)} KB, hash ${esc(f.hash.slice(0, 10))}</span> ${kindPill}</div>
    <div class="bar upl-bar">
     ${f.sheets.length > 1 ? `<label class="f">Sheet<select id="upl-sheet">${f.sheets.map(s => uplOpt(s, s, s === f.sheet)).join("")}</select></label>` : ""}
@@ -450,7 +507,7 @@ function uplWorkHTML() {
    ${canAsk ? `<div class="bar upl-bar"><button class="seg-btn" id="upl-claude">Ask Claude to map the columns</button><span class="muted">Claude sees only the header row and 3 sample rows, never totals.</span></div>` : ""}
    ${UPL.claudeMsg ? `<p class="muted" id="upl-claudemsg">${esc(UPL.claudeMsg)}</p>` : ""}
    <div class="upl-grid">${uplMapHTML(f)}</div></div></section>
-  <section id="upl-prev"><h2>3. Preview</h2>${uplPreviewHTML(f)}</section>`;
+  ${f.map.paid_date >= 0 && f.map.item_sales >= 0 ? `<section id="upl-prev"><h2>3. Preview</h2>${uplPreviewHTML(f)}</section>` : ""}`;
 }
 async function uplListHTML() {
   const items = (await uplIndex()).slice().sort((a, b) => String(b.uploaded_at).localeCompare(String(a.uploaded_at)));
@@ -461,12 +518,12 @@ const uplCmp = (w, u, money) => u == null ? `<span class="muted">not in file</sp
 async function uplReconHTML() {
   const prov = await uploadProvenance();
   if (!prov.length) return `<div class="empty">Reconcile appears here once a file is added. It compares the file with the warehouse for every day and marketplace the file covers.</div>`;
-  const nOk = prov.filter(p => p.status === "match").length, only = UPL.onlyDiff;
-  const show = prov.filter(p => !only || p.status !== "match").slice(0, 300);
-  return `<div class="bar upl-bar"><span>${pill(nOk === prov.length ? "p-ok" : "p-warn", `${nOk} of ${prov.length} cells match`)}</span><label class="upl-chk"><input type="checkbox" id="upl-onlydiff" ${only ? "checked" : ""}> Only show differences</label></div>
+  const full = prov.filter(p => p.status !== "partial"), nOk = full.filter(p => p.status === "match").length, nPart = prov.length - full.length, only = UPL.onlyDiff;
+  const show = prov.filter(p => !only || p.status === "diff").slice(0, 300);
+  return `<div class="bar upl-bar"><span>${full.length ? pill(nOk === full.length ? "p-ok" : "p-warn", `${nOk} of ${full.length} cells match`) : ""}${nPart ? " " + pill("p-info", `${nPart} partial-day cell${nPart === 1 ? "" : "s"}`) : ""}</span><label class="upl-chk"><input type="checkbox" id="upl-onlydiff" ${only ? "checked" : ""}> Only show differences</label></div>
   <div class="card scroll"><table id="upl-recon-table"><thead><tr><th>Day</th><th>Marketplace</th><th>Warehouse vs file: orders</th><th>Item sales</th><th>Shipping</th><th>Fees</th><th>Status</th></tr></thead><tbody>${show.map(p => {
-    const dd = m => p.diff[m] != null && (m === "orders" ? p.diff[m] !== 0 : Math.abs(p.diff[m]) > 0.0101) ? `<div class="down num">${p.diff[m] > 0 ? "+" : "−"}${m === "orders" ? nf(Math.abs(p.diff[m])) : usd(Math.abs(p.diff[m]), 2)}</div>` : "";
-    return `<tr data-status="${p.status}"><td class="num">${esc(p.date)}</td><td>${esc(CHN[p.channel])}${p.in_warehouse ? "" : ` <span class="muted">(not in warehouse)</span>`}</td><td>${uplCmp(p.warehouse.orders, p.upload.orders)}${dd("orders")}</td><td>${uplCmp(p.warehouse.item_sales, p.upload.item_sales, 1)}${dd("item_sales")}</td><td>${uplCmp(p.warehouse.shipping, p.upload.shipping, 1)}${dd("shipping")}</td><td>${uplCmp(p.warehouse.fees, p.upload.fees, 1)}${dd("fees")}</td><td>${p.status === "match" ? pill("p-ok", "Matches within $0.01") : pill("p-warn", "Differs")}</td></tr>`;
+    const dd = m => p.status !== "partial" && p.diff[m] != null && (m === "orders" ? p.diff[m] !== 0 : Math.abs(p.diff[m]) > 0.0101) ? `<div class="down num">${p.diff[m] > 0 ? "+" : "−"}${m === "orders" ? nf(Math.abs(p.diff[m])) : usd(Math.abs(p.diff[m]), 2)}</div>` : "";
+    return `<tr data-status="${p.status}"><td class="num">${esc(p.date)}</td><td>${esc(CHN[p.channel])}${p.in_warehouse ? "" : ` <span class="muted">(not in warehouse)</span>`}</td><td>${uplCmp(p.warehouse.orders, p.upload.orders)}${dd("orders")}</td><td>${uplCmp(p.warehouse.item_sales, p.upload.item_sales, 1)}${dd("item_sales")}</td><td>${uplCmp(p.warehouse.shipping, p.upload.shipping, 1)}${dd("shipping")}</td><td>${uplCmp(p.warehouse.fees, p.upload.fees, 1)}${dd("fees")}</td><td>${p.status === "match" ? pill("p-ok", "Matches within $0.01") : p.status === "partial" ? pill("p-info", "Partial day") + `<div class="muted upl-note">This file covers ${esc(p.covered)} of this day only. The warehouse value is kept and the file's partial sums are not compared.</div>` : pill("p-warn", "Differs")}</td></tr>`;
   }).join("")}</tbody></table></div><p class="muted upl-note">A difference is not automatically an error. The file may be partial or the warehouse may hold orders the file does not. Cells in the warehouse that the file does not cover keep their warehouse values.</p>`;
 }
 function uplPaint() {

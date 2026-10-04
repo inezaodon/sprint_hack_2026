@@ -51,5 +51,32 @@
       "shipping_credit": 47.88,
       "fees": 24.27
     }
+  },
+  "eastern_time_export": {
+    "orders": 93,
+    "item_sales": 12211.95,
+    "by_channel": {
+      "GoodwillFinds": {
+        "orders": 5,
+        "item_sales": 551.66,
+        "shipping_total": 62.43,
+        "handling": 15.0,
+        "units": 5
+      },
+      "Shopgoodwill": {
+        "orders": 86,
+        "item_sales": 10129.92,
+        "shipping_total": 963.62,
+        "handling": 330.0,
+        "units": 110
+      },
+      "eBay": {
+        "orders": 2,
+        "item_sales": 1530.37,
+        "shipping_total": 37.87,
+        "handling": 33.0,
+        "units": 11
+      }
+    }
   }
 }

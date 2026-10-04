@@ -21,3 +21,4 @@
 #upl-work>section{display:flex;flex-direction:column;gap:12px}
 #upl-prev{gap:12px}
 #upl-prev>.grid,#upl-prev>.card{margin:0}
+.upl-bad{color:var(--bad)}
