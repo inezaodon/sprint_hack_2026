@@ -1,0 +1,13 @@
+# Secrets: API keys live here and must never be committed (this repo is public)
+.secrets/
+.env
+.env.*
+!.env.example
+
+# Local Python environment and caches
+goodwill-pulse/.venv/
+**/__pycache__/
+**/.pytest_cache/
+
+# Build scratch (was in goodwill-pulse/.gitignore before 133aad4)
+goodwill-pulse/data/_tmp/
