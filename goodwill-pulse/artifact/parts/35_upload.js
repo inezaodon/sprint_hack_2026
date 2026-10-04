@@ -32,7 +32,7 @@ const UPL_ALIAS = {
 const UPL_TZ = {"America/New_York": "Eastern (already business dates)", "America/Los_Angeles": "Los Angeles (Upright, ShopGoodwill)", "UTC": "UTC (Cash Monkey)"};
 const UPL_SETASIDE_WHY = "eBay in the warehouse combines Upright and Cash Monkey orders. One file covers only part of it, so it is set aside by default. Tick it to add it anyway.";
 
-const UPL = {root: null, f: null, memo: new Map(), notice: null, sampleOK: null, sjs: null, claudeMsg: ""};
+const UPL = {root: null, f: null, memo: new Map(), notice: null, sampleOK: null, sjs: null, claudeMsg: "", server: null, conv: null, recent: [], who: ""};
 
 const uplNorm = s => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const uplR2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -347,12 +347,168 @@ async function uploadProvenance() {
   return out.sort((a, b) => a.date.localeCompare(b.date) || CHORDER.indexOf(a.channel) - CHORDER.indexOf(b.channel));
 }
 
+/* ---- other formats: the server converts an email, PDF, bank download, web page or zip into a spreadsheet ----
+   Needs the Goodwill Pulse server (routes/intake.py). In a page with no server this section stays hidden and the
+   Upload tab works exactly as before. A converted sales report continues into the normal steps below; a month-end
+   input (bank, FedEx, Jewelry Report, Goodwill Books statement) is loaded into the close's finance data. */
+const UPL_SHEET_RE = /\.(xlsx|xls|csv)$/i;
+const UPL_ALL_ACCEPT = ".xlsx,.xls,.csv,.eml,.msg,.pdf,.ofx,.qfx,.html,.htm,.json,.xml,.txt,.tsv,.zip,.png,.jpg,.jpeg,.gif,.webp";
+const UPL_TARGET_LABEL = {finance: "Month-end input for the close", warehouse: "Sales report", none: "Not recognised"};
+const UPL_STATUS = {ready: ["p-info", "Ready to load"], loaded: ["p-ok", "Loaded"], partial: ["p-warn", "Loaded with problems"], needs_review: ["p-warn", "Needs review"], needs_mapping: ["p-warn", "Columns not recognised"], rejected: ["p-bad", "Not loaded"], duplicate_file: ["p-info", "Already uploaded"]};
+
+async function uplApi(path, opts) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 120000);
+  try {
+    const r = await fetch(path, {...(opts || {}), signal: ctl.signal});
+    let body = null; try { body = await r.json(); } catch (e) { /* not JSON */ }
+    if (!r.ok) throw new Error((body && (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail))) || `The server answered ${r.status}.`);
+    return body;
+  } finally { clearTimeout(t); }
+}
+async function uplProbeServer() {      // null = not asked yet, false = no server here, object = {accept, ai}
+  if (UPL.server !== null) return UPL.server;
+  UPL.server = false;
+  if (!/^https?:$/.test(location.protocol)) return UPL.server;
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch("/api/intake/formats", {signal: ctl.signal}); clearTimeout(t);
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.accept)) UPL.server = j; }
+  } catch (e) { /* no server: stay on spreadsheets only */ }
+  return UPL.server;
+}
+async function uplRecentConv() {
+  if (!UPL.server) return [];
+  try { return await uplApi("/api/intake?limit=20"); } catch (e) { return []; }
+}
+const uplMoneyTxt = n => (n < 0 ? "−" : "") + "$" + nf(Math.abs(n), 2);
+
+async function uplConvertFile(file) {
+  const U = UPL;
+  if (!(await uplProbeServer())) {
+    U.f = null; U.conv = null;
+    U.notice = {cls: "bad", text: `"${file.name}" is not an .xlsx, .xls or .csv file. Other file types (emails, PDFs, bank downloads, zips) are converted by the Goodwill Pulse server, which is not reachable from this page. Save the report as Excel or CSV and add that.`};
+    return uplPaint();
+  }
+  U.f = null; U.conv = {name: file.name, loading: true}; uplPaint();
+  try {
+    const fd = new FormData(); fd.append("files", file, file.name);
+    const res = await uplApi("/api/intake/preview", {method: "POST", body: fd});
+    U.conv = {name: file.name, res: res[0] || {outputs: [], notes: ["The server returned nothing for this file."]}};
+  } catch (e) { U.conv = null; U.notice = {cls: "bad", text: `Could not convert "${file.name}": ${String(e.message || e)}`}; }
+  uplPaint(); uplPaintRecent();
+}
+function uplConvOutput(id) { return ((UPL.conv && UPL.conv.res && UPL.conv.res.outputs) || []).find(o => o.output_id === id); }
+function uplSetOutput(o) {
+  const outs = UPL.conv && UPL.conv.res && UPL.conv.res.outputs;
+  if (!outs) return;
+  const i = outs.findIndex(x => x.output_id === o.output_id);
+  if (i >= 0) outs[i] = {...outs[i], ...o, preview: o.preview || outs[i].preview}; else outs.push(o);
+}
+async function uplUseInDaily(id) {       // hand a converted sales spreadsheet to the normal flow below
+  const o = uplConvOutput(id); if (!o) return;
+  try {
+    const r = await fetch(o.excel_url); if (!r.ok) throw new Error(`The server answered ${r.status}.`);
+    const blob = await r.blob(), file = new File([blob], o.name, {type: blob.type});
+    UPL.conv = null; UPL.notice = {cls: "", text: `Converted "${o.name}" (${o.origin}). Check the columns and the preview below, then add it.`};
+    await uplHandleFile(file);
+  } catch (e) { UPL.notice = {cls: "bad", text: "Could not open the converted spreadsheet. " + String(e.message || e)}; uplPaint(); }
+}
+async function uplLoadFinance(id, override, corrected) {
+  const root = UPL.root, who = ($("#upl-who-" + id, root) || {}).value || UPL.who || "";
+  UPL.who = who.trim();
+  const o = uplConvOutput(id); if (!o) return;
+  if (o.status === "needs_review" && !UPL.who) { UPL.notice = {cls: "bad", text: "Enter your name first. It is recorded with the file you release."}; return uplPaint(); }
+  o.busy = true; UPL.notice = null; uplPaint();
+  try {
+    const fd = new FormData(); fd.append("confirmed_by", UPL.who); fd.append("override_control", override ? "true" : "false");
+    if (corrected) fd.append("file", corrected, corrected.name);
+    const res = await uplApi(`/api/intake/outputs/${encodeURIComponent(id)}/confirm`, {method: "POST", body: fd});
+    uplSetOutput({...res, busy: false});
+    const months = res.close_months_rebuilt || res.months || [];
+    UPL.notice = {cls: res.status === "loaded" ? "ok" : "", text: `${res.message}${months.length ? ` The Close page will rebuild ${months.join(", ")} from it.` : ""}`};
+  } catch (e) { o.busy = false; UPL.notice = {cls: "bad", text: String(e.message || e)}; }
+  uplPaint(); uplPaintRecent();
+}
+async function uplReopen(id) {           // a file that is waiting for review, from the list of earlier conversions
+  const rec = (UPL.recent || []).find(r => r.outputs.some(o => o.output_id === id)); if (!rec) return;
+  const outs = rec.outputs.map(o => ({...o}));
+  try { const o = outs.find(x => x.output_id === id); o.preview = await uplApi(`/api/intake/outputs/${encodeURIComponent(id)}/preview`); } catch (e) { /* no preview rows */ }
+  UPL.f = null; UPL.conv = {name: rec.name, res: {name: rec.name, format: rec.format, envelope: rec.envelope, notes: rec.notes, outputs: outs, status: rec.status}};
+  UPL.notice = null; uplPaint(); window.scrollTo(0, 0);
+}
+
+function uplPreviewTable(p) {
+  if (!p || !p.header || !p.header.length) return "";
+  return `<div class="scroll"><table class="upl-peek"><thead><tr>${p.header.map(h => `<th>${esc(String(h).slice(0, 28))}</th>`).join("")}</tr></thead><tbody>${(p.rows || []).map(r => `<tr>${p.header.map((_, c) => `<td>${esc(String(r[c] ?? "").slice(0, 36))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function uplControlHTML(c) {
+  if (!c) return "";
+  const diff = uplR2(c.rows_total - c.stated_total);
+  return c.ok
+    ? `<p class="upl-ctl ok"><b>Matches the file's own total.</b> The lines add up to ${uplMoneyTxt(c.rows_total)}, the same as ${esc(c.label)} (${uplMoneyTxt(c.stated_total)}).</p>`
+    : `<p class="upl-ctl bad"><b>The lines do not add up to the file's own total.</b> They add up to ${uplMoneyTxt(c.rows_total)} but ${esc(c.label)} says ${uplMoneyTxt(c.stated_total)}, a difference of ${uplMoneyTxt(diff)}. A line was probably missed or misread. Nothing is loaded until a person decides.</p>`;
+}
+function uplOutputHTML(o) {
+  const st = UPL_STATUS[o.status] || ["p-info", o.status], fin = o.target === "finance", dl = o.excel_url ? `<a class="pill upl-dl" href="${esc(o.excel_url)}" download>Download as Excel</a>` : "";
+  const how = o.method === "ai" ? pill("p-warn", "Read by Claude: check it against the source") : o.method === "parsed" ? pill("p-ok", "Read by code, no AI") : pill("p-info", "Spreadsheet, unchanged");
+  const kind = pill(o.target === "none" ? "p-warn" : "p-info", (UPL_TARGET_LABEL[o.target] || o.target) + (o.label ? ": " + o.label : ""));
+  const excs = (o.exceptions || []).filter(e => e.severity !== "info" && e.rule !== "control_total");
+  const stated = o.stated && Object.keys(o.stated).length ? `<details class="upl-what"><summary>Totals printed in the file (${Object.keys(o.stated).length})</summary><ul class="math">${Object.entries(o.stated).map(([k, v]) => `<li><b>${esc(k)}</b><span>${esc(v)}</span></li>`).join("")}</ul></details>` : "";
+  let actions = "";
+  if (o.busy) actions = `<span class="muted">Working...</span>`;
+  else if (o.status === "loaded" || o.status === "partial") {
+    actions = `<span class="muted upl-sm">${esc(o.message || "")}</span>${fin && (o.months || []).length ? ` <a class="pill primary" href="/close">Open the Close page</a>` : ""}`;
+  } else if (fin && o.status === "ready") {
+    actions = `<button class="pill primary" data-load="${esc(o.output_id)}">Load into the month-end close</button><span class="muted upl-sm">${o.months && o.months.length ? "Replaces " + esc(o.months.join(", ")) + " for this source. " : ""}Other months stay as they are.</span>`;
+  } else if (fin && o.status === "needs_review") {
+    const bad = o.control && !o.control.ok;
+    actions = `<label class="f">Your name (recorded with the file)<input type="text" id="upl-who-${esc(o.output_id)}" value="${esc(UPL.who || "")}" autocomplete="name"></label>
+      <div class="upl-actions"><button class="pill ${bad ? "" : "primary"}" data-load="${esc(o.output_id)}" ${bad ? 'data-override="1"' : ""}>${bad ? "Load anyway, I have checked it" : "Load, I have checked it"}</button>
+      <label class="pill upl-fix">Upload a corrected spreadsheet<input type="file" accept=".xlsx,.xls,.csv" class="upl-input" data-fix="${esc(o.output_id)}" hidden></label></div>
+      <p class="muted upl-note">Download the spreadsheet, compare it with the source, fix any cell, then upload the corrected copy. A corrected copy is checked again before it loads.</p>`;
+  } else if (!fin && (o.status === "ready" || o.status === "needs_mapping" || o.status === "needs_review")) {
+    actions = `<button class="pill primary" data-use="${esc(o.output_id)}">Use in the daily numbers</button><span class="muted upl-sm">Continues to the column check and preview, where you add it to the database.</span>`;
+  } else actions = `<span class="muted upl-sm">${esc(o.message || "")}</span>`;
+  return `<div class="card upl-out" data-out="${esc(o.output_id)}"><div class="upl-meta"><b>${esc(o.name)}</b> ${pill(st[0], st[1])} ${kind} ${how}</div>
+    <p class="muted upl-sm">From ${esc(o.origin || "the file")}. ${nf(o.row_count)} row${o.row_count === 1 ? "" : "s"}.</p>
+    ${o.message && o.status !== "loaded" && o.status !== "partial" ? `<p class="upl-sm">${esc(o.message)}</p>` : ""}
+    ${uplControlHTML(o.control)}${excs.length ? `<ul class="upl-list">${excs.slice(0, 6).map(e => `<li>${e.source_row ? `<span class="mono">Row ${esc(e.source_row)}</span> ` : ""}${esc(e.message)}</li>`).join("")}${excs.length > 6 ? `<li class="muted">and ${excs.length - 6} more</li>` : ""}</ul>` : ""}
+    ${uplPreviewTable(o.preview)}${stated}
+    <div class="upl-actions upl-act">${actions}${dl}</div></div>`;
+}
+function uplConvHTML() {
+  const c = UPL.conv; if (!c) return "";
+  if (c.loading) return `<div class="card" id="upl-loading">Converting ${esc(c.name)}. Scanned PDFs and photos can take a minute.</div>`;
+  const r = c.res || {}, env = r.envelope || {}, outs = r.outputs || [];
+  const mail = env.subject || env.from ? `<p class="muted upl-sm">Email${env.from ? " from " + esc(env.from) : ""}${env.subject ? ", subject " + esc(env.subject) : ""}${env.date ? ", " + esc(env.date) : ""}.</p>` : "";
+  const dup = r.status === "duplicate_file" ? `<div class="banner" id="upl-dup">${esc(r.message)}${outs.length ? " Its spreadsheets are shown below." : ""}</div>` : "";
+  const notes = (r.notes || []).map(n => `<div class="banner" data-note="1">${esc(n)}</div>`).join("");
+  return `<section id="upl-conv" class="card"><h2><span class="upl-n">2</span>What was found in ${esc(c.name)}</h2>${mail}${dup}${notes}
+    ${outs.length ? outs.map(uplOutputHTML).join("") : (r.status === "duplicate_file" ? "" : `<p class="muted">No table could be read from this file.</p>`)}
+    <div class="upl-actions"><button class="pill" id="upl-cancel">Choose another file</button></div></section>`;
+}
+async function uplRecentHTML() {
+  if (!UPL.server) return "";
+  UPL.recent = await uplRecentConv();
+  if (!UPL.recent.length) return `<section class="card" id="upl-recent-card"><h2>Converted files</h2><p class="hint">Emails, PDFs and bank downloads converted by the server appear here, with the spreadsheet that was made from each.</p><div class="empty">Nothing converted yet.</div></section>`;
+  const rows = UPL.recent.flatMap(r => (r.outputs.length ? r.outputs : [null]).map(o => {
+    const st = UPL_STATUS[o ? o.status : r.status] || ["p-info", o ? o.status : r.status];
+    return `<tr><td><b>${esc(r.name)}</b>${o && o.name !== r.name ? `<br><span class="muted upl-sm">${esc(o.name)}</span>` : ""}${r.envelope && r.envelope.subject ? `<br><span class="muted upl-sm">${esc(r.envelope.subject)}</span>` : ""}</td><td class="num">${esc(new Date(r.received_at).toLocaleString("en-US", {month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}))}</td><td>${o ? esc(o.label || UPL_TARGET_LABEL[o.target] || "") : ""}</td><td class="r num">${o ? nf(o.loaded_rows) + " of " + nf(o.row_count) : ""}</td><td>${pill(st[0], st[1])}</td><td>${o ? `${o.pending ? `<button class="pill primary" data-reopen="${esc(o.output_id)}">Review</button> ` : ""}<a class="pill" href="${esc(o.excel_url)}" download>Excel</a>` : ""}</td></tr>`;
+  })).join("");
+  return `<section class="card" id="upl-recent-card"><h2>Converted files</h2><p class="hint">What the server made from each non-spreadsheet upload. Files waiting for a decision have a Review button.</p><div class="scroll"><table class="upl-files"><thead><tr><th>File</th><th>Received</th><th>Read as</th><th class="r">Rows loaded</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+async function uplPaintRecent() {
+  const root = UPL.root; if (!root) return;
+  const el = $("#upl-recent", root); if (el) el.innerHTML = await uplRecentHTML();
+}
+
 /* ---- staging a file ---- */
 async function uplHandleFile(file) {
   const U = UPL;
   U.notice = null; U.claudeMsg = "";
   if (!file) return;
-  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { U.f = null; U.notice = {cls: "bad", text: `"${file.name}" is not an .xlsx, .xls or .csv file.`}; return uplPaint(); }
+  if (!UPL_SHEET_RE.test(file.name)) return uplConvertFile(file);      // email, PDF, bank download, zip ...: the server converts it
+  U.conv = null;
   U.f = {name: file.name, size: file.size, loading: true}; uplPaint();
   try {
     const buf = await file.arrayBuffer(), f = {name: file.name, size: file.size, hash: await uplHash(buf), isCsv: /\.csv$/i.test(file.name)};
@@ -489,6 +645,7 @@ function uplNotOrders(f) {
   return null;
 }
 function uplWorkHTML() {
+  if (UPL.conv) return uplConvHTML();
   const f = UPL.f; if (!f) return "";
   if (f.loading) return `<div class="card" id="upl-loading">Reading ${esc(f.name)}...</div>`;
   const no = uplNotOrders(f);
@@ -536,14 +693,16 @@ function uplPaint() {
 
 async function viewUpload(root) {
   UPL.root = root;
+  const srv = await uplProbeServer();
   root.innerHTML = `<div class="upl">
-  <div class="rhead"><div><h1>Upload</h1><p class="sub">Add an Upright or Cash Monkey order report. The days it covers replace the warehouse totals.</p></div></div>
-  <label class="card upl-drop" id="upl-drop" for="upl-file"><span class="upl-dropt"><span class="upl-n">1</span>Drop an Excel or CSV file here</span><span class="muted upl-sm">or click to choose (.xlsx, .xls, .csv). Read in your browser; only validated rows are saved.</span>
-    <input type="file" id="upl-file" accept=".xlsx,.xls,.csv" class="upl-input"></label>
-  <details class="upl-what"><summary>What an upload changes</summary><ul class="math"><li><b>Changes</b><span>Reports, Ask answers and Sales over time, for each day and marketplace the file fully covers.</span></li><li><b>Stays</b><span>Days the file does not cover, and the KPI scorecard (Dashboard, Close), which comes from the warehouse build.</span></li><li><b>Undo</b><span>Removing a file puts every number back. The warehouse data is never changed.</span></li></ul></details>
+  <div class="rhead"><div><h1>Upload</h1><p class="sub">${srv ? "Add an order report or a month-end file. Spreadsheets are read here; emails, PDFs, bank downloads, web pages and zips are converted to a spreadsheet first." : "Add an Upright or Cash Monkey order report. The days it covers replace the warehouse totals."}</p></div></div>
+  <label class="card upl-drop" id="upl-drop" for="upl-file"><span class="upl-dropt"><span class="upl-n">1</span>${srv ? "Drop a file here" : "Drop an Excel or CSV file here"}</span><span class="muted upl-sm">${srv ? "or click to choose. Excel and CSV are read in your browser. An email (.eml), PDF, bank download (.ofx), web page, JSON, XML, text file, zip or picture is converted to a spreadsheet by the server, shown to you, and only then loaded." : "or click to choose (.xlsx, .xls, .csv). Read in your browser; only validated rows are saved."}</span>
+    <input type="file" id="upl-file" accept="${srv ? UPL_ALL_ACCEPT : ".xlsx,.xls,.csv"}" class="upl-input"></label>
+  <details class="upl-what"><summary>What an upload changes</summary><ul class="math"><li><b>Changes</b><span>Reports, Ask answers and Sales over time, for each day and marketplace the file fully covers.</span></li><li><b>Stays</b><span>Days the file does not cover, and the KPI scorecard (Dashboard, Close), which comes from the warehouse build.</span></li><li><b>Undo</b><span>Removing a file puts every number back. The warehouse data is never changed.</span></li>${srv ? `<li><b>Other formats</b><span>A converted sales report goes through the same steps as a spreadsheet. A bank, FedEx, Jewelry or Goodwill Books file is loaded into the month-end close, only after its lines are checked against the total the file itself prints.</span></li>` : ""}</ul></details>
   <div id="upl-work"></div>
   <section class="card"><h2>Uploaded files</h2><p class="hint">The latest file covering a day and marketplace wins.</p><div id="upl-list">${await uplListHTML()}</div></section>
-  <section class="card"><h2>Reconcile with the warehouse</h2><p class="hint">Each uploaded day and marketplace next to the warehouse.</p><div id="upl-recon">${await uplReconHTML()}</div></section></div>`;
+  <section class="card"><h2>Reconcile with the warehouse</h2><p class="hint">Each uploaded day and marketplace next to the warehouse.</p><div id="upl-recon">${await uplReconHTML()}</div></section>
+  <div id="upl-recent">${await uplRecentHTML()}</div></div>`;
   uplPaint();
   const drop = $("#upl-drop", root), inp = $("#upl-file", root);
   inp.addEventListener("change", () => { const f = inp.files && inp.files[0]; if (f) uplHandleFile(f); inp.value = ""; });
@@ -553,13 +712,17 @@ async function viewUpload(root) {
   root.addEventListener("click", e => {
     const t = e.target.closest("button"); if (!t) return;
     if (t.id === "upl-add") uplAdd();
-    else if (t.id === "upl-cancel") { UPL.f = null; UPL.notice = null; uplPaint(); }
+    else if (t.id === "upl-cancel") { UPL.f = null; UPL.conv = null; UPL.notice = null; uplPaint(); }
+    else if (t.dataset.load) uplLoadFinance(t.dataset.load, !!t.dataset.override);
+    else if (t.dataset.use) uplUseInDaily(t.dataset.use);
+    else if (t.dataset.reopen) uplReopen(t.dataset.reopen);
     else if (t.id === "upl-claude") uplAskClaude();
     else if (t.dataset.rm) uplRemove(t.dataset.rm);
   });
   root.addEventListener("change", async e => {
     const t = e.target, f = UPL.f;
     if (t.id === "upl-onlydiff") { UPL.onlyDiff = t.checked; $("#upl-recon", root).innerHTML = await uplReconHTML(); return; }
+    if (t.dataset.fix) { const cf = t.files && t.files[0]; if (cf) uplLoadFinance(t.dataset.fix, true, cf); t.value = ""; return; }
     if (!f || f.loading) return;
     if (t.id === "upl-sheet") await uplSetSheet(t.value);
     else if (t.id === "upl-hdr") { f.hdr = Math.max(0, Math.min(f.matrix.length - 1, (+t.value || 1) - 1)); uplRemap(false); }

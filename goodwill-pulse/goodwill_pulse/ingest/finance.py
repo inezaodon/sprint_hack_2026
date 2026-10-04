@@ -335,6 +335,8 @@ def load(path: Path, finance_path: Path | str = FINANCE_DB_PATH, *, layout: str 
                     res.message = "Held for review: lines don't add up to the printed total."
                     return res
 
+    date_fields = [m["field"] for m in cols.values() if m.get("type") == "date"]
+    res.months = sorted({f"{r[f]:%Y-%m}" for r in records for f in date_fields if r.get(f)} | ({res.period} if res.period else set()))
     if dry_run:
         res.status = "partial" if any(e["severity"] == "error" for e in res.exceptions) else "loaded"
         res.message = f"Ready to load {len(records)} rows into {spec['table']}" + (f" for {res.period}." if res.period else ".")
@@ -390,8 +392,6 @@ def load(path: Path, finance_path: Path | str = FINANCE_DB_PATH, *, layout: str 
     finally:
         con.close()
     res.loaded = len(records)
-    date_fields = [m["field"] for m in cols.values() if m.get("type") == "date"]
-    res.months = sorted({f"{r[f]:%Y-%m}" for r in records for f in date_fields if r.get(f)} | ({res.period} if res.period else set()))
     if any(e["severity"] == "error" for e in res.exceptions):
         res.status = "partial"
     res.message = f"Loaded {res.loaded} rows into {spec['label']}" + (f" for {res.period}." if res.period else ".")

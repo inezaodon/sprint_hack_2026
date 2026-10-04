@@ -80,6 +80,10 @@ ol.stages{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:
 .stage.ok .st{color:var(--ok)} .stage.warn .st{color:var(--warn)} .stage.bad .st{color:var(--bad)}
 
 /* sources */
+.addsrc{margin-top:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.addsrc-top{display:flex;flex-direction:column;gap:2px}
+.addsrc-out{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.addsrc-out li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
 .srcgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media (max-width:900px){.srcgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.srcgrid{grid-template-columns:minmax(0,1fr)}}
@@ -163,6 +167,11 @@ details.doc .tscroll{border-top:1px solid var(--line)}
   <section>
     <div class="sec-head"><h2>Sources</h2><span class="sub">The nine month-end inputs from today's process, and what the rules did with each.</span></div>
     <div class="srcgrid" id="sources"></div>
+    <div class="card addsrc" id="addsrc">
+      <div class="addsrc-top"><b>Add a source file</b><span class="sub">Bank activity, FedEx invoices, the Jewelry Report or the Goodwill Books statement. A spreadsheet, or the email, PDF, bank download (.ofx) or zip it came in. It is converted to a spreadsheet and loaded only if its lines add up to the total the file prints.</span></div>
+      <div class="btns"><label class="btn">Choose a file<input id="addsrc-file" type="file" hidden accept=".csv,.xlsx,.xls,.eml,.msg,.pdf,.ofx,.qfx,.html,.htm,.json,.xml,.txt,.tsv,.zip,.png,.jpg,.jpeg,.gif,.webp"></label><a class="btn" href="/#upload">Review before loading (Upload tab)</a></div>
+      <ul class="addsrc-out" id="addsrc-out" aria-live="polite"></ul>
+    </div>
   </section>
 
   <section>
@@ -411,6 +420,22 @@ async function init() {
   } catch (e) { showError(e.message); }
 }
 
+const SRC_STATUS = {loaded: ["p-ok", "Loaded"], partial: ["p-warn", "Loaded with problems"], needs_review: ["p-warn", "Held for review"], needs_mapping: ["p-warn", "Columns not recognised"], rejected: ["p-bad", "Not loaded"], duplicate_file: ["p-info", "Already uploaded"], ready: ["p-info", "Ready"]};
+async function addSource(file) {
+  const list = $("#addsrc-out"); list.innerHTML = `<li>Reading ${esc(file.name)}. A scanned PDF or a photo can take a minute.</li>`;
+  try {
+    const fd = new FormData(); fd.append("files", file, file.name);
+    const res = await api("/api/intake", {method: "POST", body: fd});
+    const rows = res.flatMap(r => r.outputs.length ? r.outputs.map(o => ({file: r.name, o})) : [{file: r.name, o: null, msg: r.message, status: r.status}]);
+    list.innerHTML = rows.map(({file: f, o, msg, status}) => {
+      const st = o ? o.status : status, [c, l] = SRC_STATUS[st] || ["p-info", st], held = o && ["needs_review", "needs_mapping"].includes(o.status);
+      return `<li><span class="pill ${c}">${esc(l)}</span><b>${esc(o ? o.name : f)}</b><span class="sub">${esc(o ? o.message : msg)}</span>${held ? `<a href="/#upload">Review it in the Upload tab</a>` : ""}${o && o.excel_url ? `<a href="${esc(o.excel_url)}" download>Excel copy</a>` : ""}</li>`;
+    }).join("") || `<li>Nothing could be read from ${esc(file.name)}.</li>`;
+    const touched = [...new Set(res.flatMap(r => r.close_months_rebuilt || []))];
+    if (touched.length) { toast(`Loaded. Rebuilding ${touched.join(", ")}.`); await load(true); }
+  } catch (e) { list.innerHTML = `<li><span class="pill p-bad">Not loaded</span><span class="sub">${esc(e.message)}</span></li>`; }
+}
+$("#addsrc-file").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) addSource(f); });
 $("#month").addEventListener("change", e => { month = e.target.value; load(); });
 $("#override").addEventListener("change", () => data && renderApproval(data));
 $("#note").addEventListener("input", () => data && renderApproval(data));

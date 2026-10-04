@@ -142,9 +142,9 @@ table{border-collapse:collapse;width:100%}
       </div>
     </div>
     <div class="drop" id="drop">
-      <p><b>Drop tonight's reports here</b> (Upright paid orders, Cash Monkey orders), or</p>
+      <p><b>Drop tonight's reports here</b> (Upright paid orders, Cash Monkey orders), as a spreadsheet or as the email, PDF or zip they came in, or</p>
       <div class="btns">
-        <label class="btn">Choose files<input id="file" type="file" multiple accept=".csv,.xlsx" hidden></label>
+        <label class="btn">Choose files<input id="file" type="file" multiple accept=".csv,.xlsx,.xls,.eml,.msg,.pdf,.ofx,.qfx,.html,.htm,.json,.xml,.txt,.tsv,.zip,.png,.jpg,.jpeg,.gif,.webp" hidden></label>
         <button class="btn" id="demo-drop" data-set="demo">Load Saturday's reports</button>
         <button class="btn" id="messy-drop" data-set="messy">Load a messy report</button>
       </div>
@@ -274,7 +274,9 @@ async function refreshAll(keepDate) {
 function summarize(results) {
   const loaded = results.reduce((a, r) => a + r.loaded, 0);
   const issues = results.filter(r => r.status !== "loaded");
-  toast(`${results.length} report${results.length === 1 ? "" : "s"} processed · ${loaded} new orders` + (issues.length ? ` · ${issues.length} need attention` : ""));
+  const held = results.filter(r => ["needs_review", "needs_mapping"].includes(r.status) && r.output_id);
+  toast(`${results.length} report${results.length === 1 ? "" : "s"} processed · ${loaded} new orders` + (issues.length ? ` · ${issues.length} need attention` : "") +
+        (held.length ? ` · ${held.length} converted file${held.length === 1 ? "" : "s"} waiting for review in the Upload tab (${location.origin}/#upload)` : ""));
 }
 
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => {

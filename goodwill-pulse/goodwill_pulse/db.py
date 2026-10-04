@@ -98,8 +98,10 @@ CREATE TABLE IF NOT EXISTS intake_outputs (
     file_id        VARCHAR,                  -- report_files.file_id when it went through the sales pipeline
     stated         VARCHAR,                  -- JSON: totals printed in the source, outside the table
     confirmed_by   VARCHAR,
-    confirmed_at   TIMESTAMPTZ
+    confirmed_at   TIMESTAMPTZ,
+    control        VARCHAR                   -- JSON: {rows_total, stated_total, label, ok} when the source printed a total
 );
+ALTER TABLE intake_outputs ADD COLUMN IF NOT EXISTS control VARCHAR;   -- databases created before this column existed
 
 CREATE SEQUENCE IF NOT EXISTS exception_seq;
 CREATE TABLE IF NOT EXISTS exceptions (

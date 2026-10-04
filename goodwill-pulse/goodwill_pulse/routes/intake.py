@@ -1,5 +1,11 @@
 """Upload ingest API: any file format in, spreadsheets out, loaded into the warehouse or the close's finance inputs.
 
+    GET  /api/intake/formats                         {accept: [".csv", ".eml", ...], ai: bool, spreadsheets: [...]}
+    POST /api/intake/preview                         same upload as POST /api/intake, but nothing is loaded: each
+                                                     spreadsheet comes back "ready" (or needs_review / needs_mapping)
+                                                     with `preview` rows, `control` (rows vs printed total) and
+                                                     `target` ("finance" = the close's month-end inputs; anything
+                                                     else = daily sales numbers). Load one with .../confirm.
     POST /api/intake                                 multipart `files`: emails, PDFs, OFX, HTML, JSON, XML, zips,
                                                      images, CSV, Excel. -> [{intake_id, status, message, envelope,
                                                      notes, outputs: [{output_id, name, origin, method, target,
@@ -7,6 +13,7 @@
                                                      exceptions, stated, excel_url, months}]}]
     GET  /api/intake                                 recent uploads with their spreadsheets
     GET  /api/intake/outputs/{output_id}/file        download a spreadsheet made from an upload (to review it)
+    GET  /api/intake/outputs/{output_id}/preview     {header, rows}: its first rows
     POST /api/intake/outputs/{output_id}/confirm     load a held spreadsheet. Optional multipart `file` = corrected
                                                      copy; form fields `confirmed_by`, `override_control` (true loads
                                                      even if the rows don't add up to the printed total)
@@ -46,7 +53,7 @@ def _refresh_close(results: list[dict]) -> list[str]:
     return months
 
 
-def ingest_upload(files: list[UploadFile], contents: list[bytes]) -> list[dict]:
+def ingest_upload(files: list[UploadFile], contents: list[bytes], autoload: bool = True) -> list[dict]:
     """Write each upload to the inbox, run intake, clean up. Used by POST /api/intake and api.py's /api/upload."""
     con, lock = _warehouse()
     INBOX_DIR.mkdir(parents=True, exist_ok=True)
@@ -56,13 +63,28 @@ def ingest_upload(files: list[UploadFile], contents: list[bytes]) -> list[dict]:
         dest.write_bytes(data)
         try:
             with lock:
-                out.append(intake_mod.intake(con, dest))
+                out.append(intake_mod.intake(con, dest, autoload=autoload))
         finally:
             dest.unlink(missing_ok=True)
     rebuilt = _refresh_close(out)
     for r in out:
         r["close_months_rebuilt"] = rebuilt
     return out
+
+
+ACCEPT = [".csv", ".xlsx", ".xls", ".eml", ".msg", ".pdf", ".ofx", ".qfx", ".html", ".htm", ".json", ".xml", ".txt",
+          ".tsv", ".zip", ".png", ".jpg", ".jpeg", ".gif", ".webp"]
+
+
+@router.get("/formats")
+def formats() -> dict:
+    from ..ai import client as ai
+    return {"accept": ACCEPT, "spreadsheets": [".csv", ".xlsx", ".xls"], "ai": ai.ai_available()}
+
+
+@router.post("/preview")
+async def preview(files: list[UploadFile] = File(...)) -> list[dict]:
+    return ingest_upload(files, [await f.read() for f in files], autoload=False)
 
 
 @router.post("")
@@ -89,6 +111,16 @@ def download(output_id: str) -> FileResponse:
     return FileResponse(path, filename=path.name, media_type=media)
 
 
+@router.get("/outputs/{output_id}/preview")
+def output_preview(output_id: str) -> dict:
+    con, lock = _warehouse()
+    with lock:
+        try:
+            return intake_mod.output_preview(con, output_id)
+        except KeyError:
+            raise HTTPException(404, "Unknown spreadsheet")
+
+
 @router.post("/outputs/{output_id}/confirm")
 async def confirm(output_id: str, file: UploadFile | None = File(None), confirmed_by: str = Form(""),
                   override_control: bool = Form(False)) -> dict:
@@ -104,7 +136,10 @@ async def confirm(output_id: str, file: UploadFile | None = File(None), confirme
                 tmp = Path(t.name)
         with lock:
             try:
-                res = intake_mod.confirm(con, output_id, tmp, confirmed_by, override_control)
+                held = con.execute("SELECT status FROM intake_outputs WHERE output_id = ?", [output_id]).fetchone()
+                if held and held[0] == "needs_review" and not confirmed_by.strip():
+                    raise HTTPException(422, "Enter your name to release a file that was held for review.")
+                res = intake_mod.confirm(con, output_id, tmp, confirmed_by.strip(), override_control)
             except KeyError:
                 raise HTTPException(404, "Unknown spreadsheet")
             except ValueError as e:

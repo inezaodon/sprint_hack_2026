@@ -1,7 +1,9 @@
 """Upload ingest: any file in -> spreadsheets -> the database.
 
     intake(con, path)                       -> dict   convert, route, load (or hold for review)
-    confirm(con, output_id, corrected=None) -> dict   load a held spreadsheet, optionally a corrected copy
+    intake(con, path, autoload=False)       -> dict   convert and check only: every spreadsheet is "ready" (the UI shows
+                                                      what was found, a person chooses what to load)
+    confirm(con, output_id, corrected=None) -> dict   load a held / ready spreadsheet, optionally a corrected copy
     python -m goodwill_pulse.ingest.intake FILE [FILE ...]
 
 1. Convert (ingest/convert): the upload becomes one spreadsheet per table found. CSV / Excel pass through unchanged.
@@ -30,7 +32,8 @@ from .convert import Conversion, Output, convert
 from .pipeline import archive, load_aliases, process_file, sha256
 from .recognize import read_header, recognize
 
-HELD = ("needs_review", "needs_mapping")
+HELD = ("needs_review", "needs_mapping", "ready")
+PREVIEW_ROWS = 8
 
 
 def _now() -> datetime:
@@ -51,6 +54,17 @@ def _label(layout: str | None) -> str:
     return ""
 
 
+def _preview(o: Output) -> dict:
+    """First rows of a spreadsheet, as text, for the UI to show before anything is loaded."""
+    if o.rows is not None:
+        return {"header": o.header, "rows": o.rows[:PREVIEW_ROWS]}
+    try:
+        df, _ = finance.read_sheet(o.path)
+        return {"header": list(df.columns), "rows": df.head(PREVIEW_ROWS).astype(str).values.tolist()}
+    except Exception:  # noqa: BLE001  (a preview must never fail an upload)
+        return {"header": [], "rows": []}
+
+
 def _target_of(con, path: Path, hint: str | None) -> tuple[str, str | None]:
     """('warehouse' | 'finance' | 'none', layout). A complete sales match wins, then a complete finance match, then
     a partial sales match (so the existing 'confirm the renamed column' flow handles it)."""
@@ -68,11 +82,12 @@ def _target_of(con, path: Path, hint: str | None) -> tuple[str, str | None]:
 
 
 def _route(con, o: Output, output_id: str, source_name: str, finance_path: Path, *, confirmed: bool = False,
-           control_override: bool = False) -> dict:
+           control_override: bool = False, autoload: bool = True) -> dict:
     """Load one spreadsheet (or hold it). Returns the intake_outputs row as a dict, plus its exceptions."""
     row = {"output_id": output_id, "name": o.name, "path": str(o.path), "origin": o.origin, "method": o.method,
            "target": "none", "layout": o.layout, "row_count": o.row_count, "loaded_rows": 0, "status": "rejected",
-           "message": "", "file_id": None, "stated": json.dumps(o.stated) if o.stated else None, "exceptions": []}
+           "message": "", "file_id": None, "stated": json.dumps(o.stated) if o.stated else None, "exceptions": [],
+           "control": None, "preview": _preview(o)}
     target, layout = _target_of(con, o.path, o.layout)
     row["target"], row["layout"] = target, layout or o.layout
     shown = f"{source_name} > {o.name}" if o.name != source_name else source_name
@@ -84,6 +99,7 @@ def _route(con, o: Output, output_id: str, source_name: str, finance_path: Path,
         if target == "finance":   # show what the checks will say once confirmed, without loading
             pre = finance.load(o.path, finance_path, layout=layout, stated=o.stated, dry_run=True)
             row["exceptions"] += pre.exceptions
+            row["control"] = pre.control
             if pre.control:
                 c = pre.control
                 row["message"] += (f" Lines total ${c['rows_total']:,.2f} vs printed {c['label']} "
@@ -97,6 +113,26 @@ def _route(con, o: Output, output_id: str, source_name: str, finance_path: Path,
             _exception(con, output_id, shown, e)
         return row
 
+    if not autoload and not confirmed:
+        label = _label(row["layout"])
+        row["status"] = "ready"
+        row["message"] = f"Recognized as {label}. Not loaded yet." if label else "Converted. Not loaded yet."
+        if target == "finance":
+            pre = finance.load(o.path, finance_path, layout=layout, stated=o.stated, file_id=output_id, dry_run=True)
+            row["exceptions"], row["control"] = pre.exceptions, pre.control
+            row["months"] = pre.months
+            if pre.status == "needs_review":
+                row["status"], row["message"] = "needs_review", f"Recognized as {label}, but {pre.message.lower()}"
+                for e in pre.exceptions:
+                    _exception(con, output_id, shown, e)
+            elif pre.status in ("needs_mapping", "rejected"):
+                row["status"], row["message"] = pre.status, pre.message
+                for e in pre.exceptions:
+                    _exception(con, output_id, shown, e)
+            else:
+                row["message"] += (f" {pre.rows} rows" + (f" for {pre.period}" if pre.period else "") + ".")
+        return row if target != "none" else _unmapped(con, o, row, shown)
+
     if target == "warehouse":
         fr = process_file(con, o.path)            # records its own report_files row and exceptions
         row.update(file_id=fr.file_id, layout=fr.report_type, row_count=fr.row_count, loaded_rows=fr.loaded_rows,
@@ -107,13 +143,17 @@ def _route(con, o: Output, output_id: str, source_name: str, finance_path: Path,
         fres = finance.load(o.path, finance_path, layout=layout, stated=o.stated, file_id=output_id,
                             control_override=control_override)
         row.update(layout=fres.layout, row_count=fres.rows, loaded_rows=fres.loaded, status=fres.status,
-                   message=fres.message, exceptions=fres.exceptions, months=fres.months)
+                   message=fres.message, exceptions=fres.exceptions, months=fres.months, control=fres.control)
         if control_override and fres.control and not fres.control["ok"]:
             row["message"] += " Loaded despite the control-total difference (confirmed by a person)."
         for e in fres.exceptions:
             _exception(con, output_id, shown, e)
         return row
 
+    return _unmapped(con, o, row, shown)
+
+
+def _unmapped(con, o: Output, row: dict, shown: str) -> dict:
     row["status"] = "needs_mapping"
     row["message"] = "Converted, but the columns don't match any known report."
     e = {"rule": "unrecognized_report", "severity": "error", "source_row": None,
@@ -121,17 +161,17 @@ def _route(con, o: Output, output_id: str, source_name: str, finance_path: Path,
          "suggested_fix": "Download the spreadsheet and check its columns. Add the column names as aliases in "
                           "config/mappings or config/finance_layouts, then confirm it again."}
     row["exceptions"] = [e]
-    _exception(con, output_id, shown, e)
+    _exception(con, row["output_id"], shown, e)
     return row
 
 
 def _save_output(con, intake_id: str, row: dict) -> None:
     con.execute("DELETE FROM intake_outputs WHERE output_id = ?", [row["output_id"]])
     con.execute("""INSERT INTO intake_outputs (output_id, intake_id, name, path, origin, method, target, layout,
-                   row_count, loaded_rows, status, message, file_id, stated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   row_count, loaded_rows, status, message, file_id, stated, control) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 [row["output_id"], intake_id, row["name"], row["path"], row["origin"], row["method"], row["target"],
                  row["layout"], row["row_count"], row["loaded_rows"], row["status"], row["message"], row["file_id"],
-                 row["stated"]])
+                 row["stated"], json.dumps(row["control"]) if row.get("control") else None])
 
 
 def _overall(statuses: list[str]) -> str:
@@ -139,6 +179,8 @@ def _overall(statuses: list[str]) -> str:
         return "rejected"
     if any(s == "needs_review" for s in statuses):
         return "needs_review"
+    if any(s == "ready" for s in statuses):
+        return "ready"
     if all(s in ("loaded", "duplicate_file") for s in statuses):
         return "loaded"
     if any(s in ("loaded", "partial") for s in statuses):
@@ -149,27 +191,39 @@ def _overall(statuses: list[str]) -> str:
 def _public(row: dict) -> dict:
     out = {k: v for k, v in row.items() if k not in ("path", "stated")}
     out.setdefault("months", [])
+    out.setdefault("exceptions", [])
+    out.setdefault("preview", None)
+    if isinstance(out.get("control"), str):
+        out["control"] = json.loads(out["control"])
+    out["pending"] = out.get("status") in HELD
     out["stated"] = json.loads(row["stated"]) if row.get("stated") else {}
     out["label"] = _label(row.get("layout"))
     out["excel_url"] = f"/api/intake/outputs/{row['output_id']}/file"
     return out
 
 
+def _existing(con, intake_id: str) -> list[dict]:
+    cur = con.execute("SELECT * FROM intake_outputs WHERE intake_id = ? ORDER BY output_id", [intake_id])
+    cols = [d[0] for d in cur.description]
+    return [_public(dict(zip(cols, r))) for r in cur.fetchall()]
+
+
 def intake(con: duckdb.DuckDBPyConnection, path: Path | str, finance_path: Path | str | None = None,
-           converted_dir: Path | str | None = None) -> dict:
+           converted_dir: Path | str | None = None, autoload: bool = True) -> dict:
     path, finance_path = Path(path), Path(finance_path or FINANCE_DB_PATH)
     converted_dir = converted_dir or CONVERTED_DIR
     intake_id = sha256(path)
     prev = con.execute("SELECT status, original_name FROM intake_files WHERE intake_id = ?", [intake_id]).fetchone()
-    if prev and prev[0] not in ("rejected",):
-        return {"intake_id": intake_id, "name": path.name, "status": "duplicate_file",
-                "message": f"This exact file was already uploaded ({prev[1]}, {prev[0]}).", "outputs": [], "notes": []}
+    if prev and prev[0] not in ("rejected", "ready"):
+        return {"intake_id": intake_id, "name": path.name, "status": "duplicate_file", "previous_status": prev[0],
+                "message": f"This exact file was already uploaded ({prev[1]}, {prev[0]}).",
+                "outputs": _existing(con, intake_id), "notes": []}
 
     conv: Conversion = convert(path)
     mid = conv.envelope.get("message_id")
     if mid:
         dup = con.execute("SELECT original_name FROM intake_files WHERE message_id = ? AND intake_id <> ? "
-                          "AND status <> 'rejected'", [mid, intake_id]).fetchone()
+                          "AND status NOT IN ('rejected', 'ready')", [mid, intake_id]).fetchone()
         if dup:
             return {"intake_id": intake_id, "name": path.name, "status": "duplicate_file", "outputs": [], "notes": [],
                     "message": f"This email was already uploaded as {dup[0]} (same Message-ID)."}
@@ -183,7 +237,7 @@ def intake(con: duckdb.DuckDBPyConnection, path: Path | str, finance_path: Path 
     con.execute("DELETE FROM exceptions WHERE file_id = ? OR file_id LIKE ?", [intake_id, f"{intake_id[:12]}-%"])
     rows = []
     for n, o in enumerate(conv.outputs, 1):
-        row = _route(con, o, f"{intake_id[:12]}-{n}", conv.source_name, finance_path)
+        row = _route(con, o, f"{intake_id[:12]}-{n}", conv.source_name, finance_path, autoload=autoload)
         _save_output(con, intake_id, row)
         rows.append(row)
     for note in conv.notes:
@@ -197,8 +251,10 @@ def intake(con: duckdb.DuckDBPyConnection, path: Path | str, finance_path: Path 
                 [intake_id, path.name, conv.fmt, str(archived), when, env.get("from"), env.get("subject"),
                  env.get("date"), mid, status, json.dumps(conv.notes)])
     loaded = sum(r["loaded_rows"] or 0 for r in rows)
-    held = sum(1 for r in rows if r["status"] in HELD)
+    held = sum(1 for r in rows if r["status"] in ("needs_review", "needs_mapping"))
     msg = f"{len(rows)} spreadsheet{'s' if len(rows) != 1 else ''} from {path.name}: {loaded} rows loaded"
+    if not autoload and not held:
+        msg = f"{len(rows)} spreadsheet{'s' if len(rows) != 1 else ''} found in {path.name}, ready to load"
     msg += f", {held} waiting for review" if held else ""
     msg += f", {len(conv.notes)} part{'s' if len(conv.notes) != 1 else ''} not readable" if conv.notes else ""
     return {"intake_id": intake_id, "name": path.name, "format": conv.fmt, "status": status, "message": msg + ".",
@@ -244,6 +300,11 @@ def output_path(con: duckdb.DuckDBPyConnection, output_id: str) -> Path:
     if r is None or not Path(r[0]).exists():
         raise KeyError(output_id)
     return Path(r[0])
+
+
+def output_preview(con: duckdb.DuckDBPyConnection, output_id: str) -> dict:
+    """First rows of a stored spreadsheet (to reopen a file that is waiting for review)."""
+    return _preview(Output("", "", "", path=output_path(con, output_id)))
 
 
 def recent(con: duckdb.DuckDBPyConnection, limit: int = 50) -> list[dict]:

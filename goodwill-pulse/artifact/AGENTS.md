@@ -55,6 +55,9 @@ and a match/diff status. Nothing the model says is shown as a number unless the 
    when a doc would exceed 200 KB). It registers an overlay with `addRowsOverlay`: for each (date, channel) cell present in the latest
    upload covering it, the warehouse totals are REPLACED by the upload's sums and the row gets `src: "upload:<id>"`.
    `async function uploadProvenance()` returns [{date, channel, upload_id, name, warehouse:{orders,item_sales,shipping,fees,refunds}, upload:{...}, diff:{...}}].
+   Other formats: when `/api/intake/formats` answers, the Upload tab also accepts emails, PDFs, OFX, HTML, JSON, XML, zips and images,
+   converts them on the server (`/api/intake/preview`), and either loads a month-end input (`/api/intake/outputs/<id>/confirm`) or hands the
+   converted sales spreadsheet to the same steps as a file picked from disk. See docs/UPLOAD_INGEST.md.
 4. Related dashboards (41_related.js): `relatedKpis(spec, claudeHint) -> {pillar, ids:[kpi ids], reason}`; the dashboard accepts
    `state.focus = {pillar, ids}` to open that pillar and highlight those tiles.
 5. Lineage docs (written by `artifact/export_lineage.py`, one collection `lineage`, each doc < 250 KB):

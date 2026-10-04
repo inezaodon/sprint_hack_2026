@@ -22,3 +22,14 @@
 #upl-prev{gap:12px}
 #upl-prev>.grid,#upl-prev>.card{margin:0}
 .upl-bad{color:var(--bad)}
+
+/* ---- other formats: converted files, review, month-end loads ---- */
+.upl-out{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.upl-out .upl-peek th{white-space:nowrap;font-size:12px;padding:6px 10px;text-align:left;color:var(--muted)}
+.upl-ctl{margin:0;padding:10px 14px;border-radius:10px;font-size:13.5px;max-width:90ch}
+.upl-ctl.ok{background:var(--good-soft);color:var(--good)}
+.upl-ctl.bad{background:var(--bad-soft);color:var(--bad)}
+.upl-act{align-items:center}
+a.pill,label.pill{display:inline-flex;align-items:center;text-decoration:none;font-size:13px}
+.upl-fix{cursor:pointer}
+#upl-conv>.banner,#upl-conv>p{margin:8px 0 0}

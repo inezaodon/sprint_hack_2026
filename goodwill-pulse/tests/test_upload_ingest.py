@@ -385,3 +385,72 @@ def test_round_trip_reproduces_the_finance_inputs_and_the_close(env, tmp_path):
                      r.revenue.groupby(["channel", "account_no"])["amount"].sum().round(2).to_dict(),
                      sorted((e.get("severity"), e.get("message")) for e in r.exceptions))
     assert sig(x) == sig(y)
+
+
+# ---------------------------------------------------------------------------------------------- preview mode (UI)
+def test_preview_changes_nothing_until_a_person_loads_it(env, tmp_path):
+    _statement_db(tmp_path / "src.duckdb")
+    src = duckdb.connect(str(tmp_path / "src.duckdb"), read_only=True)
+    m = _email("Your Goodwill Books payment statement", "<prev@example.test>")
+    m.add_attachment(gen.gwb_statement_pdf(src, "2026-09"), maintype="application", subtype="pdf", filename="s.pdf")
+    src.close()
+    p = tmp_path / "statement.eml"
+    p.write_bytes(bytes(m))
+    r = intake_mod.intake(env.con, p, autoload=False)
+    [o] = r["outputs"]
+    assert r["status"] == "ready" and (o["status"], o["target"], o["layout"], o["loaded_rows"]) == ("ready", "finance", "gwb_statement", 0)
+    assert o["control"]["ok"] is True and o["pending"] is True and o["months"] == ["2026-09"]
+    assert len(o["preview"]["rows"]) == 8 and o["preview"]["header"][0] == "Line"
+    assert not env.fin.exists() and env.con.execute("SELECT count(*) FROM exceptions").fetchone()[0] == 0
+    res = intake_mod.confirm(env.con, o["output_id"], confirmed_by="Amanda")
+    assert (res["status"], res["loaded_rows"]) == ("loaded", 130)
+    assert duckdb.connect(str(env.fin), read_only=True).execute("SELECT count(*) FROM gwb_statement").fetchone()[0] == 130
+    again = intake_mod.intake(env.con, p, autoload=False)                     # uploading it again
+    assert again["status"] == "duplicate_file" and again["outputs"][0]["status"] == "loaded"
+
+
+def test_preview_flags_a_bad_total_and_unknown_tables_up_front(env, tmp_path):
+    _statement_db(tmp_path / "src.duckdb")
+    src = duckdb.connect(str(tmp_path / "src.duckdb"), read_only=True)
+    bad = tmp_path / "bad.pdf"
+    bad.write_bytes(gen.gwb_statement_pdf(src, "2026-09", drop_line=40))
+    src.close()
+    [o] = intake_mod.intake(env.con, bad, autoload=False)["outputs"]
+    assert o["status"] == "needs_review" and o["control"]["ok"] is False and o["pending"]
+    assert round(o["control"]["rows_total"] - o["control"]["stated_total"], 2) != 0
+    misc = tmp_path / "misc.json"
+    misc.write_text(json.dumps([{"color": "red"}]))
+    [m] = intake_mod.intake(env.con, misc, autoload=False)["outputs"]
+    assert m["status"] == "needs_mapping" and m["target"] == "none"
+    held = intake_mod.recent(env.con)
+    assert {x["outputs"][0]["output_id"] for x in held} == {o["output_id"], m["output_id"]}
+    assert all(x["outputs"][0]["pending"] for x in held)
+
+
+def test_preview_and_confirm_endpoints(env, tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from goodwill_pulse import api
+    monkeypatch.setattr(api, "_con", env.con)
+    monkeypatch.setattr("goodwill_pulse.routes.intake.INBOX_DIR", tmp_path / "inbox")
+    c = TestClient(api.app)
+    f = c.get("/api/intake/formats").json()
+    assert ".eml" in f["accept"] and ".pdf" in f["accept"] and f["ai"] is False
+    _statement_db(tmp_path / "src.duckdb")
+    src = duckdb.connect(str(tmp_path / "src.duckdb"), read_only=True)
+    pdf = gen.gwb_statement_pdf(src, "2026-09", drop_line=40)
+    src.close()
+    r = c.post("/api/intake/preview", files={"files": ("s.pdf", pdf, "application/pdf")})
+    assert r.status_code == 200, r.text
+    o = r.json()[0]["outputs"][0]
+    assert o["status"] == "needs_review" and o["excel_url"].endswith("/file")
+    assert c.get(o["excel_url"]).status_code == 200
+    no_name = c.post(f"/api/intake/outputs/{o['output_id']}/confirm", data={"override_control": "true"})
+    assert no_name.status_code == 422 and "name" in no_name.json()["detail"]
+    ok = c.post(f"/api/intake/outputs/{o['output_id']}/confirm", data={"override_control": "true", "confirmed_by": "Amanda"})
+    assert ok.status_code == 200 and ok.json()["loaded_rows"] == 129
+    good = gen.gwb_statement_pdf(duckdb.connect(str(tmp_path / "src.duckdb"), read_only=True), "2026-09")
+    g = c.post("/api/intake/preview", files={"files": ("good.pdf", good, "application/pdf")}).json()[0]["outputs"][0]
+    assert g["status"] == "ready" and g["control"]["ok"]
+    assert c.post(f"/api/intake/outputs/{g['output_id']}/confirm", data={"confirmed_by": "A"}).json()["status"] == "loaded"
+    assert c.post(f"/api/intake/outputs/{g['output_id']}/confirm", data={"confirmed_by": "A"}).status_code == 409
